@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev:docker": "docker compose -f docker-compose.dev.yml up --build --force-recreate",
-    "dev": "clear && nodemon server.js",
-    "seed": "clear && node src/seeds/seeds.js",
-    "start": "clear && node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node src/seeds/seeds.js",
+    "start": "node server.js",
     "start:production": "docker compose -f docker-compose.yml up --build --force-recreate",
-    "test": "clear && jest --coverage"
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -18,14 +18,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.0",
+    "express": "^5.2.1",
     "faker-br": "^0.5.0",
     "mongodb": "^7.1.1",
     "mongoose": "^9.3.3",
     "mongoose-paginate-v2": "^1.9.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -44,5 +47,37 @@
     "nodemon": "^3.1.14",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ],
+    "plugins": [
+      "babel-plugin-transform-import-meta"
+    ]
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "testEnvironment": "node",
+    "verbose": true,
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/src/config/dbconnect.js",
+      "/src/utils/logger.js",
+      "/src/utils/helpers/http.js",
+      "/src/app.js"
+    ]
   }
 }
