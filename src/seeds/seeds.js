@@ -1,47 +1,21 @@
 import 'dotenv/config';
-import DbConnect from '../config/dbconnect.js';
-import Usuario from '../models/Usuario.js';
+import mongoose from 'mongoose';
+import seedUsuario from './seedsUsuario.js';
+import seedVaga from './seedsVaga.js';
 
-const usuariosSeed = [
-  {
-    nome: 'Ana Recrutadora',
-    email: 'ana.recrutadora@match.com',
-    tipos_permissao: ['recrutador'],
-    status_ativo: true,
-  },
-  {
-    nome: 'Bruno Candidato',
-    email: 'bruno.candidato@match.com',
-    tipos_permissao: ['candidato'],
-    status_ativo: true,
-  },
-  {
-    nome: 'Carla Multipla',
-    email: 'carla.multipla@match.com',
-    tipos_permissao: ['recrutador', 'candidato'],
-    status_ativo: true,
-  },
-];
-
-const runSeed = async () => {
+async function main() {
   try {
-    await DbConnect.conectar();
+    await seedUsuario();
+    await seedVaga();
 
-    for (const usuario of usuariosSeed) {
-      await Usuario.findOneAndUpdate(
-        { email: usuario.email },
-        { $set: usuario },
-        { upsert: true, returnDocument: 'after' },
-      );
-    }
-
-    console.log(`Seed finalizado com sucesso. ${usuariosSeed.length} usuarios processados.`);
-  } catch (error) {
-    console.error('Erro ao executar seed de usuarios:', error);
+    console.log('>>> SEED FINALIZADO COM SUCESSO! <<<');
+  } catch (err) {
+    console.error('Erro ao executar SEED:', err);
     process.exitCode = 1;
   } finally {
-    await DbConnect.desconectar();
+    mongoose.connection.close();
+    process.exit(0);
   }
-};
+}
 
-runSeed();
+main();
