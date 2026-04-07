@@ -14,7 +14,9 @@ const getSwaggerOptions = async () => {
   const cacheBuster = process.env.NODE_ENV === 'development' ? `?t=${Date.now()}` : '';
 
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
+  const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
+  const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -30,13 +32,19 @@ const getSwaggerOptions = async () => {
           name: 'Usuarios RH',
           description: 'CRUD de usuarios com suporte a multi-perfil (recrutador e candidato).',
         },
+        {
+          name: 'Vagas RH',
+          description: 'CRUD de vagas e criterios para montagem futura de questionarios de avaliacao.',
+        },
       ],
       paths: {
         ...usuarioPaths,
+        ...vagaPaths,
       },
       components: {
         schemas: {
           ...usuarioSchemas,
+          ...vagaSchemas,
         },
       },
     },
