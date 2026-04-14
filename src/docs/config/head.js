@@ -15,8 +15,10 @@ const getSwaggerOptions = async () => {
 
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
   const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
+  const candidatoPaths = (await import(new URL('../paths/candidato.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
+  const candidatoSchemas = (await import(new URL('../schemas/candidatoSchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -36,15 +38,41 @@ const getSwaggerOptions = async () => {
           name: 'Vagas RH',
           description: 'CRUD de vagas e criterios para montagem futura de questionarios de avaliacao.',
         },
+        {
+          name: 'Candidatos',
+          description: 'CRUD de candidato e perfil completo com dados relacionados.',
+        },
+        {
+          name: 'Candidato Formacao',
+          description: 'Operacoes de formacao academica do candidato.',
+        },
+        {
+          name: 'Candidato Experiencia',
+          description: 'Operacoes de experiencia profissional do candidato.',
+        },
+        {
+          name: 'Candidato Habilidade',
+          description: 'Operacoes de habilidades do candidato.',
+        },
+        {
+          name: 'Candidato Certificacao',
+          description: 'Operacoes de certificacoes do candidato.',
+        },
+        {
+          name: 'Candidato Candidatura',
+          description: 'Operacoes de candidatura do candidato em vagas.',
+        },
       ],
       paths: {
         ...usuarioPaths,
         ...vagaPaths,
+        ...candidatoPaths,
       },
       components: {
         schemas: {
           ...usuarioSchemas,
           ...vagaSchemas,
+          ...candidatoSchemas,
         },
       },
     },

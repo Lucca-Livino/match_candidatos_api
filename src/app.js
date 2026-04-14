@@ -3,6 +3,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUI from 'swagger-ui-express';
 import userRoutes from './routes/userRoutes.js';
 import vagaRoutes from './routes/vagaRoutes.js';
+import candidatoRoutes from './routes/candidatoRoutes.js';
 import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api', userRoutes);
 app.use('/api', vagaRoutes);
+app.use('/api', candidatoRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
