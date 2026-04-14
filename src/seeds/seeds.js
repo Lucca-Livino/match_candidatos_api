@@ -2,11 +2,13 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import seedUsuario from './seedsUsuario.js';
 import seedVaga from './seedsVaga.js';
+import seedCandidato from './seedsCandidato.js';
 
 async function main() {
   try {
     await seedUsuario();
     await seedVaga();
+    await seedCandidato();
 
     console.log('>>> SEED FINALIZADO COM SUCESSO! <<<');
   } catch (err) {
