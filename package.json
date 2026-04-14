@@ -4,9 +4,12 @@
   "description": "To make it easy for you to get started with GitLab, here's a list of recommended next steps.",
   "main": "index.js",
   "scripts": {
-    "dev:docker": "docker compose -f docker-compose.dev.yml up --build --force-recreate",
+    "dev:docker": "docker compose -f docker-compose.yml up --build --force-recreate",
     "dev": "nodemon server.js",
-    "seed": "node src/seeds/seeds.js",
+    "seed": "npm run _seed_local",
+    "_seed_local": "node src/seeds/seeds.js",
+    "seed:docker": "docker compose run --rm -T api npm run _seed_local",
+    "seed:auto": "docker compose --profile seed up --build --force-recreate",
     "start": "node server.js",
     "start:production": "docker compose -f docker-compose.yml up --build --force-recreate",
     "test": "jest --coverage"
