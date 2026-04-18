@@ -120,14 +120,14 @@ const candidatoPaths = {
   '/api/candidato/formacao/{id}': {
     get: {
       tags: ['Candidatos'],
-      summary: 'Busca candidato completo pelo id de uma formacao',
-      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+      summary: 'Lista formacoes por id do candidato',
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'ID do candidato' }],
       responses: {
         200: {
-          description: 'Candidato encontrado com relacionamentos',
+          description: 'Formacoes listadas com sucesso',
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/CandidatoCompletoResponse' },
+              schema: { $ref: '#/components/schemas/FormacaoListResponse' },
             },
           },
         },
@@ -138,14 +138,14 @@ const candidatoPaths = {
   '/api/candidato/experiencia/{id}': {
     get: {
       tags: ['Candidatos'],
-      summary: 'Busca candidato completo pelo id de uma experiencia',
-      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+      summary: 'Lista experiencias por id do candidato',
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'ID do candidato' }],
       responses: {
         200: {
-          description: 'Candidato encontrado com relacionamentos',
+          description: 'Experiencias listadas com sucesso',
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/CandidatoCompletoResponse' },
+              schema: { $ref: '#/components/schemas/ExperienciaListResponse' },
             },
           },
         },
@@ -156,14 +156,14 @@ const candidatoPaths = {
   '/api/candidato/habilidade/{id}': {
     get: {
       tags: ['Candidatos'],
-      summary: 'Busca candidato completo pelo id de uma habilidade',
-      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+      summary: 'Lista habilidades por id do candidato',
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'ID do candidato' }],
       responses: {
         200: {
-          description: 'Candidato encontrado com relacionamentos',
+          description: 'Habilidades listadas com sucesso',
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/CandidatoCompletoResponse' },
+              schema: { $ref: '#/components/schemas/HabilidadeListResponse' },
             },
           },
         },
@@ -174,14 +174,14 @@ const candidatoPaths = {
   '/api/candidato/certificacao/{id}': {
     get: {
       tags: ['Candidatos'],
-      summary: 'Busca candidato completo pelo id de uma certificacao',
-      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+      summary: 'Lista certificacoes por id do candidato',
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'ID do candidato' }],
       responses: {
         200: {
-          description: 'Candidato encontrado com relacionamentos',
+          description: 'Certificacoes listadas com sucesso',
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/CandidatoCompletoResponse' },
+              schema: { $ref: '#/components/schemas/CertificacaoListResponse' },
             },
           },
         },

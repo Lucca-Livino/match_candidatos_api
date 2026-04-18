@@ -22,7 +22,7 @@ const Formacao = {
     candidatoId: { type: 'string', example: 'cand-001' },
     instituicao: { type: 'string', example: 'USP' },
     curso: { type: 'string', example: 'Engenharia de Software' },
-    grau: { type: 'string', enum: ['tecnico', 'graduacao', 'pos_graduacao', 'mestrado', 'doutorado'] },
+    grau: { type: 'string', enum: ['tecnico', 'graduação', 'pos_graduação', 'mestrado', 'doutorado'] },
     situacao: { type: 'string', example: 'concluido' },
     anoInicio: { type: 'integer', example: 2018 },
     anoConclusao: { type: 'integer', nullable: true, example: 2022 },
