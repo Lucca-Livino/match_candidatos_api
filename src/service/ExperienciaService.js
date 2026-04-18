@@ -40,7 +40,7 @@ class ExperienciaService {
 	}
 
 	async garantirCandidatoExiste(candidatoId) {
-		const candidato = await this.candidatoRepository.buscarCandidatoPorId(candidatoId);
+		const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
 		if (!candidato) {
 			throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
 		}
@@ -48,14 +48,19 @@ class ExperienciaService {
 		return candidato;
 	}
 
+	async resolverCandidatoId(candidatoId) {
+		const candidato = await this.garantirCandidatoExiste(candidatoId);
+		return candidato.id;
+	}
+
 	async criarExperiencia(candidatoId, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
 		const mesesDuracao = this.calcularMesesDuracao(payload.dataInicio, payload.dataFim);
 
 		const created = await this.experienciaRepository.criar({
 			...payload,
-			candidatoId,
+			candidatoId: candidatoIdResolvido,
 			mesesDuracao,
 		});
 
@@ -63,16 +68,16 @@ class ExperienciaService {
 	}
 
 	async listarExperiencia(candidatoId) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const list = await this.experienciaRepository.listarPorCandidatoId(candidatoId);
+		const list = await this.experienciaRepository.listarPorCandidatoId(candidatoIdResolvido);
 		return list.map((item) => this.sanitize(item));
 	}
 
 	async atualizarExperiencia(candidatoId, id, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const existente = await this.experienciaRepository.buscarPorCandidatoEId(candidatoId, id);
+		const existente = await this.experienciaRepository.buscarPorCandidatoEId(candidatoIdResolvido, id);
 		if (!existente) {
 			throw new AppError('Experiencia nao encontrada.', 404, 'NOT_FOUND');
 		}
@@ -82,7 +87,7 @@ class ExperienciaService {
 
 		const mesesDuracao = this.calcularMesesDuracao(dataInicio, dataFim);
 
-		const updated = await this.experienciaRepository.atualizarPorCandidatoEId(candidatoId, id, {
+		const updated = await this.experienciaRepository.atualizarPorCandidatoEId(candidatoIdResolvido, id, {
 			...payload,
 			mesesDuracao,
 		});
@@ -91,9 +96,9 @@ class ExperienciaService {
 	}
 
 	async deletarExperiencia(candidatoId, id) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const removed = await this.experienciaRepository.deletarPorCandidatoEId(candidatoId, id);
+		const removed = await this.experienciaRepository.deletarPorCandidatoEId(candidatoIdResolvido, id);
 		if (!removed) {
 			throw new AppError('Experiencia nao encontrada.', 404, 'NOT_FOUND');
 		}

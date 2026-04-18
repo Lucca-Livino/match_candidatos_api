@@ -4,6 +4,8 @@ import Experiencia from '../models/Experiencia.js';
 import Habilidade from '../models/Habilidade.js';
 import Certificacao from '../models/Certificacao.js';
 import CandidatoVaga from '../models/CandidatoVaga.js';
+import Usuario from '../models/Usuario.js';
+import mongoose from 'mongoose';
 
 class CandidatoRepository {
   async listarPaginado({ page = 1, limit = 10, cidade, estado, nome } = {}) {
@@ -32,6 +34,29 @@ class CandidatoRepository {
 
   async buscarCandidatoPorId(id) {
     return Candidato.findOne({ id }).lean();
+  }
+
+  async buscarCandidatoPorIdOuUsuarioId(idOuUsuarioId) {
+    const candidato = await this.buscarCandidatoPorId(idOuUsuarioId);
+    if (candidato) {
+      return candidato;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(idOuUsuarioId)) {
+      return null;
+    }
+
+    const candidatoPorObjectId = await Candidato.findById(idOuUsuarioId).lean();
+    if (candidatoPorObjectId) {
+      return candidatoPorObjectId;
+    }
+
+    const usuario = await Usuario.findById(idOuUsuarioId).lean();
+    if (!usuario?.email) {
+      return null;
+    }
+
+    return Candidato.findOne({ email: usuario.email }).lean();
   }
 
   async buscarCandidatoPorEmail(email) {

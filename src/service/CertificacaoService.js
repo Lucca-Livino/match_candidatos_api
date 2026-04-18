@@ -32,7 +32,7 @@ class CertificacaoService {
   }
 
   async garantirCandidatoExiste(candidatoId) {
-    const candidato = await this.candidatoRepository.buscarCandidatoPorId(candidatoId);
+    const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
     if (!candidato) {
       throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
     }
@@ -40,40 +40,45 @@ class CertificacaoService {
     return candidato;
   }
 
+  async resolverCandidatoId(candidatoId) {
+    const candidato = await this.garantirCandidatoExiste(candidatoId);
+    return candidato.id;
+  }
+
   async criarCertificacao(candidatoId, payload) {
-    await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
     const created = await this.certificacaoRepository.criar({
       ...payload,
-      candidatoId,
+      candidatoId: candidatoIdResolvido,
     });
 
     return this.withCertificacaoExpirada(created.toObject());
   }
 
   async listarCertificacao(candidatoId) {
-    await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-    const list = await this.certificacaoRepository.listarPorCandidatoId(candidatoId);
+    const list = await this.certificacaoRepository.listarPorCandidatoId(candidatoIdResolvido);
     return list.map((item) => this.withCertificacaoExpirada(item));
   }
 
   async atualizarCertificacao(candidatoId, id, payload) {
-    await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-    const existente = await this.certificacaoRepository.buscarPorCandidatoEId(candidatoId, id);
+    const existente = await this.certificacaoRepository.buscarPorCandidatoEId(candidatoIdResolvido, id);
     if (!existente) {
       throw new AppError('Certificacao nao encontrada.', 404, 'NOT_FOUND');
     }
 
-    const updated = await this.certificacaoRepository.atualizarPorCandidatoEId(candidatoId, id, payload);
+    const updated = await this.certificacaoRepository.atualizarPorCandidatoEId(candidatoIdResolvido, id, payload);
     return this.withCertificacaoExpirada(updated);
   }
 
   async deletarCertificacao(candidatoId, id) {
-    await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-    const removed = await this.certificacaoRepository.deletarPorCandidatoEId(candidatoId, id);
+    const removed = await this.certificacaoRepository.deletarPorCandidatoEId(candidatoIdResolvido, id);
     if (!removed) {
       throw new AppError('Certificacao nao encontrada.', 404, 'NOT_FOUND');
     }

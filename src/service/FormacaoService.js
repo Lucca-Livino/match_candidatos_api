@@ -22,7 +22,7 @@ class FormacaoService {
 	}
 
 	async garantirCandidatoExiste(candidatoId) {
-		const candidato = await this.candidatoRepository.buscarCandidatoPorId(candidatoId);
+		const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
 		if (!candidato) {
 			throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
 		}
@@ -30,28 +30,33 @@ class FormacaoService {
 		return candidato;
 	}
 
+	async resolverCandidatoId(candidatoId) {
+		const candidato = await this.garantirCandidatoExiste(candidatoId);
+		return candidato.id;
+	}
+
 	async criarFormacao(candidatoId, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
 		const created = await this.formacaoRepository.criar({
 			...payload,
-			candidatoId,
+			candidatoId: candidatoIdResolvido,
 		});
 
 		return this.sanitize(created.toObject());
 	}
 
 	async listarFormacao(candidatoId) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const list = await this.formacaoRepository.listarPorCandidatoId(candidatoId);
+		const list = await this.formacaoRepository.listarPorCandidatoId(candidatoIdResolvido);
 		return list.map((item) => this.sanitize(item));
 	}
 
 	async atualizarFormacao(candidatoId, id, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const existente = await this.formacaoRepository.buscarPorCandidatoEId(candidatoId, id);
+		const existente = await this.formacaoRepository.buscarPorCandidatoEId(candidatoIdResolvido, id);
 		if (!existente) {
 			throw new AppError('Formacao nao encontrada.', 404, 'NOT_FOUND');
 		}
@@ -63,14 +68,14 @@ class FormacaoService {
 			throw new AppError('anoConclusao nao pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
 		}
 
-		const updated = await this.formacaoRepository.atualizarPorCandidatoEId(candidatoId, id, payload);
+		const updated = await this.formacaoRepository.atualizarPorCandidatoEId(candidatoIdResolvido, id, payload);
 		return this.sanitize(updated);
 	}
 
 	async deletarFormacao(candidatoId, id) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const removed = await this.formacaoRepository.deletarPorCandidatoEId(candidatoId, id);
+		const removed = await this.formacaoRepository.deletarPorCandidatoEId(candidatoIdResolvido, id);
 		if (!removed) {
 			throw new AppError('Formacao nao encontrada.', 404, 'NOT_FOUND');
 		}

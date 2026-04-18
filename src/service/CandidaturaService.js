@@ -40,7 +40,7 @@ class CandidaturaService {
 	}
 
 	async garantirCandidatoExiste(candidatoId) {
-		const candidato = await this.candidatoRepository.buscarCandidatoPorId(candidatoId);
+		const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
 		if (!candidato) {
 			throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
 		}
@@ -48,17 +48,22 @@ class CandidaturaService {
 		return candidato;
 	}
 
-	async criarCandidatura(candidatoId, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+	async resolverCandidatoId(candidatoId) {
+		const candidato = await this.garantirCandidatoExiste(candidatoId);
+		return candidato.id;
+	}
 
-		const jaExiste = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoId, payload.vagaId);
+	async criarCandidatura(candidatoId, payload) {
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
+
+		const jaExiste = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoIdResolvido, payload.vagaId);
 		if (jaExiste) {
 			throw new AppError('Candidato ja esta inscrito nesta vaga.', 409, 'CONFLICT');
 		}
 
 		const created = await this.candidaturaRepository.criar({
 			...payload,
-			candidatoId,
+			candidatoId: candidatoIdResolvido,
 			status: 'inscrito',
 		});
 
@@ -66,16 +71,16 @@ class CandidaturaService {
 	}
 
 	async listarCandidatura(candidatoId) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const list = await this.candidaturaRepository.listarPorCandidatoId(candidatoId);
+		const list = await this.candidaturaRepository.listarPorCandidatoId(candidatoIdResolvido);
 		return list.map((item) => this.sanitize(item));
 	}
 
 	async detalharCandidatura(candidatoId, vagaId) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoId, vagaId);
+		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoIdResolvido, vagaId);
 		if (!candidatura) {
 			throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
 		}
@@ -95,9 +100,9 @@ class CandidaturaService {
 	}
 
 	async atualizarStatusCandidatura(candidatoId, vagaId, payload) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoId, vagaId);
+		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoIdResolvido, vagaId);
 		if (!candidatura) {
 			throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
 		}
@@ -105,7 +110,7 @@ class CandidaturaService {
 		this.validarTransicaoStatus(candidatura.status, payload.status);
 
 		const updated = await this.candidaturaRepository.atualizarPorCandidatoEVaga(
-			candidatoId,
+			candidatoIdResolvido,
 			vagaId,
 			payload,
 		);
@@ -113,9 +118,9 @@ class CandidaturaService {
 	}
 
 	async cancelarCandidatura(candidatoId, vagaId) {
-		await this.garantirCandidatoExiste(candidatoId);
+		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoId, vagaId);
+		const candidatura = await this.candidaturaRepository.buscarPorCandidatoEVaga(candidatoIdResolvido, vagaId);
 		if (!candidatura) {
 			throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
 		}
@@ -128,7 +133,7 @@ class CandidaturaService {
 			);
 		}
 
-		await this.candidaturaRepository.deletarPorCandidatoEVaga(candidatoId, vagaId);
+		await this.candidaturaRepository.deletarPorCandidatoEVaga(candidatoIdResolvido, vagaId);
 
 		return {
 			vagaId,

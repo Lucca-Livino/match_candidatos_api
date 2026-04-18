@@ -44,11 +44,16 @@ class CandidatoService {
   }
 
   async garantirCandidatoExiste(candidatoId) {
-    const candidato = await this.repository.buscarCandidatoPorId(candidatoId);
+    const candidato = await this.repository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
     if (!candidato) {
       throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
     }
     return candidato;
+  }
+
+  async resolverCandidatoId(candidatoId) {
+    const candidato = await this.garantirCandidatoExiste(candidatoId);
+    return candidato.id;
   }
 
   async listar(query) {
@@ -62,13 +67,14 @@ class CandidatoService {
 
   async buscarPorId(candidatoId) {
     const candidato = await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = candidato.id;
 
     const [formacao, experiencia, habilidade, certificacao] =
       await Promise.all([
-        this.formacaoRepository.listarPorCandidatoId(candidatoId),
-        this.experienciaRepository.listarPorCandidatoId(candidatoId),
-        this.habilidadeRepository.listarPorCandidatoId(candidatoId),
-        this.certificacaoRepository.listarPorCandidatoId(candidatoId),
+        this.formacaoRepository.listarPorCandidatoId(candidatoIdResolvido),
+        this.experienciaRepository.listarPorCandidatoId(candidatoIdResolvido),
+        this.habilidadeRepository.listarPorCandidatoId(candidatoIdResolvido),
+        this.certificacaoRepository.listarPorCandidatoId(candidatoIdResolvido),
       ]);
 
     return {
@@ -82,38 +88,38 @@ class CandidatoService {
 
   async buscarPorFormacaoId(formacaoId) {
     const formacao = await this.formacaoRepository.buscarPorId(formacaoId);
-    if (!formacao) {
-      throw new AppError('Formacao nao encontrada.', 404, 'NOT_FOUND');
+    if (formacao) {
+      return this.buscarPorId(formacao.candidatoId);
     }
 
-    return this.buscarPorId(formacao.candidatoId);
+    return this.buscarPorId(formacaoId);
   }
 
   async buscarPorExperienciaId(experienciaId) {
     const experiencia = await this.experienciaRepository.buscarPorId(experienciaId);
-    if (!experiencia) {
-      throw new AppError('Experiencia nao encontrada.', 404, 'NOT_FOUND');
+    if (experiencia) {
+      return this.buscarPorId(experiencia.candidatoId);
     }
 
-    return this.buscarPorId(experiencia.candidatoId);
+    return this.buscarPorId(experienciaId);
   }
 
   async buscarPorHabilidadeId(habilidadeId) {
     const habilidade = await this.habilidadeRepository.buscarPorId(habilidadeId);
-    if (!habilidade) {
-      throw new AppError('Habilidade nao encontrada.', 404, 'NOT_FOUND');
+    if (habilidade) {
+      return this.buscarPorId(habilidade.candidatoId);
     }
 
-    return this.buscarPorId(habilidade.candidatoId);
+    return this.buscarPorId(habilidadeId);
   }
 
   async buscarPorCertificacaoId(certificacaoId) {
     const certificacao = await this.certificacaoRepository.buscarPorId(certificacaoId);
-    if (!certificacao) {
-      throw new AppError('Certificacao nao encontrada.', 404, 'NOT_FOUND');
+    if (certificacao) {
+      return this.buscarPorId(certificacao.candidatoId);
     }
 
-    return this.buscarPorId(certificacao.candidatoId);
+    return this.buscarPorId(certificacaoId);
   }
 
   async buscarPorCandidaturaId(candidaturaId) {
@@ -137,22 +143,23 @@ class CandidatoService {
 
   async atualizar(candidatoId, payload) {
     const existente = await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = existente.id;
 
     if (payload.email && payload.email !== existente.email) {
       const emailEmUso = await this.repository.buscarCandidatoPorEmail(payload.email);
-      if (emailEmUso && emailEmUso.id !== candidatoId) {
+      if (emailEmUso && emailEmUso.id !== candidatoIdResolvido) {
         throw new AppError('Ja existe candidato com este email.', 409, 'CONFLICT');
       }
     }
 
-    const updated = await this.repository.atualizarCandidato(candidatoId, payload);
+    const updated = await this.repository.atualizarCandidato(candidatoIdResolvido, payload);
     return this.sanitize(updated);
   }
 
   async deletar(candidatoId) {
-    await this.garantirCandidatoExiste(candidatoId);
+    const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
 
-    const candidaturasBloqueantes = await this.repository.contarCandidaturasBloqueantes(candidatoId);
+    const candidaturasBloqueantes = await this.repository.contarCandidaturasBloqueantes(candidatoIdResolvido);
     if (candidaturasBloqueantes > 0) {
       throw new AppError(
         'Nao e permitido excluir candidato com candidatura em_analise ou aprovado.',
@@ -161,11 +168,11 @@ class CandidatoService {
       );
     }
 
-    await this.repository.removerRelacionamentosDoCandidato(candidatoId);
-    await this.repository.deletarCandidato(candidatoId);
+    await this.repository.removerRelacionamentosDoCandidato(candidatoIdResolvido);
+    await this.repository.deletarCandidato(candidatoIdResolvido);
 
     return {
-      id: candidatoId,
+      id: candidatoIdResolvido,
       deletado: true,
     };
   }

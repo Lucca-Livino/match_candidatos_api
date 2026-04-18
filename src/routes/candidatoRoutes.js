@@ -15,14 +15,19 @@ const habilidadeController = new HabilidadeController();
 const certificacaoController = new CertificacaoController();
 const candidaturaController = new CandidaturaController();
 
+const aliasIdAsCandidatoId = (req, _res, next) => {
+  req.params.candidatoId = req.params.id;
+  return next();
+};
+
 
 //Candidato
 router.post('/candidato', (req, res, next) => candidatoController.criar(req, res, next));
 router.get('/candidato', (req, res, next) => candidatoController.listar(req, res, next));
-router.get('/candidato/formacao/:id', (req, res, next) => candidatoController.buscarPorFormacaoId(req, res, next));
-router.get('/candidato/experiencia/:id', (req, res, next) => candidatoController.buscarPorExperienciaId(req, res, next));
-router.get('/candidato/habilidade/:id', (req, res, next) => candidatoController.buscarPorHabilidadeId(req, res, next));
-router.get('/candidato/certificacao/:id', (req, res, next) => candidatoController.buscarPorCertificacaoId(req, res, next));
+router.get('/candidato/formacao/:id', aliasIdAsCandidatoId, (req, res, next) => formacaoController.listarFormacao(req, res, next));
+router.get('/candidato/experiencia/:id', aliasIdAsCandidatoId, (req, res, next) => experienciaController.listarExperiencia(req, res, next));
+router.get('/candidato/habilidade/:id', aliasIdAsCandidatoId, (req, res, next) => habilidadeController.listarHabilidade(req, res, next));
+router.get('/candidato/certificacao/:id', aliasIdAsCandidatoId, (req, res, next) => certificacaoController.listarCertificacao(req, res, next));
 
 router.get('/candidato/:id', (req, res, next) => candidatoController.buscarPorId(req, res, next));
 router.put('/candidato/:id', (req, res, next) => candidatoController.atualizar(req, res, next));

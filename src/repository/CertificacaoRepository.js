@@ -5,27 +5,27 @@ class CertificacaoRepository {
 		return Certificacao.create(payload);
 	}
 
-	async listarPorId(Id) {
-		return Certificacao.find({ Id }).sort({ dataEmissao: -1 }).lean();
+	async listarPorCandidatoId(candidatoId) {
+		return Certificacao.find({ candidatoId }).sort({ dataEmissao: -1 }).lean();
 	}
 
-	async buscarPorEId(Id, id) {
-		return Certificacao.findOne({ Id, id }).lean();
+	async buscarPorCandidatoEId(candidatoId, id) {
+		return Certificacao.findOne({ candidatoId, id }).lean();
 	}
 
 	async buscarPorId(id) {
 		return Certificacao.findOne({ id }).lean();
 	}
 
-	async atualizarPorEId(Id, id, payload) {
-		return Certificacao.findOneAndUpdate({ Id, id }, payload, {
+	async atualizarPorCandidatoEId(candidatoId, id, payload) {
+		return Certificacao.findOneAndUpdate({ candidatoId, id }, payload, {
 			returnDocument: 'after',
 			runValidators: true,
 		}).lean();
 	}
 
-	async deletarPorEId(Id, id) {
-		return Certificacao.findOneAndDelete({ Id, id }).lean();
+	async deletarPorCandidatoEId(candidatoId, id) {
+		return Certificacao.findOneAndDelete({ candidatoId, id }).lean();
 	}
 }
 
