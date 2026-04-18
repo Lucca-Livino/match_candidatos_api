@@ -10,15 +10,15 @@ const usuariosSeed = [
     status_ativo: true,
   },
   {
-    nome: "Bruno Candidato",
-    email: "bruno.candidato@match.com",
-    tipos_permissao: ["candidato"],
+    nome: "Bruno Admin",
+    email: "bruno.admin@match.com",
+    tipos_permissao: ["Admin"],
     status_ativo: true,
   },
   {
     nome: "Carla Multipla",
     email: "carla.multipla@match.com",
-    tipos_permissao: ["recrutador", "candidato"],
+    tipos_permissao: ["recrutador", "Admin"],
     status_ativo: true,
   },
 ];

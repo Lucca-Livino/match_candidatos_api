@@ -1,0 +1,59 @@
+services:
+  mongodb:
+    container_name: mongodb-match-de-curriculos
+    image: mongo:8
+    volumes:
+      - vol-mongodb:/data/db
+    command: mongod --quiet --logpath /dev/null
+    ports:
+      - '27017:27017'
+    restart: always
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/match-de-curriculos --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  api:
+    container_name: match-de-curriculos-api
+    build: .
+    ports:
+      - '${APP_PORT:-5000}:${APP_PORT:-5000}'
+    environment:
+      - NODE_ENV=production
+      - DB_URL=mongodb://mongodb:27017/match-de-curriculos
+      - APP_PORT=${APP_PORT:-5000}
+    env_file:
+      - .env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: curl -f http://localhost:${APP_PORT:-5000}/api/usuarios || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  seeder:
+    container_name: match-de-curriculos-seeder
+    build: .
+    environment:
+      - NODE_ENV=production
+      - DB_URL=mongodb://mongodb:27017/match-de-curriculos
+    env_file:
+      - .env
+    command: npm run _seed_local
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: no
+    profiles:
+      - seed
+
+volumes:
+  vol-mongodb:
