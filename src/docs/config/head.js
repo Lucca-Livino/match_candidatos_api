@@ -16,9 +16,12 @@ const getSwaggerOptions = async () => {
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
   const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
   const candidatoPaths = (await import(new URL('../paths/candidato.js', import.meta.url).href + cacheBuster)).default;
+  const questionarioPaths = (await import(new URL('../paths/questionario.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
   const candidatoSchemas = (await import(new URL('../schemas/candidatoSchema.js', import.meta.url).href + cacheBuster)).default;
+  const questionarioSchemas =
+    (await import(new URL('../schemas/questionarioSchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -62,17 +65,31 @@ const getSwaggerOptions = async () => {
           name: 'Candidato Candidatura',
           description: 'Operacoes de candidatura do candidato em vagas.',
         },
+        {
+          name: 'Questionarios RH',
+          description: 'Operacoes de criacao e gestao de questionarios avaliativos por vaga.',
+        },
+        {
+          name: 'Perguntas de Questionario',
+          description: 'Operacoes de perguntas, opcoes de resposta e ordenacao de questionarios.',
+        },
+        {
+          name: 'Resposta de Questionario',
+          description: 'Fluxo de resposta do candidato: iniciar, responder, finalizar e consultar.',
+        },
       ],
       paths: {
         ...usuarioPaths,
         ...vagaPaths,
         ...candidatoPaths,
+        ...questionarioPaths,
       },
       components: {
         schemas: {
           ...usuarioSchemas,
           ...vagaSchemas,
           ...candidatoSchemas,
+          ...questionarioSchemas,
         },
       },
     },

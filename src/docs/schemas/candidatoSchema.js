@@ -393,23 +393,7 @@ const candidatoSchemas = {
     properties: {
       success: { type: 'boolean', example: true },
       message: { type: 'string', example: 'Candidatura detalhada com sucesso.' },
-      data: {
-        allOf: [
-          { $ref: '#/components/schemas/Candidatura' },
-          {
-            type: 'object',
-            properties: {
-              score: {
-                type: 'object',
-                properties: {
-                  scoreTotal: { type: 'number', example: 14 },
-                  scoreMaximoTotal: { type: 'number', example: 20 },
-                },
-              },
-            },
-          },
-        ],
-      },
+      data: { $ref: '#/components/schemas/Candidatura' },
     },
   },
 
