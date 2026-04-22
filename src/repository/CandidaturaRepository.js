@@ -1,5 +1,4 @@
 import CandidatoVaga from '../models/CandidatoVaga.js';
-import ScorePergunta from '../models/ScorePergunta.js';
 
 class CandidaturaRepository {
 	async criar(payload) {
@@ -27,10 +26,6 @@ class CandidaturaRepository {
 
 	async deletarPorCandidatoEVaga(candidatoId, vagaId) {
 		return CandidatoVaga.findOneAndDelete({ candidatoId, vagaId }).lean();
-	}
-
-	async listarScorePorCandidatura(candidatoVagaId) {
-		return ScorePergunta.find({ candidatoVagaId }).lean();
 	}
 }
 

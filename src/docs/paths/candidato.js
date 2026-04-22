@@ -555,14 +555,14 @@ const candidatoPaths = {
   '/api/candidato/{candidatoId}/candidatura/{vagaId}': {
     get: {
       tags: ['Candidato Candidatura'],
-      summary: 'Detalha candidatura com score total',
+      summary: 'Detalha candidatura',
       parameters: [
         { name: 'candidatoId', in: 'path', required: true, schema: { type: 'string' } },
         { name: 'vagaId', in: 'path', required: true, schema: { type: 'string' } },
       ],
       responses: {
         200: {
-          description: 'Candidatura detalhada com score total',
+          description: 'Candidatura detalhada com sucesso',
           content: {
             'application/json': { schema: { $ref: '#/components/schemas/CandidaturaDetalheResponse' } },
           },

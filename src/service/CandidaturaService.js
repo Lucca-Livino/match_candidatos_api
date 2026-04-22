@@ -85,18 +85,7 @@ class CandidaturaService {
 			throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
 		}
 
-		const scores = await this.candidaturaRepository.listarScorePorCandidatura(candidatura.id);
-
-		const scoreTotal = scores.reduce((acc, item) => acc + Number(item.scoreObtido || 0), 0);
-		const scoreMaximoTotal = scores.reduce((acc, item) => acc + Number(item.scoreMaximo || 0), 0);
-
-		return {
-			...this.sanitize(candidatura),
-			score: {
-				scoreTotal,
-				scoreMaximoTotal,
-			},
-		};
+		return this.sanitize(candidatura);
 	}
 
 	async atualizarStatusCandidatura(candidatoId, vagaId, payload) {
