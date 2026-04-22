@@ -404,9 +404,9 @@ async function seedCandidato() {
       ]);
     }
 
-    console.log(`✓ Seed de candidato finalizado com sucesso. ${candidatosSeed.length} candidatos processados.`);
+    console.log(`✓ Carga de candidato finalizada com sucesso. ${candidatosSeed.length} candidatos processados.`);
   } catch (error) {
-    console.error('Erro ao executar seed de candidato:', error);
+    console.error('Erro ao executar carga de candidato:', error);
     throw error;
   } finally {
     await DbConnect.desconectar();

@@ -87,10 +87,10 @@ async function seedVaga() {
     }
 
     console.log(
-      `✓ Seed de vagas finalizado com sucesso. ${vagasSeed.length} vagas processadas.`,
+      `✓ Carga de vagas finalizada com sucesso. ${vagasSeed.length} vagas processadas.`,
     );
   } catch (error) {
-    console.error("✗ Erro ao executar seed de vagas:", error);
+    console.error("✗ Erro ao executar carga de vagas:", error);
     throw error;
   } finally {
     await DbConnect.desconectar();

@@ -36,10 +36,10 @@ async function seedUsuario() {
     }
 
     console.log(
-      `✓ Seed de usuários finalizado com sucesso. ${usuariosSeed.length} usuários processados.`,
+      `✓ Carga de usuários finalizada com sucesso. ${usuariosSeed.length} usuários processados.`,
     );
   } catch (error) {
-    console.error("✗ Erro ao executar seed de usuários:", error);
+    console.error("✗ Erro ao executar carga de usuários:", error);
     throw error;
   } finally {
     await DbConnect.desconectar();
