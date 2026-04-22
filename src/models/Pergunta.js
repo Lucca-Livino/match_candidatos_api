@@ -3,7 +3,9 @@ import crypto from 'node:crypto';
 
 const createUuid = () => crypto.randomUUID();
 
-const ScorePerguntaSchema = new mongoose.Schema(
+export const TIPOS_RESPOSTA_PERGUNTA = ['multipla_escolha', 'dissertativa', 'verdadeiro_falso'];
+
+const PerguntaSchema = new mongoose.Schema(
   {
     id: {
       type: String,
@@ -11,40 +13,39 @@ const ScorePerguntaSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    candidatoVagaId: {
+    questionarioId: {
       type: String,
       required: true,
       index: true,
     },
-    respostaPergunta_: {
+    enunciado: {
       type: String,
+      required: true,
       trim: true,
+      minlength: 3,
       maxlength: 2000,
-      default: '',
     },
-    scoreObtido: {
+    tipoResposta: {
+      type: String,
+      required: true,
+      enum: TIPOS_RESPOSTA_PERGUNTA,
+    },
+    peso: {
       type: Number,
       required: true,
       min: 0,
-      default: 0,
+      default: 1,
     },
-    scoreMaximo: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0,
-    },
-    atendido: {
-      type: Number,
-      min: 0,
-      max: 1,
-      default: 0,
-    },
-    avaliadorAutomatic: {
+    obrigatoria: {
       type: Number,
       min: 0,
       max: 1,
       default: 1,
+    },
+    ordem: {
+      type: Number,
+      required: true,
+      min: 1,
     },
     criadoEm: {
       type: Date,
@@ -52,11 +53,13 @@ const ScorePerguntaSchema = new mongoose.Schema(
     },
   },
   {
-    collection: 'scorePergunta',
+    collection: 'pergunta',
     timestamps: false,
   },
 );
 
-const ScorePergunta = mongoose.model('ScorePergunta', ScorePerguntaSchema);
+PerguntaSchema.index({ questionarioId: 1, ordem: 1 }, { unique: true });
 
-export default ScorePergunta;
+const Pergunta = mongoose.model('Pergunta', PerguntaSchema);
+
+export default Pergunta;
