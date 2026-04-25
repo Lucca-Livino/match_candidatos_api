@@ -4,6 +4,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUI from 'swagger-ui-express';
 import { auth } from './utils/auth.js';
 import authRoutes from './routes/authRoutes.js';
+import { authMiddleware } from './middlewares/authMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 import vagaRoutes from './routes/vagaRoutes.js';
 import candidatoRoutes from './routes/candidatoRoutes.js';
@@ -31,6 +32,14 @@ app.get('/health', (req, res) => {
 		success: true,
 		message: 'API saudavel.',
 	});
+});
+
+app.use('/api', (req, res, next) => {
+	if (req.path.startsWith('/auth')) {
+		return next();
+	}
+
+	return authMiddleware(req, res, next);
 });
 
 app.use('/api', userRoutes);
