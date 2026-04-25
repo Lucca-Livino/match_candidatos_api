@@ -1,6 +1,9 @@
 import express from 'express';
+import { toNodeHandler } from 'better-auth/node';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUI from 'swagger-ui-express';
+import { auth } from './utils/auth.js';
+import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import vagaRoutes from './routes/vagaRoutes.js';
 import candidatoRoutes from './routes/candidatoRoutes.js';
@@ -11,6 +14,8 @@ import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
 const app = express();
+
+app.all('/api/auth/*splat', toNodeHandler(auth));
 
 app.use(express.json());
 
@@ -34,6 +39,7 @@ app.use('/api', candidatoRoutes);
 app.use('/api', questionarioRoutes);
 app.use('/api', perguntaRoutes);
 app.use('/api', respostaQuestionarioRoutes);
+app.use('/api', authRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
