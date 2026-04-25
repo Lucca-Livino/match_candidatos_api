@@ -27,6 +27,14 @@ const CandidatoSchema = new mongoose.Schema(
       trim: true,
       maxlength: 180,
     },
+    senha: {
+      type: String,
+      trim: true,
+      minlength: 8,
+      maxlength: 255,
+      select: false,
+      default: null,
+    },
     telefone: {
       type: String,
       trim: true,

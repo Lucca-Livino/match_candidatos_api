@@ -13,6 +13,7 @@ class UsuarioService {
     }
 
     const sanitized = { ...usuario };
+    delete sanitized.senha;
     delete sanitized.__v;
     return sanitized;
   }
