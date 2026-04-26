@@ -37,6 +37,12 @@ export const auth = betterAuth({
   baseURL: getBaseUrl(),
   basePath: '/api/auth',
   database: mongodbAdapter(getMongoDatabase()),
+  user: {
+    modelName: 'usuarios',
+    fields: {
+      name: 'nome',
+    },
+  },
   plugins: [bearer()],
   emailAndPassword: {
     enabled: true,
