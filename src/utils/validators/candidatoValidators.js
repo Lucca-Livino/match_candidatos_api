@@ -4,6 +4,7 @@ import AppError from '../helpers/AppError.js';
 
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -43,6 +44,14 @@ const normalizeCandidato = (payload, isPatch = false) => {
       throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
     }
     normalized.email = email;
+  }
+
+  if (!isPatch || Object.hasOwn(payload, 'senha')) {
+    const senha = String(payload.senha || '').trim();
+    if (senha.length < MIN_PASSWORD_LENGTH) {
+      throw new AppError('senha deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
+    }
+    normalized.senha = senha;
   }
 
   if (!isPatch || Object.hasOwn(payload, 'telefone')) {

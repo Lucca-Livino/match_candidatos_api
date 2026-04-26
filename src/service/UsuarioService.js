@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import UsuarioRepository from '../repository/UsuarioRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { hashPassword } from '../utils/password.js';
 
 class UsuarioService {
   constructor(repository = new UsuarioRepository()) {
@@ -22,6 +23,17 @@ class UsuarioService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError('ID de usuario invalido.', 400, 'VALIDATION_ERROR');
     }
+  }
+
+  async withHashedPassword(payload) {
+    if (!Object.hasOwn(payload, 'senha')) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      senha: await hashPassword(payload.senha),
+    };
   }
 
   async listar(query) {
@@ -50,7 +62,8 @@ class UsuarioService {
       throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
     }
 
-    const created = await this.repository.criar(payload);
+    const payloadComHash = await this.withHashedPassword(payload);
+    const created = await this.repository.criar(payloadComHash);
     return this.sanitize(created.toObject());
   }
 
@@ -69,7 +82,8 @@ class UsuarioService {
       }
     }
 
-    const atualizado = await this.repository.atualizar(id, payload);
+    const payloadComHash = await this.withHashedPassword(payload);
+    const atualizado = await this.repository.atualizar(id, payloadComHash);
     return this.sanitize(atualizado);
   }
 
