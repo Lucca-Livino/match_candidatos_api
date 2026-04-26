@@ -6,12 +6,16 @@ import Experiencia from '../models/Experiencia.js';
 import Habilidade from '../models/Habilidade.js';
 import Certificacao from '../models/Certificacao.js';
 import CandidatoVaga from '../models/CandidatoVaga.js';
+import { hashPassword } from '../utils/password.js';
+
+const CANDIDATO_SEED_PASSWORD = 'Senha@123';
 
 const candidatosSeed = [
   {
     candidato: {
       nome: 'Marina Silva',
       email: 'marina.silva@candidato.com',
+      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(11) 98888-1111',
       linkedin: 'https://www.linkedin.com/in/marina-silva',
       cidade: 'Sao Paulo',
@@ -64,6 +68,7 @@ const candidatosSeed = [
     candidato: {
       nome: 'Carlos Roberto Mendes',
       email: 'carlos.mendes@candidato.com',
+      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(21) 99888-2222',
       linkedin: 'https://www.linkedin.com/in/carlos-mendes',
       cidade: 'Rio de Janeiro',
@@ -142,6 +147,7 @@ const candidatosSeed = [
     candidato: {
       nome: 'Fernanda Oliveira',
       email: 'fernanda.oliveira@candidato.com',
+      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(85) 99777-3333',
       linkedin: 'https://www.linkedin.com/in/fernanda-oliveira',
       cidade: 'Fortaleza',
@@ -213,6 +219,7 @@ const candidatosSeed = [
     candidato: {
       nome: 'Rafael Santos',
       email: 'rafael.santos@candidato.com',
+      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(31) 98666-4444',
       linkedin: 'https://www.linkedin.com/in/rafael-santos',
       cidade: 'Belo Horizonte',
@@ -291,6 +298,7 @@ const candidatosSeed = [
     candidato: {
       nome: 'Amanda Pereira',
       email: 'amanda.pereira@candidato.com',
+      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(48) 99555-5555',
       linkedin: 'https://www.linkedin.com/in/amanda-pereira',
       cidade: 'Florianopolis',
@@ -379,9 +387,14 @@ async function seedCandidato() {
     await DbConnect.conectar();
 
     for (const item of candidatosSeed) {
+      const candidatoComHash = {
+        ...item.candidato,
+        senha: await hashPassword(item.candidato.senha),
+      };
+
       const candidatoExistente = await Candidato.findOneAndUpdate(
         { email: item.candidato.email },
-        { $set: item.candidato },
+        { $set: candidatoComHash },
         { upsert: true, returnDocument: 'after' },
       );
 

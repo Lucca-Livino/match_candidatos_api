@@ -10,16 +10,37 @@ API Node.js para o projeto de match de curriculos.
 ## Executar localmente
 1. Copie `.env.example` para `.env`.
 2. Ajuste `DB_URL` para o seu MongoDB local.
-3. Instale dependencias:
+3. Defina as variaveis de auth no `.env`:
+	- `BETTER_AUTH_SECRET`
+	- `BETTER_AUTH_URL`
+	- `BETTER_AUTH_TRUSTED_ORIGINS`
+4. Instale dependencias:
 
 ```bash
 npm install
 ```
 
-4. Suba a API:
+5. Suba a API:
 
 ```bash
 npm run dev
+```
+
+## Autenticacao (Better Auth)
+
+- Handler automatico: `POST/GET /api/auth/*`
+- Login: `POST /api/auth/sign-in/email`
+- Cadastro: `POST /api/auth/sign-up/email`
+- Sessao atual: `GET /api/auth/get-session`
+- Perfil autenticado: `GET /api/me`
+
+Exemplo de login (somente email e senha):
+
+```json
+{
+	"email": "Maria@gmail.com",
+	"password": "senhaFORTE@123"
+}
 ```
 
 ## Testes

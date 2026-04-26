@@ -13,10 +13,12 @@ const getServersInCorrectOrder = () => {
 const getSwaggerOptions = async () => {
   const cacheBuster = process.env.NODE_ENV === 'development' ? `?t=${Date.now()}` : '';
 
+  const authPaths = (await import(new URL('../paths/auth.js', import.meta.url).href + cacheBuster)).default;
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
   const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
   const candidatoPaths = (await import(new URL('../paths/candidato.js', import.meta.url).href + cacheBuster)).default;
   const questionarioPaths = (await import(new URL('../paths/questionario.js', import.meta.url).href + cacheBuster)).default;
+  const authSchemas = (await import(new URL('../schemas/authSchema.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
   const candidatoSchemas = (await import(new URL('../schemas/candidatoSchema.js', import.meta.url).href + cacheBuster)).default;
@@ -33,6 +35,10 @@ const getSwaggerOptions = async () => {
       },
       servers: getServersInCorrectOrder(),
       tags: [
+        {
+          name: 'Auth',
+          description: 'Autenticacao com Better Auth (cadastro, login, sessao e perfil autenticado).',
+        },
         {
           name: 'Usuarios RH',
           description: 'CRUD de usuarios com suporte a multi-perfil (recrutador e candidato).',
@@ -79,13 +85,22 @@ const getSwaggerOptions = async () => {
         },
       ],
       paths: {
+        ...authPaths,
         ...usuarioPaths,
         ...vagaPaths,
         ...candidatoPaths,
         ...questionarioPaths,
       },
       components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
         schemas: {
+          ...authSchemas,
           ...usuarioSchemas,
           ...vagaSchemas,
           ...candidatoSchemas,

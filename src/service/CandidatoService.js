@@ -5,6 +5,7 @@ import ExperienciaRepository from '../repository/ExperienciaRepository.js';
 import HabilidadeRepository from '../repository/HabilidadeRepository.js';
 import CertificacaoRepository from '../repository/CertificacaoRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { hashPassword } from '../utils/password.js';
 
 class CandidatoService {
   constructor(
@@ -29,8 +30,20 @@ class CandidatoService {
     }
 
     const sanitized = { ...doc };
+    delete sanitized.senha;
     delete sanitized.__v;
     return sanitized;
+  }
+
+  async withHashedPassword(payload) {
+    if (!Object.hasOwn(payload, 'senha')) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      senha: await hashPassword(payload.senha),
+    };
   }
 
   withCertificacaoExpirada(certificacao) {
@@ -137,7 +150,8 @@ class CandidatoService {
       throw new AppError('Ja existe candidato com este email.', 409, 'CONFLICT');
     }
 
-    const created = await this.repository.criarCandidato(payload);
+    const payloadComHash = await this.withHashedPassword(payload);
+    const created = await this.repository.criarCandidato(payloadComHash);
     return this.sanitize(created.toObject());
   }
 
@@ -152,7 +166,8 @@ class CandidatoService {
       }
     }
 
-    const updated = await this.repository.atualizarCandidato(candidatoIdResolvido, payload);
+    const payloadComHash = await this.withHashedPassword(payload);
+    const updated = await this.repository.atualizarCandidato(candidatoIdResolvido, payloadComHash);
     return this.sanitize(updated);
   }
 
