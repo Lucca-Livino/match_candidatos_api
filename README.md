@@ -34,6 +34,15 @@ npm run dev
 - Sessao atual: `GET /api/auth/get-session`
 - Perfil autenticado: `GET /api/me`
 
+Exemplo de login (somente email e senha):
+
+```json
+{
+	"email": "Maria@gmail.com",
+	"password": "senhaFORTE@123"
+}
+```
+
 ## Testes
 
 ```bash
