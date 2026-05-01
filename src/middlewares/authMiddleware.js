@@ -1,5 +1,6 @@
 import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../utils/auth.js';
+import Usuario from '../models/Usuario.js';
 
 export async function authMiddleware(req, res, next) {
   try {
@@ -16,7 +17,12 @@ export async function authMiddleware(req, res, next) {
       return;
     }
 
-    req.user = session.user;
+    const usuarioDoc = await Usuario.findOne({ email: session.user.email }).select('tipos_permissao').lean();
+
+    req.user = {
+      ...session.user,
+      tipos_permissao: usuarioDoc?.tipos_permissao ?? [],
+    };
     req.authSession = session.session;
     next();
   } catch (error) {

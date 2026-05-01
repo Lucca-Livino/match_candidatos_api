@@ -15,41 +15,49 @@ const usuariosSeed = [
     nome: "Bruno Admin",
     email: "bruno.admin@match.com",
     senha: 'Senha@123',
-    tipos_permissao: ["Admin"],
+    tipos_permissao: ["administrador"],
     status_ativo: true,
   },
   {
     nome: "Carla Multipla",
     email: "carla.multipla@match.com",
     senha: 'Senha@123',
-    tipos_permissao: ["recrutador", "Admin"],
+    tipos_permissao: ["recrutador"],
     status_ativo: true,
   },
 ];
 
-async function seedUsuario() {
+async function seedUsuario({ useOwnConnection = true } = {}) {
   try {
-    await DbConnect.conectar();
+    if (useOwnConnection) {
+      await DbConnect.conectar();
+    }
     const { auth } = await import("../utils/auth.js");
 
     for (const usuario of usuariosSeed) {
       try {
-        await Usuario.deleteOne({ email: usuario.email });
         const db = mongoose.connection.db;
-        await db.collection("account").deleteMany({ accountId: usuario.email });
 
-        const user = await auth.api.signUpEmail({
+        // Limpar registros do Better Auth: busca o userId pelo email na collection 'usuarios'
+        const authUser = await db.collection('usuarios').findOne({ email: usuario.email });
+        if (authUser) {
+          await db.collection('account').deleteMany({ userId: String(authUser._id) });
+          await db.collection('session').deleteMany({ userId: String(authUser._id) });
+          await db.collection('usuarios').deleteOne({ _id: authUser._id });
+        }
+
+        // Criar usuario no Better Auth
+        await auth.api.signUpEmail({
           body: {
             email: usuario.email,
             password: usuario.senha,
             name: usuario.nome,
-          }
+          },
         });
-
 
         await Usuario.findOneAndUpdate(
           { email: usuario.email },
-          { $set: { tipos_permissao: usuario.tipos_permissao, status_ativo: usuario.status_ativo } }
+          { $set: { tipos_permissao: usuario.tipos_permissao, status_ativo: usuario.status_ativo } },
         );
       } catch (err) {
         console.error(`Error creating user ${usuario.email}:`, err);
@@ -63,7 +71,9 @@ async function seedUsuario() {
     console.error("Erro ao executar carga de usuários:", error);
     throw error;
   } finally {
-    await DbConnect.desconectar();
+    if (useOwnConnection) {
+      await DbConnect.desconectar();
+    }
   }
 }
 
