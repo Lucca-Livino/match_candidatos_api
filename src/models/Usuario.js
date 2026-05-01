@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import mongoosePaginate from 'mongoose-paginate-v2';
 
-export const TIPOS_PERMISSAO = ['recrutador', 'candidato'];
+export const TIPOS_PERMISSAO = ['administrador', 'recrutador', 'candidato'];
 
 const UsuarioSchema = new mongoose.Schema(
   {
