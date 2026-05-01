@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import mongoose from 'mongoose';
 import DbConnect from '../config/dbconnect.js';
 import Candidato from '../models/Candidato.js';
 import Formacao from '../models/Formacao.js';
@@ -6,16 +7,18 @@ import Experiencia from '../models/Experiencia.js';
 import Habilidade from '../models/Habilidade.js';
 import Certificacao from '../models/Certificacao.js';
 import CandidatoVaga from '../models/CandidatoVaga.js';
-import { hashPassword } from '../utils/password.js';
+import Usuario from '../models/Usuario.js';
 
 const CANDIDATO_SEED_PASSWORD = 'Senha@123';
 
 const candidatosSeed = [
   {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
     candidato: {
       nome: 'Marina Silva',
       email: 'marina.silva@candidato.com',
-      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(11) 98888-1111',
       linkedin: 'https://www.linkedin.com/in/marina-silva',
       cidade: 'Sao Paulo',
@@ -56,7 +59,7 @@ const candidatosSeed = [
     ],
     candidaturas: [
       {
-        vagaId: 'vaga-backend-jr',
+        vagaTitulo: 'Desenvolvedor Full Stack Node.js/React',
         compativel: 1,
         motivoIncompat_: '',
         status: 'inscrito',
@@ -65,10 +68,12 @@ const candidatosSeed = [
     ],
   },
   {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
     candidato: {
       nome: 'Carlos Roberto Mendes',
       email: 'carlos.mendes@candidato.com',
-      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(21) 99888-2222',
       linkedin: 'https://www.linkedin.com/in/carlos-mendes',
       cidade: 'Rio de Janeiro',
@@ -135,7 +140,7 @@ const candidatosSeed = [
     ],
     candidaturas: [
       {
-        vagaId: 'vaga-backend-senior',
+        vagaTitulo: 'Desenvolvedor Full Stack Node.js/React',
         compativel: 1,
         motivoIncompat_: '',
         status: 'em_analise',
@@ -144,10 +149,12 @@ const candidatosSeed = [
     ],
   },
   {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
     candidato: {
       nome: 'Fernanda Oliveira',
       email: 'fernanda.oliveira@candidato.com',
-      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(85) 99777-3333',
       linkedin: 'https://www.linkedin.com/in/fernanda-oliveira',
       cidade: 'Fortaleza',
@@ -207,7 +214,7 @@ const candidatosSeed = [
     ],
     candidaturas: [
       {
-        vagaId: 'vaga-frontend-jr',
+        vagaTitulo: 'Desenvolvedor Full Stack Node.js/React',
         compativel: 1,
         motivoIncompat_: '',
         status: 'inscrito',
@@ -216,10 +223,12 @@ const candidatosSeed = [
     ],
   },
   {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
     candidato: {
       nome: 'Rafael Santos',
       email: 'rafael.santos@candidato.com',
-      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(31) 98666-4444',
       linkedin: 'https://www.linkedin.com/in/rafael-santos',
       cidade: 'Belo Horizonte',
@@ -286,7 +295,7 @@ const candidatosSeed = [
     ],
     candidaturas: [
       {
-        vagaId: 'vaga-data-scientist',
+        vagaTitulo: 'Analista de Marketing Digital',
         compativel: 1,
         motivoIncompat_: '',
         status: 'inscrito',
@@ -295,10 +304,12 @@ const candidatosSeed = [
     ],
   },
   {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
     candidato: {
       nome: 'Amanda Pereira',
       email: 'amanda.pereira@candidato.com',
-      senha: CANDIDATO_SEED_PASSWORD,
       telefone: '(48) 99555-5555',
       linkedin: 'https://www.linkedin.com/in/amanda-pereira',
       cidade: 'Florianopolis',
@@ -372,7 +383,7 @@ const candidatosSeed = [
     ],
     candidaturas: [
       {
-        vagaId: 'vaga-pm-senior',
+        vagaTitulo: 'Analista de RH',
         compativel: 1,
         motivoIncompat_: '',
         status: 'inscrito',
@@ -380,41 +391,136 @@ const candidatosSeed = [
       },
     ],
   },
+  {
+    auth: {
+      password: CANDIDATO_SEED_PASSWORD,
+    },
+    candidato: {
+      nome: 'Candidato Questionario',
+      email: 'questionario@candidato.com',
+      telefone: '(11) 90000-0000',
+      linkedin: 'https://www.linkedin.com/in/questionario-candidato',
+      cidade: 'Sao Paulo',
+      estado: 'SP',
+    },
+    formacoes: [],
+    experiencias: [],
+    habilidades: [],
+    certificacoes: [],
+    candidaturas: [],
+  },
 ];
 
-async function seedCandidato() {
+function buildVagaIdByTitulo(vagas) {
+  const map = new Map();
+
+  for (const vaga of vagas) {
+    if (vaga?.titulo && (vaga?._id || vaga?.id)) {
+      map.set(vaga.titulo, String(vaga._id || vaga.id));
+    }
+  }
+
+  return map;
+}
+
+function resolveCandidaturas(candidaturas, vagaIdByTitulo) {
+  if (!Array.isArray(candidaturas) || candidaturas.length === 0) {
+    return [];
+  }
+
+  return candidaturas
+    .map((candidatura) => {
+      const vagaId = candidatura.vagaTitulo ? vagaIdByTitulo.get(candidatura.vagaTitulo) : null;
+      if (!vagaId) {
+        console.warn(`Aviso: vaga nao encontrada para candidatura "${candidatura.vagaTitulo}".`);
+        return null;
+      }
+
+      const { vagaTitulo, ...rest } = candidatura;
+      return { ...rest, vagaId };
+    })
+    .filter(Boolean);
+}
+
+function pushInsert(ops, docs, mapper, model) {
+  if (!Array.isArray(docs) || docs.length === 0) {
+    return;
+  }
+
+  ops.push(model.insertMany(docs.map(mapper)));
+}
+
+async function seedCandidato({ vagas = [], useOwnConnection = true } = {}) {
   try {
-    await DbConnect.conectar();
+    if (useOwnConnection) {
+      await DbConnect.conectar();
+    }
+    const { auth } = await import('../utils/auth.js');
+    const vagaIdByTitulo = buildVagaIdByTitulo(vagas);
 
     for (const item of candidatosSeed) {
-      const candidatoComHash = {
-        ...item.candidato,
-        senha: await hashPassword(item.candidato.senha),
-      };
+      try {
+        // Limpar registros do Better Auth: busca o userId pelo email na collection 'usuarios'
+        const db = mongoose.connection.db;
+        const authUser = await db.collection('usuarios').findOne({ email: item.candidato.email });
+        if (authUser) {
+          await db.collection('account').deleteMany({ userId: String(authUser._id) });
+          await db.collection('session').deleteMany({ userId: String(authUser._id) });
+          await db.collection('usuarios').deleteOne({ _id: authUser._id });
+        }
 
-      const candidatoExistente = await Candidato.findOneAndUpdate(
-        { email: item.candidato.email },
-        { $set: candidatoComHash },
-        { upsert: true, returnDocument: 'after' },
-      );
+        // Criar usuario no Better Auth (nao bloqueia o seed em caso de erro)
+        try {
+          await auth.api.signUpEmail({
+            body: {
+              email: item.candidato.email,
+              password: item.auth?.password || CANDIDATO_SEED_PASSWORD,
+              name: item.candidato.nome,
+            },
+          });
+        } catch (err) {
+          console.warn(`Aviso ao criar usuario ${item.candidato.email}:`, err.message);
+        }
 
-      const candidatoId = candidatoExistente.id;
+        // Atualizar permissões do usuario
+        await Usuario.findOneAndUpdate(
+          { email: item.candidato.email },
+          { $set: { tipos_permissao: ['candidato'], status_ativo: true } },
+          { upsert: true },
+        );
 
-      await Promise.all([
-        Formacao.deleteMany({ candidatoId }),
-        Experiencia.deleteMany({ candidatoId }),
-        Habilidade.deleteMany({ candidatoId }),
-        Certificacao.deleteMany({ candidatoId }),
-        CandidatoVaga.deleteMany({ candidatoId }),
-      ]);
+        const candidatoExistente = await Candidato.findOneAndUpdate(
+          { email: item.candidato.email },
+          { $set: item.candidato },
+          { upsert: true, returnDocument: 'after' },
+        );
 
-      await Promise.all([
-        Formacao.insertMany(item.formacoes.map((f) => ({ ...f, candidatoId }))),
-        Experiencia.insertMany(item.experiencias.map((e) => ({ ...e, candidatoId }))),
-        Habilidade.insertMany(item.habilidades.map((h) => ({ ...h, candidatoId }))),
-        Certificacao.insertMany(item.certificacoes.map((c) => ({ ...c, candidatoId }))),
-        CandidatoVaga.insertMany(item.candidaturas.map((c) => ({ ...c, candidatoId }))),
-      ]);
+        const candidatoId = candidatoExistente.id;
+        const candidaturas = resolveCandidaturas(item.candidaturas, vagaIdByTitulo);
+
+        // Limpar dados relacionados
+        await Promise.all([
+          Formacao.deleteMany({ candidatoId }),
+          Experiencia.deleteMany({ candidatoId }),
+          Habilidade.deleteMany({ candidatoId }),
+          Certificacao.deleteMany({ candidatoId }),
+          CandidatoVaga.deleteMany({ candidatoId }),
+        ]);
+
+        // Inserir novos dados relacionados
+        const inserts = [];
+        pushInsert(inserts, item.formacoes, (f) => ({ ...f, candidatoId }), Formacao);
+        pushInsert(inserts, item.experiencias, (e) => ({ ...e, candidatoId }), Experiencia);
+        pushInsert(inserts, item.habilidades, (h) => ({ ...h, candidatoId }), Habilidade);
+        pushInsert(inserts, item.certificacoes, (c) => ({ ...c, candidatoId }), Certificacao);
+        pushInsert(inserts, candidaturas, (c) => ({ ...c, candidatoId }), CandidatoVaga);
+
+        if (inserts.length) {
+          await Promise.all(inserts);
+        }
+      } catch (err) {
+        console.error(`Erro ao processar candidato ${item.candidato.email}:`, err.message);
+      }
     }
 
     console.log(`✓ Carga de candidato finalizada com sucesso. ${candidatosSeed.length} candidatos processados.`);
@@ -422,7 +528,9 @@ async function seedCandidato() {
     console.error('Erro ao executar carga de candidato:', error);
     throw error;
   } finally {
-    await DbConnect.desconectar();
+    if (useOwnConnection) {
+      await DbConnect.desconectar();
+    }
   }
 }
 
