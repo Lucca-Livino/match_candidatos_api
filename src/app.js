@@ -16,6 +16,37 @@ import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
 const app = express();
 
+const getAllowedOrigins = () => {
+	if (!process.env.CORS_ORIGINS) {
+		return ['http://localhost:5173'];
+	}
+
+	return process.env.CORS_ORIGINS.split(',')
+		.map((origin) => origin.trim())
+		.filter(Boolean);
+};
+
+const allowedOrigins = getAllowedOrigins();
+
+app.use((req, res, next) => {
+	const origin = req.headers.origin;
+
+	if (origin && allowedOrigins.includes(origin)) {
+		res.setHeader('Access-Control-Allow-Origin', origin);
+		res.setHeader('Vary', 'Origin');
+	}
+
+	res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+	res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+	res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+	if (req.method === 'OPTIONS') {
+		return res.sendStatus(204);
+	}
+
+	next();
+});
+
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
 app.use(express.json());
