@@ -1,47 +1,27 @@
 import 'dotenv/config';
 import DbConnect from '../config/dbconnect.js';
-import Usuario from '../models/Usuario.js';
+import seedUsuario from './seedsUsuario.js';
+import seedVaga from './seedsVaga.js';
+import seedCandidato from './seedsCandidato.js';
+import seedQuestionario from './seedsQuestionario.js';
 
-const usuariosSeed = [
-  {
-    nome: 'Ana Recrutadora',
-    email: 'ana.recrutadora@match.com',
-    tipos_permissao: ['recrutador'],
-    status_ativo: true,
-  },
-  {
-    nome: 'Bruno Candidato',
-    email: 'bruno.candidato@match.com',
-    tipos_permissao: ['candidato'],
-    status_ativo: true,
-  },
-  {
-    nome: 'Carla Multipla',
-    email: 'carla.multipla@match.com',
-    tipos_permissao: ['recrutador', 'candidato'],
-    status_ativo: true,
-  },
-];
-
-const runSeed = async () => {
+async function main() {
   try {
     await DbConnect.conectar();
 
-    for (const usuario of usuariosSeed) {
-      await Usuario.findOneAndUpdate(
-        { email: usuario.email },
-        { $set: usuario },
-        { upsert: true, returnDocument: 'after' },
-      );
-    }
+    await seedUsuario({ useOwnConnection: false });
+    const vagas = await seedVaga({ useOwnConnection: false });
+    await seedCandidato({ vagas, useOwnConnection: false });
+    await seedQuestionario({ vagas, useOwnConnection: false });
 
-    console.log(`Seed finalizado com sucesso. ${usuariosSeed.length} usuarios processados.`);
-  } catch (error) {
-    console.error('Erro ao executar seed de usuarios:', error);
+    console.log('>>> CARGA DE DADOS FINALIZADA COM SUCESSO! <<<');
+  } catch (err) {
+    console.error('Erro ao executar carga de dados:', err);
     process.exitCode = 1;
   } finally {
     await DbConnect.desconectar();
+    process.exit(0);
   }
-};
+}
 
-runSeed();
+main();

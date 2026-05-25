@@ -13,8 +13,17 @@ const getServersInCorrectOrder = () => {
 const getSwaggerOptions = async () => {
   const cacheBuster = process.env.NODE_ENV === 'development' ? `?t=${Date.now()}` : '';
 
+  const authPaths = (await import(new URL('../paths/auth.js', import.meta.url).href + cacheBuster)).default;
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
+  const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
+  const candidatoPaths = (await import(new URL('../paths/candidato.js', import.meta.url).href + cacheBuster)).default;
+  const questionarioPaths = (await import(new URL('../paths/questionario.js', import.meta.url).href + cacheBuster)).default;
+  const authSchemas = (await import(new URL('../schemas/authSchema.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
+  const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
+  const candidatoSchemas = (await import(new URL('../schemas/candidatoSchema.js', import.meta.url).href + cacheBuster)).default;
+  const questionarioSchemas =
+    (await import(new URL('../schemas/questionarioSchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -27,16 +36,75 @@ const getSwaggerOptions = async () => {
       servers: getServersInCorrectOrder(),
       tags: [
         {
+          name: 'Auth',
+          description: 'Autenticacao com Better Auth (cadastro, login, sessao e perfil autenticado).',
+        },
+        {
           name: 'Usuarios RH',
           description: 'CRUD de usuarios com suporte a multi-perfil (recrutador e candidato).',
         },
+        {
+          name: 'Vagas RH',
+          description: 'CRUD de vagas e criterios para montagem futura de questionarios de avaliacao.',
+        },
+        {
+          name: 'Candidatos',
+          description: 'CRUD de candidato e perfil completo com dados relacionados.',
+        },
+        {
+          name: 'Candidato Formacao',
+          description: 'Operacoes de formacao academica do candidato.',
+        },
+        {
+          name: 'Candidato Experiencia',
+          description: 'Operacoes de experiencia profissional do candidato.',
+        },
+        {
+          name: 'Candidato Habilidade',
+          description: 'Operacoes de habilidades do candidato.',
+        },
+        {
+          name: 'Candidato Certificacao',
+          description: 'Operacoes de certificacoes do candidato.',
+        },
+        {
+          name: 'Candidato Candidatura',
+          description: 'Operacoes de candidatura do candidato em vagas.',
+        },
+        {
+          name: 'Questionarios RH',
+          description: 'Operacoes de criacao e gestao de questionarios avaliativos por vaga.',
+        },
+        {
+          name: 'Perguntas de Questionario',
+          description: 'Operacoes de perguntas, opcoes de resposta e ordenacao de questionarios.',
+        },
+        {
+          name: 'Resposta de Questionario',
+          description: 'Fluxo de resposta do candidato: iniciar, responder, finalizar e consultar.',
+        },
       ],
       paths: {
+        ...authPaths,
         ...usuarioPaths,
+        ...vagaPaths,
+        ...candidatoPaths,
+        ...questionarioPaths,
       },
       components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
         schemas: {
+          ...authSchemas,
           ...usuarioSchemas,
+          ...vagaSchemas,
+          ...candidatoSchemas,
+          ...questionarioSchemas,
         },
       },
     },

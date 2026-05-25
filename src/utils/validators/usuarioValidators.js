@@ -2,6 +2,7 @@ import { TIPOS_PERMISSAO } from '../../models/Usuario.js';
 import AppError from '../helpers/AppError.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -34,6 +35,7 @@ export const validateCreateUsuario = (payload) => {
 
   const nome = String(payload.nome || '').trim();
   const email = String(payload.email || '').trim().toLowerCase();
+  const senha = String(payload.senha || '').trim();
   const status_ativo = payload.status_ativo;
 
   if (nome.length < 2) {
@@ -44,6 +46,10 @@ export const validateCreateUsuario = (payload) => {
     throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
   }
 
+  if (senha.length < MIN_PASSWORD_LENGTH) {
+    throw new AppError('senha e obrigatoria e deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
+  }
+
   if (typeof status_ativo !== 'undefined' && typeof status_ativo !== 'boolean') {
     throw new AppError('status_ativo deve ser booleano.', 400, 'VALIDATION_ERROR');
   }
@@ -51,6 +57,7 @@ export const validateCreateUsuario = (payload) => {
   return {
     nome,
     email,
+    senha,
     tipos_permissao: normalizeRoles(payload.tipos_permissao),
     status_ativo: typeof status_ativo === 'boolean' ? status_ativo : true,
   };
@@ -91,6 +98,14 @@ export const validatePatchUsuario = (payload) => {
       throw new AppError('status_ativo deve ser booleano.', 400, 'VALIDATION_ERROR');
     }
     normalized.status_ativo = payload.status_ativo;
+  }
+
+  if (Object.hasOwn(payload, 'senha')) {
+    const senha = String(payload.senha || '').trim();
+    if (senha.length < MIN_PASSWORD_LENGTH) {
+      throw new AppError('senha deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
+    }
+    normalized.senha = senha;
   }
 
   if (Object.keys(normalized).length === 0) {
