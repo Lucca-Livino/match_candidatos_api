@@ -3,6 +3,7 @@ import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import PerguntaRepository from '../repository/PerguntaRepository.js';
 import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class RespostaQuestionarioService {
   constructor(
@@ -18,14 +19,7 @@ class RespostaQuestionarioService {
   }
 
   sanitize(doc) {
-    if (!doc) {
-      return null;
-    }
-
-    const raw = typeof doc?.toObject === 'function' ? doc.toObject() : doc;
-    const sanitized = { ...raw };
-    delete sanitized.__v;
-    return sanitized;
+    return sanitizeDoc(doc);
   }
 
   async resolverCandidatoId(candidatoId) {
