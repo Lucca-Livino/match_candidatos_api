@@ -26,12 +26,18 @@ const getMongoDatabase = () => {
   const database = mongoose.connection?.db;
 
   if (!database) {
-    throw new Error('Conexao MongoDB nao inicializada para Better Auth.');
+    throw new Error('Conexao MongoDB nao inicializada para Better Auth. Chame DbConnect.conectar() antes de inicializar o app.');
   }
 
   return database;
 };
 
+if (process.env.NODE_ENV === 'production' && !process.env.BETTER_AUTH_SECRET) {
+  throw new Error('BETTER_AUTH_SECRET deve ser definida em producao.');
+}
+
+// getMongoDatabase() depende de mongoose.connection.db estar populado.
+// Garanta que DbConnect.conectar() foi chamado antes desta importacao.
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'dev-secret-change-me',
   baseURL: getBaseUrl(),

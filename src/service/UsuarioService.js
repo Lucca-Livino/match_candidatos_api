@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import UsuarioRepository from '../repository/UsuarioRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { hashPassword } from '../utils/password.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class UsuarioService {
   constructor(repository = new UsuarioRepository()) {
@@ -9,14 +10,7 @@ class UsuarioService {
   }
 
   sanitize(usuario) {
-    if (!usuario) {
-      return null;
-    }
-
-    const sanitized = { ...usuario };
-    delete sanitized.senha;
-    delete sanitized.__v;
-    return sanitized;
+    return sanitizeDoc(usuario, ['senha']);
   }
 
   ensureObjectId(id) {

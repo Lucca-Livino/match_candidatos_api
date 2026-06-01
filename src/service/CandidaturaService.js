@@ -1,6 +1,7 @@
 import CandidatoRepository from '../repository/CandidatoRepository.js';
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class CandidaturaService {
 	constructor(
@@ -12,13 +13,7 @@ class CandidaturaService {
 	}
 
 	sanitize(doc) {
-		if (!doc) {
-			return null;
-		}
-
-		const sanitized = { ...doc };
-		delete sanitized.__v;
-		return sanitized;
+		return sanitizeDoc(doc);
 	}
 
 	validarTransicaoStatus(statusAtual, novoStatus) {

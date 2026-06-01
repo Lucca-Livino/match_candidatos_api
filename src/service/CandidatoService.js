@@ -6,6 +6,7 @@ import HabilidadeRepository from '../repository/HabilidadeRepository.js';
 import CertificacaoRepository from '../repository/CertificacaoRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { hashPassword } from '../utils/password.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class CandidatoService {
   constructor(
@@ -25,14 +26,7 @@ class CandidatoService {
   }
 
   sanitize(doc) {
-    if (!doc) {
-      return null;
-    }
-
-    const sanitized = { ...doc };
-    delete sanitized.senha;
-    delete sanitized.__v;
-    return sanitized;
+    return sanitizeDoc(doc, ['senha']);
   }
 
   async withHashedPassword(payload) {

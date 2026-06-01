@@ -43,13 +43,10 @@ export function defineAbilityFor(user) {
 
     case 'candidato':
       can('manage', 'Candidato');
-      cannot('read', 'Candidato');
 
       can('read', 'Vaga');
-      cannot(['create', 'update', 'delete'], 'Vaga');
 
       can('read', 'Questionario');
-      cannot(['create', 'update', 'delete'], 'Questionario');
 
       can('manage', 'RespostaQuestionario');
 
