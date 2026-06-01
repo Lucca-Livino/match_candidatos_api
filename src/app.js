@@ -52,10 +52,13 @@ app.all('/api/auth/*splat', toNodeHandler(auth));
 app.use(express.json());
 
 app.use(swaggerUI.serve);
+let _swaggerDocs = null;
 app.get('/docs', async (req, res, next) => {
-	const options = await getSwaggerOptions();
-	const swaggerDocs = swaggerJSDoc(options);
-	swaggerUI.setup(swaggerDocs)(req, res, next);
+	if (!_swaggerDocs) {
+		const options = await getSwaggerOptions();
+		_swaggerDocs = swaggerJSDoc(options);
+	}
+	swaggerUI.setup(_swaggerDocs)(req, res, next);
 });
 
 app.get('/health', (req, res) => {
