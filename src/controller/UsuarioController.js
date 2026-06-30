@@ -22,6 +22,12 @@ class UsuarioController {
     return sendSuccess(res, data, 200, 'Usuario encontrado com sucesso.');
   }
 
+  async registrar(req, res) {
+    const { nome, email, senha } = req.body;
+    const data = await this.service.registrarCandidato({ nome, email, senha });
+    return sendSuccess(res, data, 201, 'Candidato registrado com sucesso.');
+  }
+
   async criar(req, res) {
     const payload = validateCreateUsuario(req.body);
     const data = await this.service.criar(payload);
