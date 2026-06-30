@@ -15,15 +15,19 @@ const getSwaggerOptions = async () => {
 
   const authPaths = (await import(new URL('../paths/auth.js', import.meta.url).href + cacheBuster)).default;
   const usuarioPaths = (await import(new URL('../paths/usuario.js', import.meta.url).href + cacheBuster)).default;
+  const usuarioCurriculoPaths = (await import(new URL('../paths/usuarioCurriculo.js', import.meta.url).href + cacheBuster)).default;
   const vagaPaths = (await import(new URL('../paths/vaga.js', import.meta.url).href + cacheBuster)).default;
-  const candidatoPaths = (await import(new URL('../paths/candidato.js', import.meta.url).href + cacheBuster)).default;
   const questionarioPaths = (await import(new URL('../paths/questionario.js', import.meta.url).href + cacheBuster)).default;
+  const rotaPaths = (await import(new URL('../paths/rota.js', import.meta.url).href + cacheBuster)).default;
+  const grupoPaths = (await import(new URL('../paths/grupo.js', import.meta.url).href + cacheBuster)).default;
   const authSchemas = (await import(new URL('../schemas/authSchema.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
   const candidatoSchemas = (await import(new URL('../schemas/candidatoSchema.js', import.meta.url).href + cacheBuster)).default;
   const questionarioSchemas =
     (await import(new URL('../schemas/questionarioSchema.js', import.meta.url).href + cacheBuster)).default;
+  const rotaSchemas = (await import(new URL('../schemas/rotaSchema.js', import.meta.url).href + cacheBuster)).default;
+  const grupoSchemas = (await import(new URL('../schemas/grupoSchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -48,28 +52,24 @@ const getSwaggerOptions = async () => {
           description: 'CRUD de vagas e criterios para montagem futura de questionarios de avaliacao.',
         },
         {
-          name: 'Candidatos',
-          description: 'CRUD de candidato e perfil completo com dados relacionados.',
+          name: 'Usuario Formacao',
+          description: 'Operacoes de formacao academica do usuario.',
         },
         {
-          name: 'Candidato Formacao',
-          description: 'Operacoes de formacao academica do candidato.',
+          name: 'Usuario Experiencia',
+          description: 'Operacoes de experiencia profissional do usuario.',
         },
         {
-          name: 'Candidato Experiencia',
-          description: 'Operacoes de experiencia profissional do candidato.',
+          name: 'Usuario Habilidade',
+          description: 'Operacoes de habilidades do usuario.',
         },
         {
-          name: 'Candidato Habilidade',
-          description: 'Operacoes de habilidades do candidato.',
+          name: 'Usuario Certificacao',
+          description: 'Operacoes de certificacoes do usuario.',
         },
         {
-          name: 'Candidato Certificacao',
-          description: 'Operacoes de certificacoes do candidato.',
-        },
-        {
-          name: 'Candidato Candidatura',
-          description: 'Operacoes de candidatura do candidato em vagas.',
+          name: 'Usuario Candidatura',
+          description: 'Operacoes de candidatura do usuario em vagas.',
         },
         {
           name: 'Questionarios RH',
@@ -83,13 +83,23 @@ const getSwaggerOptions = async () => {
           name: 'Resposta de Questionario',
           description: 'Fluxo de resposta do candidato: iniciar, responder, finalizar e consultar.',
         },
+        {
+          name: 'Rotas (Admin)',
+          description: 'CRUD administrativo das rotas registradas para o controle de permissoes.',
+        },
+        {
+          name: 'Grupos (Admin)',
+          description: 'CRUD administrativo dos grupos de permissao.',
+        },
       ],
       paths: {
         ...authPaths,
         ...usuarioPaths,
+        ...usuarioCurriculoPaths,
         ...vagaPaths,
-        ...candidatoPaths,
         ...questionarioPaths,
+        ...rotaPaths,
+        ...grupoPaths,
       },
       components: {
         securitySchemes: {
@@ -105,6 +115,8 @@ const getSwaggerOptions = async () => {
           ...vagaSchemas,
           ...candidatoSchemas,
           ...questionarioSchemas,
+          ...rotaSchemas,
+          ...grupoSchemas,
         },
       },
     },
