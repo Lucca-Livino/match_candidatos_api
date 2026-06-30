@@ -19,7 +19,7 @@ const Formacao = {
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'form-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     instituicao: { type: 'string', example: 'USP' },
     curso: { type: 'string', example: 'Engenharia de Software' },
     grau: { type: 'string', enum: ['tecnico', 'graduação', 'pos_graduação', 'mestrado', 'doutorado'] },
@@ -34,7 +34,7 @@ const Experiencia = {
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'exp-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     empresa: { type: 'string', example: 'Empresa XPTO' },
     cargo: { type: 'string', example: 'Backend Developer' },
     descricaoAtivida_: { type: 'string', example: 'Desenvolvimento de APIs REST com Node.js' },
@@ -49,7 +49,7 @@ const Habilidade = {
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'hab-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     habilidade: { type: 'string', example: 'Node.js' },
     nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
   },
@@ -60,7 +60,7 @@ const Certificacao = {
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'cert-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     nome: { type: 'string', example: 'AWS Certified Cloud Practitioner' },
     emissor: { type: 'string', example: 'Amazon' },
     dataEmissao: { type: 'string', format: 'date-time', nullable: true },
@@ -75,7 +75,7 @@ const Candidatura = {
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'candv-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     vagaId: { type: 'string', example: 'vaga-001' },
     compativel: { type: 'integer', enum: [0, 1], example: 1 },
     motivoIncompat_: { type: 'string', example: '' },
