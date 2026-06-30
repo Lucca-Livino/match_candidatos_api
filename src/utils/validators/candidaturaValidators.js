@@ -1,4 +1,4 @@
-import { STATUS_CANDIDATURA } from '../../models/CandidatoVaga.js';
+import { STATUS_CANDIDATURA } from '../../models/Candidatura.js';
 import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {

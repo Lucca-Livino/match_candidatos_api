@@ -1,4 +1,3 @@
-import CandidatoRepository from '../repository/CandidatoRepository.js';
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import PerguntaRepository from '../repository/PerguntaRepository.js';
 import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
@@ -10,26 +9,14 @@ class RespostaQuestionarioService {
     repository = new RespostaQuestionarioRepository(),
     questionarioRepository = new QuestionarioRepository(),
     perguntaRepository = new PerguntaRepository(),
-    candidatoRepository = new CandidatoRepository(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.perguntaRepository = perguntaRepository;
-    this.candidatoRepository = candidatoRepository;
   }
 
   sanitize(doc) {
     return sanitizeDoc(doc);
-  }
-
-  async resolverCandidatoId(candidatoId) {
-    const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
-
-    if (!candidato) {
-      throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
-    }
-
-    return candidato.id;
   }
 
   async garantirQuestionarioExiste(questionarioId) {
@@ -59,12 +46,10 @@ class RespostaQuestionarioService {
       throw new AppError('Nao e permitido iniciar questionario inativo.', 400, 'BUSINESS_RULE_ERROR');
     }
 
-    const candidatoIdResolvido = await this.resolverCandidatoId(payload.candidatoId);
-
-    const emAndamento = await this.repository.buscarRespostaEmAndamento(questionario.id, candidatoIdResolvido);
+    const emAndamento = await this.repository.buscarRespostaEmAndamento(questionario.id, payload.usuarioId);
     if (emAndamento) {
       throw new AppError(
-        'Ja existe uma resposta em andamento para este candidato neste questionario.',
+        'Ja existe uma resposta em andamento para este usuario neste questionario.',
         409,
         'CONFLICT',
       );
@@ -72,7 +57,7 @@ class RespostaQuestionarioService {
 
     const created = await this.repository.criarRespostaQuestionario({
       questionarioId: questionario.id,
-      candidatoId: candidatoIdResolvido,
+      usuarioId: payload.usuarioId,
       status: 'em_andamento',
       iniciadoEm: new Date(),
       criadoEm: new Date(),

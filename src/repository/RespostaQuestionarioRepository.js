@@ -11,10 +11,10 @@ class RespostaQuestionarioRepository {
     return RespostaQuestionario.findOne({ id }).lean();
   }
 
-  async buscarRespostaEmAndamento(questionarioId, candidatoId) {
+  async buscarRespostaEmAndamento(questionarioId, usuarioId) {
     return RespostaQuestionario.findOne({
       questionarioId,
-      candidatoId,
+      usuarioId,
       status: 'em_andamento',
     }).lean();
   }

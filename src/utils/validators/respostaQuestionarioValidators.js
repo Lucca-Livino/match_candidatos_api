@@ -32,19 +32,19 @@ export const validateIniciarRespostaQuestionario = (payload) => {
   ensureObject(payload);
 
   const questionarioId = String(payload.questionarioId || '').trim();
-  const candidatoId = String(payload.candidatoId || '').trim();
+  const usuarioId = String(payload.usuarioId || '').trim();
 
   if (!questionarioId) {
     throw new AppError('questionarioId e obrigatorio.', 400, 'VALIDATION_ERROR');
   }
 
-  if (!candidatoId) {
-    throw new AppError('candidatoId e obrigatorio.', 400, 'VALIDATION_ERROR');
+  if (!usuarioId) {
+    throw new AppError('usuarioId e obrigatorio.', 400, 'VALIDATION_ERROR');
   }
 
   return {
     questionarioId,
-    candidatoId,
+    usuarioId,
   };
 };
 

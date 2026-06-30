@@ -55,9 +55,16 @@ async function seedUsuario({ useOwnConnection = true } = {}) {
           },
         });
 
+        const Grupo = (await import('../models/Grupo.js')).default;
+        const grupo = await Grupo.findOne({ nome: usuario.tipos_permissao[0] }).lean();
+
         await Usuario.findOneAndUpdate(
           { email: usuario.email },
-          { $set: { tipos_permissao: usuario.tipos_permissao, status_ativo: usuario.status_ativo } },
+          { $set: {
+              tipos_permissao: usuario.tipos_permissao,
+              status_ativo: usuario.status_ativo,
+              groups: grupo ? [grupo._id] : [],
+          } },
         );
       } catch (err) {
         console.error(`Error creating user ${usuario.email}:`, err);
