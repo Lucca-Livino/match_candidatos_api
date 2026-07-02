@@ -1,83 +1,56 @@
-import CandidatoRepository from '../repository/CandidatoRepository.js';
 import HabilidadeRepository from '../repository/HabilidadeRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 
 class HabilidadeService {
-	constructor(
-		habilidadeRepository = new HabilidadeRepository(),
-		candidatoRepository = new CandidatoRepository(),
-	) {
-		this.habilidadeRepository = habilidadeRepository;
-		this.candidatoRepository = candidatoRepository;
-	}
+  constructor(habilidadeRepository = new HabilidadeRepository()) {
+    this.habilidadeRepository = habilidadeRepository;
+  }
 
-	sanitize(doc) {
-		if (!doc) {
-			return null;
-		}
+  sanitize(doc) {
+    if (!doc) {
+      return null;
+    }
 
-		const sanitized = { ...doc };
-		delete sanitized.__v;
-		return sanitized;
-	}
+    const sanitized = { ...doc };
+    delete sanitized.__v;
+    return sanitized;
+  }
 
-	async garantirCandidatoExiste(candidatoId) {
-		const candidato = await this.candidatoRepository.buscarCandidatoPorIdOuUsuarioId(candidatoId);
-		if (!candidato) {
-			throw new AppError('Candidato nao encontrado.', 404, 'NOT_FOUND');
-		}
+  async criarHabilidade(usuarioId, payload) {
+    const created = await this.habilidadeRepository.criar({
+      ...payload,
+      usuarioId,
+    });
 
-		return candidato;
-	}
+    return this.sanitize(created.toObject());
+  }
 
-	async resolverCandidatoId(candidatoId) {
-		const candidato = await this.garantirCandidatoExiste(candidatoId);
-		return candidato.id;
-	}
+  async listarHabilidade(usuarioId) {
+    const list = await this.habilidadeRepository.listarPorUsuarioId(usuarioId);
+    return list.map((item) => this.sanitize(item));
+  }
 
-	async criarHabilidade(candidatoId, payload) {
-		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
+  async atualizarHabilidade(usuarioId, id, payload) {
+    const existente = await this.habilidadeRepository.buscarPorUsuarioEId(usuarioId, id);
+    if (!existente) {
+      throw new AppError('Habilidade nao encontrada.', 404, 'NOT_FOUND');
+    }
 
-		const created = await this.habilidadeRepository.criar({
-			...payload,
-			candidatoId: candidatoIdResolvido,
-		});
+    const updated = await this.habilidadeRepository.atualizarPorUsuarioEId(usuarioId, id, payload);
+    return this.sanitize(updated);
+  }
 
-		return this.sanitize(created.toObject());
-	}
+  async deletarHabilidade(usuarioId, id) {
+    const removed = await this.habilidadeRepository.deletarPorUsuarioEId(usuarioId, id);
+    if (!removed) {
+      throw new AppError('Habilidade nao encontrada.', 404, 'NOT_FOUND');
+    }
 
-	async listarHabilidade(candidatoId) {
-		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
-
-		const list = await this.habilidadeRepository.listarPorCandidatoId(candidatoIdResolvido);
-		return list.map((item) => this.sanitize(item));
-	}
-
-	async atualizarHabilidade(candidatoId, id, payload) {
-		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
-
-		const existente = await this.habilidadeRepository.buscarPorCandidatoEId(candidatoIdResolvido, id);
-		if (!existente) {
-			throw new AppError('Habilidade nao encontrada.', 404, 'NOT_FOUND');
-		}
-
-		const updated = await this.habilidadeRepository.atualizarPorCandidatoEId(candidatoIdResolvido, id, payload);
-		return this.sanitize(updated);
-	}
-
-	async deletarHabilidade(candidatoId, id) {
-		const candidatoIdResolvido = await this.resolverCandidatoId(candidatoId);
-
-		const removed = await this.habilidadeRepository.deletarPorCandidatoEId(candidatoIdResolvido, id);
-		if (!removed) {
-			throw new AppError('Habilidade nao encontrada.', 404, 'NOT_FOUND');
-		}
-
-		return {
-			id,
-			deletado: true,
-		};
-	}
+    return {
+      id,
+      deletado: true,
+    };
+  }
 }
 
 export default HabilidadeService;

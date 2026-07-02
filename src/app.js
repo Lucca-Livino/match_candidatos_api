@@ -5,12 +5,15 @@ import swaggerUI from 'swagger-ui-express';
 import { auth } from './utils/auth.js';
 import authRoutes from './routes/authRoutes.js';
 import { authMiddleware } from './middlewares/authMiddleware.js';
+import { permissaoMiddleware } from './middlewares/permissaoMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 import vagaRoutes from './routes/vagaRoutes.js';
-import candidatoRoutes from './routes/candidatoRoutes.js';
+import usuarioCurriculoRoutes from './routes/usuarioCurriculoRoutes.js';
 import questionarioRoutes from './routes/questionarioRoutes.js';
 import perguntaRoutes from './routes/perguntaRoutes.js';
 import respostaQuestionarioRoutes from './routes/respostaQuestionarioRoutes.js';
+import rotaRoutes from './routes/rotaRoutes.js';
+import grupoRoutes from './routes/grupoRoutes.js';
 import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
@@ -52,10 +55,13 @@ app.all('/api/auth/*splat', toNodeHandler(auth));
 app.use(express.json());
 
 app.use(swaggerUI.serve);
+let _swaggerDocs = null;
 app.get('/docs', async (req, res, next) => {
-	const options = await getSwaggerOptions();
-	const swaggerDocs = swaggerJSDoc(options);
-	swaggerUI.setup(swaggerDocs)(req, res, next);
+	if (!_swaggerDocs) {
+		const options = await getSwaggerOptions();
+		_swaggerDocs = swaggerJSDoc(options);
+	}
+	swaggerUI.setup(_swaggerDocs)(req, res, next);
 });
 
 app.get('/health', (req, res) => {
@@ -65,20 +71,35 @@ app.get('/health', (req, res) => {
 	});
 });
 
+// Rotas públicas (sem autenticação nem autorização)
+const isPublicPath = (path) =>
+	path.startsWith('/auth') || path === '/usuarios/registro';
+
+// Autenticação (better-auth) — exceto rotas públicas
 app.use('/api', (req, res, next) => {
-	if (req.path.startsWith('/auth')) {
+	if (isPublicPath(req.path)) {
 		return next();
 	}
-
 	return authMiddleware(req, res, next);
+});
+
+// Autorização (RBAC de 3 camadas) — exceto rotas públicas
+const permissao = permissaoMiddleware();
+app.use('/api', (req, res, next) => {
+	if (isPublicPath(req.path)) {
+		return next();
+	}
+	return permissao(req, res, next);
 });
 
 app.use('/api', userRoutes);
 app.use('/api', vagaRoutes);
-app.use('/api', candidatoRoutes);
+app.use('/api', usuarioCurriculoRoutes);
 app.use('/api', questionarioRoutes);
 app.use('/api', perguntaRoutes);
 app.use('/api', respostaQuestionarioRoutes);
+app.use('/api', rotaRoutes);
+app.use('/api', grupoRoutes);
 app.use('/api', authRoutes);
 
 app.use(notFoundHandler);

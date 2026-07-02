@@ -13,7 +13,7 @@ class HabilidadeController {
   async criarHabilidade(req, res, next) {
     try {
       const payload = validateCreateHabilidade(req.body);
-      const data = await this.service.criarHabilidade(req.params.candidatoId, payload);
+      const data = await this.service.criarHabilidade(req.params.id, payload);
       return sendSuccess(res, data, 201, 'Habilidade criada com sucesso.');
     } catch (error) {
       return next(error);
@@ -22,7 +22,7 @@ class HabilidadeController {
 
   async listarHabilidade(req, res, next) {
     try {
-      const data = await this.service.listarHabilidade(req.params.candidatoId);
+      const data = await this.service.listarHabilidade(req.params.id);
       return sendSuccess(res, data, 200, 'Habilidades listadas com sucesso.');
     } catch (error) {
       return next(error);
@@ -32,7 +32,7 @@ class HabilidadeController {
   async atualizarHabilidade(req, res, next) {
     try {
       const payload = validateUpdateHabilidade(req.body);
-      const data = await this.service.atualizarHabilidade(req.params.candidatoId, req.params.id, payload);
+      const data = await this.service.atualizarHabilidade(req.params.id, req.params.habilidadeId, payload);
       return sendSuccess(res, data, 200, 'Habilidade atualizada com sucesso.');
     } catch (error) {
       return next(error);
@@ -41,7 +41,7 @@ class HabilidadeController {
 
   async deletarHabilidade(req, res, next) {
     try {
-      const data = await this.service.deletarHabilidade(req.params.candidatoId, req.params.id);
+      const data = await this.service.deletarHabilidade(req.params.id, req.params.habilidadeId);
       return sendSuccess(res, data, 200, 'Habilidade removida com sucesso.');
     } catch (error) {
       return next(error);

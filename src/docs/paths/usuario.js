@@ -1,4 +1,37 @@
 const usuarioPaths = {
+  '/api/usuarios/registro': {
+    post: {
+      tags: ['Usuarios RH'],
+      summary: 'Auto-cadastro publico de candidato',
+      description: 'Rota publica (sem autenticacao). Cria um usuario com papel candidato via Better Auth.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/UsuarioRegistroRequest' },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: 'Candidato registrado com sucesso',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UsuarioSingleResponse' },
+            },
+          },
+        },
+        409: {
+          description: 'Email ja cadastrado',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+      },
+    },
+  },
   '/api/usuarios': {
     get: {
       tags: ['Usuarios RH'],

@@ -5,27 +5,27 @@ class FormacaoRepository {
     return Formacao.create(payload);
   }
 
-  async listarPorCandidatoId(candidatoId) {
-    return Formacao.find({ candidatoId }).sort({ anoInicio: -1 }).lean();
+  async listarPorUsuarioId(usuarioId) {
+    return Formacao.find({ usuarioId }).sort({ anoInicio: -1 }).lean();
   }
 
-  async buscarPorCandidatoEId(candidatoId, id) {
-    return Formacao.findOne({ candidatoId, id }).lean();
+  async buscarPorUsuarioEId(usuarioId, id) {
+    return Formacao.findOne({ usuarioId, id }).lean();
   }
 
   async buscarPorId(id) {
     return Formacao.findOne({ id }).lean();
   }
 
-  async atualizarPorCandidatoEId(candidatoId, id, payload) {
-    return Formacao.findOneAndUpdate({ candidatoId, id }, payload, {
+  async atualizarPorUsuarioEId(usuarioId, id, payload) {
+    return Formacao.findOneAndUpdate({ usuarioId, id }, payload, {
       returnDocument: 'after',
       runValidators: true,
     }).lean();
   }
 
-  async deletarPorCandidatoEId(candidatoId, id) {
-    return Formacao .findOneAndDelete({ candidatoId, id }).lean();
+  async deletarPorUsuarioEId(usuarioId, id) {
+    return Formacao.findOneAndDelete({ usuarioId, id }).lean();
   }
 }
 

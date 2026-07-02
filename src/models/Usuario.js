@@ -48,6 +48,24 @@ const UsuarioSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    groups: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'grupos',
+      },
+    ],
+    permissions: [
+      {
+        route: { type: String, required: true },
+        domain: { type: String },
+        active: { type: Boolean, default: false },
+        get: { type: Boolean, default: false },
+        post: { type: Boolean, default: false },
+        put: { type: Boolean, default: false },
+        patch: { type: Boolean, default: false },
+        delete: { type: Boolean, default: false },
+      },
+    ],
   },
   {
     timestamps: true,

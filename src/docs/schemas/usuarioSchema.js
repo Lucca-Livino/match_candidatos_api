@@ -6,8 +6,8 @@ const Usuario = {
     email: { type: 'string', example: 'maria.rh@empresa.com' },
     tipos_permissao: {
       type: 'array',
-      items: { type: 'string', enum: ['recrutador', 'candidato'] },
-      example: ['recrutador', 'candidato'],
+      items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
+      example: ['recrutador'],
     },
     status_ativo: { type: 'boolean', example: true },
     createdAt: { type: 'string', format: 'date-time' },
@@ -17,17 +17,27 @@ const Usuario = {
 
 const usuarioSchemas = {
   Usuario,
+  UsuarioRegistroRequest: {
+    type: 'object',
+    required: ['nome', 'email', 'senha'],
+    properties: {
+      nome: { type: 'string', example: 'Joao Candidato' },
+      email: { type: 'string', format: 'email', example: 'joao.candidato@email.com' },
+      senha: { type: 'string', format: 'password', example: 'Senha@123' },
+    },
+  },
   UsuarioCreateRequest: {
     type: 'object',
-    required: ['nome', 'email', 'tipos_permissao'],
+    required: ['nome', 'email', 'senha', 'tipos_permissao'],
     properties: {
       nome: { type: 'string', example: 'Maria RH' },
       email: { type: 'string', format: 'email', example: 'maria.rh@empresa.com' },
+      senha: { type: 'string', format: 'password', example: 'Senha@123' },
       tipos_permissao: {
         type: 'array',
         minItems: 1,
-        items: { type: 'string', enum: ['recrutador', 'candidato'] },
-        example: ['recrutador', 'candidato'],
+        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
+        example: ['recrutador'],
       },
       status_ativo: { type: 'boolean', example: true },
     },
@@ -40,7 +50,7 @@ const usuarioSchemas = {
       tipos_permissao: {
         type: 'array',
         minItems: 1,
-        items: { type: 'string', enum: ['recrutador', 'candidato'] },
+        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
         example: ['candidato'],
       },
       status_ativo: { type: 'boolean', example: false },

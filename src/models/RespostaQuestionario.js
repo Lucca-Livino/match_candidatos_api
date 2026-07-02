@@ -18,7 +18,7 @@ const RespostaQuestionarioSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    candidatoId: {
+    usuarioId: {
       type: String,
       required: true,
       index: true,
@@ -48,7 +48,7 @@ const RespostaQuestionarioSchema = new mongoose.Schema(
   },
 );
 
-RespostaQuestionarioSchema.index({ questionarioId: 1, candidatoId: 1, status: 1 });
+RespostaQuestionarioSchema.index({ questionarioId: 1, usuarioId: 1, status: 1 });
 
 const RespostaQuestionario = mongoose.model('RespostaQuestionario', RespostaQuestionarioSchema);
 

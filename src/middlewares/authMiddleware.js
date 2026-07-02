@@ -17,12 +17,18 @@ export async function authMiddleware(req, res, next) {
       return;
     }
 
-    const usuarioDoc = await Usuario.findOne({ email: session.user.email }).select('tipos_permissao').lean();
+    const usuarioDoc = await Usuario.findOne({ email: session.user.email })
+      .select('tipos_permissao groups permissions')
+      .lean();
 
     req.user = {
       ...session.user,
+      _id: usuarioDoc?._id ?? session.user.id,
       tipos_permissao: usuarioDoc?.tipos_permissao ?? [],
+      groups: usuarioDoc?.groups ?? [],
+      permissions: usuarioDoc?.permissions ?? [],
     };
+    req.user_id = usuarioDoc?._id ?? session.user.id;
     req.authSession = session.session;
     next();
   } catch (error) {

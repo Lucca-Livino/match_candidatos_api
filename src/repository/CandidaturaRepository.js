@@ -1,32 +1,32 @@
-import CandidatoVaga from '../models/CandidatoVaga.js';
+import Candidatura from '../models/Candidatura.js';
 
 class CandidaturaRepository {
-	async criar(payload) {
-		return CandidatoVaga.create(payload);
-	}
+  async criar(payload) {
+    return Candidatura.create(payload);
+  }
 
-	async listarPorCandidatoId(candidatoId) {
-		return CandidatoVaga.find({ candidatoId }).sort({ criadoEm: -1 }).lean();
-	}
+  async listarPorUsuarioId(usuarioId) {
+    return Candidatura.find({ usuarioId }).sort({ criadoEm: -1 }).lean();
+  }
 
-	async buscarPorCandidatoEVaga(candidatoId, vagaId) {
-		return CandidatoVaga.findOne({ candidatoId, vagaId }).lean();
-	}
+  async buscarPorUsuarioEVaga(usuarioId, vagaId) {
+    return Candidatura.findOne({ usuarioId, vagaId }).lean();
+  }
 
-	async buscarPorId(id) {
-		return CandidatoVaga.findOne({ id }).lean();
-	}
+  async buscarPorId(id) {
+    return Candidatura.findOne({ id }).lean();
+  }
 
-	async atualizarPorCandidatoEVaga(candidatoId, vagaId, payload) {
-		return CandidatoVaga.findOneAndUpdate({ candidatoId, vagaId }, payload, {
-			returnDocument: 'after',
-			runValidators: true,
-		}).lean();
-	}
+  async atualizarPorUsuarioEVaga(usuarioId, vagaId, payload) {
+    return Candidatura.findOneAndUpdate({ usuarioId, vagaId }, payload, {
+      returnDocument: 'after',
+      runValidators: true,
+    }).lean();
+  }
 
-	async deletarPorCandidatoEVaga(candidatoId, vagaId) {
-		return CandidatoVaga.findOneAndDelete({ candidatoId, vagaId }).lean();
-	}
+  async deletarPorUsuarioEVaga(usuarioId, vagaId) {
+    return Candidatura.findOneAndDelete({ usuarioId, vagaId }).lean();
+  }
 }
 
 export default CandidaturaRepository;

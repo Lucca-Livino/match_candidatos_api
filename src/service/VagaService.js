@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import VagaRepository from '../repository/VagaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class VagaService {
   constructor(repository = new VagaRepository()) {
@@ -8,19 +9,11 @@ class VagaService {
   }
 
   sanitize(vaga) {
-    if (!vaga) {
-      return null;
-    }
-
-    const sanitized = { ...vaga };
-    delete sanitized.__v;
+    const sanitized = sanitizeDoc(vaga);
+    if (!sanitized) return null;
 
     if (Array.isArray(sanitized.criterio_vaga)) {
-      sanitized.criterio_vaga = sanitized.criterio_vaga.map((criterio) => {
-        const normalized = { ...criterio };
-        delete normalized.__v;
-        return normalized;
-      });
+      sanitized.criterio_vaga = sanitized.criterio_vaga.map((criterio) => sanitizeDoc(criterio));
     }
 
     return sanitized;
@@ -46,7 +39,7 @@ class VagaService {
     const permitidos = transicoesPermitidas[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        'Vaga arquivada nao pode voltar para ativa ou pausada.',
+        `Transicao de status invalida: ${statusAtual} -> ${novoStatus}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );

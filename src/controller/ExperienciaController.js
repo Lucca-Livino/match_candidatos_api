@@ -13,7 +13,7 @@ class ExperienciaController {
   async criarExperiencia(req, res, next) {
     try {
       const payload = validateCreateExperiencia(req.body);
-      const data = await this.service.criarExperiencia(req.params.candidatoId, payload);
+      const data = await this.service.criarExperiencia(req.params.id, payload);
       return sendSuccess(res, data, 201, 'Experiencia criada com sucesso.');
     } catch (error) {
       return next(error);
@@ -22,7 +22,7 @@ class ExperienciaController {
 
   async listarExperiencia(req, res, next) {
     try {
-      const data = await this.service.listarExperiencia(req.params.candidatoId);
+      const data = await this.service.listarExperiencia(req.params.id);
       return sendSuccess(res, data, 200, 'Experiencias listadas com sucesso.');
     } catch (error) {
       return next(error);
@@ -32,7 +32,7 @@ class ExperienciaController {
   async atualizarExperiencia(req, res, next) {
     try {
       const payload = validateUpdateExperiencia(req.body);
-      const data = await this.service.atualizarExperiencia(req.params.candidatoId, req.params.id, payload);
+      const data = await this.service.atualizarExperiencia(req.params.id, req.params.experienciaId, payload);
       return sendSuccess(res, data, 200, 'Experiencia atualizada com sucesso.');
     } catch (error) {
       return next(error);
@@ -41,7 +41,7 @@ class ExperienciaController {
 
   async deletarExperiencia(req, res, next) {
     try {
-      const data = await this.service.deletarExperiencia(req.params.candidatoId, req.params.id);
+      const data = await this.service.deletarExperiencia(req.params.id, req.params.experienciaId);
       return sendSuccess(res, data, 200, 'Experiencia removida com sucesso.');
     } catch (error) {
       return next(error);

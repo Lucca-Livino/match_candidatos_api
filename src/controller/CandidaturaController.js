@@ -13,7 +13,7 @@ class CandidaturaController {
   async criarCandidatura(req, res, next) {
     try {
       const payload = validateCreateCandidatura(req.body);
-      const data = await this.service.criarCandidatura(req.params.candidatoId, payload);
+      const data = await this.service.criarCandidatura(req.params.id, payload);
       return sendSuccess(res, data, 201, 'Candidatura criada com sucesso.');
     } catch (error) {
       return next(error);
@@ -22,7 +22,7 @@ class CandidaturaController {
 
   async listarCandidatura(req, res, next) {
     try {
-      const data = await this.service.listarCandidatura(req.params.candidatoId);
+      const data = await this.service.listarCandidatura(req.params.id);
       return sendSuccess(res, data, 200, 'Candidaturas listadas com sucesso.');
     } catch (error) {
       return next(error);
@@ -31,7 +31,7 @@ class CandidaturaController {
 
   async detalharCandidatura(req, res, next) {
     try {
-      const data = await this.service.detalharCandidatura(req.params.candidatoId, req.params.vagaId);
+      const data = await this.service.detalharCandidatura(req.params.id, req.params.vagaId);
       return sendSuccess(res, data, 200, 'Candidatura detalhada com sucesso.');
     } catch (error) {
       return next(error);
@@ -42,7 +42,7 @@ class CandidaturaController {
     try {
       const payload = validateUpdateStatusCandidatura(req.body);
       const data = await this.service.atualizarStatusCandidatura(
-        req.params.candidatoId,
+        req.params.id,
         req.params.vagaId,
         payload,
       );
@@ -54,7 +54,7 @@ class CandidaturaController {
 
   async cancelarCandidatura(req, res, next) {
     try {
-      const data = await this.service.cancelarCandidatura(req.params.candidatoId, req.params.vagaId);
+      const data = await this.service.cancelarCandidatura(req.params.id, req.params.vagaId);
       return sendSuccess(res, data, 200, 'Candidatura cancelada com sucesso.');
     } catch (error) {
       return next(error);

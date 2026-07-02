@@ -44,6 +44,13 @@ class UsuarioRepository {
     }).lean();
   }
 
+  async atualizarPorEmail(email, payload) {
+    return Usuario.findOneAndUpdate({ email }, payload, {
+      returnDocument: 'after',
+      runValidators: true,
+    }).lean();
+  }
+
   async deletar(id) {
     return Usuario.findByIdAndDelete(id).lean();
   }

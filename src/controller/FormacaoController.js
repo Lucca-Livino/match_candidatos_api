@@ -13,7 +13,7 @@ class FormacaoController {
   async criarFormacao(req, res, next) {
     try {
       const payload = validateCreateFormacao(req.body);
-      const data = await this.service.criarFormacao(req.params.candidatoId, payload);
+      const data = await this.service.criarFormacao(req.params.id, payload);
       return sendSuccess(res, data, 201, 'Formacao criada com sucesso.');
     } catch (error) {
       return next(error);
@@ -22,7 +22,7 @@ class FormacaoController {
 
   async listarFormacao(req, res, next) {
     try {
-      const data = await this.service.listarFormacao(req.params.candidatoId);
+      const data = await this.service.listarFormacao(req.params.id);
       return sendSuccess(res, data, 200, 'Formacoes listadas com sucesso.');
     } catch (error) {
       return next(error);
@@ -32,7 +32,7 @@ class FormacaoController {
   async atualizarFormacao(req, res, next) {
     try {
       const payload = validateUpdateFormacao(req.body);
-      const data = await this.service.atualizarFormacao(req.params.candidatoId, req.params.id, payload);
+      const data = await this.service.atualizarFormacao(req.params.id, req.params.formacaoId, payload);
       return sendSuccess(res, data, 200, 'Formacao atualizada com sucesso.');
     } catch (error) {
       return next(error);
@@ -41,7 +41,7 @@ class FormacaoController {
 
   async deletarFormacao(req, res, next) {
     try {
-      const data = await this.service.deletarFormacao(req.params.candidatoId, req.params.id);
+      const data = await this.service.deletarFormacao(req.params.id, req.params.formacaoId);
       return sendSuccess(res, data, 200, 'Formacao removida com sucesso.');
     } catch (error) {
       return next(error);

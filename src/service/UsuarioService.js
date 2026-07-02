@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import UsuarioRepository from '../repository/UsuarioRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { hashPassword } from '../utils/password.js';
+import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class UsuarioService {
   constructor(repository = new UsuarioRepository()) {
@@ -9,14 +10,7 @@ class UsuarioService {
   }
 
   sanitize(usuario) {
-    if (!usuario) {
-      return null;
-    }
-
-    const sanitized = { ...usuario };
-    delete sanitized.senha;
-    delete sanitized.__v;
-    return sanitized;
+    return sanitizeDoc(usuario, ['senha']);
   }
 
   ensureObjectId(id) {
@@ -56,15 +50,47 @@ class UsuarioService {
     return this.sanitize(usuario);
   }
 
-  async criar(payload) {
-    const jaExiste = await this.repository.buscarPorEmail(payload.email);
+  // Provisiona usuario de forma consistente com o Better Auth:
+  // 1) cria a conta (email/senha) via signUpEmail (hash fica na collection 'account');
+  // 2) vincula papel e grupos no mesmo doc 'usuarios'.
+  // Usado tanto pelo auto-cadastro de candidato quanto pela criacao administrativa.
+  async provisionarComAuth({ nome, email, senha, tipos_permissao, status_ativo = true }) {
+    const jaExiste = await this.repository.buscarPorEmail(email);
     if (jaExiste) {
       throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
     }
 
-    const payloadComHash = await this.withHashedPassword(payload);
-    const created = await this.repository.criar(payloadComHash);
-    return this.sanitize(created.toObject());
+    const { auth } = await import('../utils/auth.js');
+    await auth.api.signUpEmail({ body: { email, password: senha, name: nome } });
+
+    const Grupo = (await import('../models/Grupo.js')).default;
+    const grupos = await Grupo.find({ nome: { $in: tipos_permissao } }).select('_id').lean();
+
+    const atualizado = await this.repository.atualizarPorEmail(email, {
+      tipos_permissao,
+      status_ativo,
+      groups: grupos.map((grupo) => grupo._id),
+    });
+
+    return this.sanitize(atualizado);
+  }
+
+  async registrarCandidato({ nome, email, senha }) {
+    if (!nome || !email || !senha) {
+      throw new AppError('nome, email e senha sao obrigatorios.', 400, 'VALIDATION_ERROR');
+    }
+
+    return this.provisionarComAuth({
+      nome,
+      email,
+      senha,
+      tipos_permissao: ['candidato'],
+      status_ativo: true,
+    });
+  }
+
+  async criar(payload) {
+    return this.provisionarComAuth(payload);
   }
 
   async atualizar(id, payload) {

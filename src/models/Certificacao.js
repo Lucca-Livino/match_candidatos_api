@@ -11,7 +11,7 @@ const CertificacaoSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    candidatoId: {
+    usuarioId: {
       type: String,
       required: true,
       index: true,
