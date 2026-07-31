@@ -32,7 +32,8 @@ const politicasAcesso = [
   // Colecao de usuarios
   {
     pattern: /^\/usuarios(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN] }, POST: { roles: [ADMIN] } },
+    // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
   },
   // Vagas
   {
