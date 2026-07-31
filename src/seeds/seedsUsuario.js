@@ -25,6 +25,35 @@ const usuariosSeed = [
     tipos_permissao: ["recrutador"],
     status_ativo: true,
   },
+  {
+    nome: "Diego Candidato",
+    email: "diego.candidato@match.com",
+    senha: 'Senha@123',
+    tipos_permissao: ["candidato"],
+    status_ativo: true,
+  },
+  {
+    nome: "Elisa Candidata",
+    email: "elisa.candidata@match.com",
+    senha: 'Senha@123',
+    tipos_permissao: ["candidato"],
+    status_ativo: true,
+  },
+  {
+    nome: "Fabio Candidato",
+    email: "fabio.candidato@match.com",
+    senha: 'Senha@123',
+    tipos_permissao: ["candidato"],
+    status_ativo: true,
+  },
+  // Candidato inativo: cobre o caminho de bloqueio de login/listagem.
+  {
+    nome: "Gabriela Inativa",
+    email: "gabriela.inativa@match.com",
+    senha: 'Senha@123',
+    tipos_permissao: ["candidato"],
+    status_ativo: false,
+  },
 ];
 
 async function seedUsuario({ useOwnConnection = true } = {}) {
