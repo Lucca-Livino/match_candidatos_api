@@ -36,6 +36,14 @@ const gruposSeed = [
       perm('me', R(['get'])),
     ],
   },
+  {
+    nome: 'suporte',
+    descricao: 'Configuracao das integracoes e do limiar de compatibilidade',
+    permissions: [
+      perm('configuracao-integracao', R(['get', 'patch'])),
+      perm('me', R(['get'])),
+    ],
+  },
 ];
 
 async function seedGrupos({ useOwnConnection = true } = {}) {

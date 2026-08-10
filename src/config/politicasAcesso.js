@@ -3,8 +3,17 @@
 const ADMIN = 'administrador';
 const RECRUTADOR = 'recrutador';
 const CANDIDATO = 'candidato';
+const SUPORTE = 'suporte';
 
 const politicasAcesso = [
+  // Configuracao das integracoes: exclusiva do suporte (segregacao de funcoes).
+  {
+    pattern: /^\/configuracao-integracao(?:\/.*)?$/,
+    methods: {
+      GET: { roles: [SUPORTE] },
+      PATCH: { roles: [SUPORTE] },
+    },
+  },
   // Curriculo do proprio usuario
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
@@ -32,7 +41,8 @@ const politicasAcesso = [
   // Colecao de usuarios
   {
     pattern: /^\/usuarios(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN] }, POST: { roles: [ADMIN] } },
+    // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
   },
   // Vagas
   {
