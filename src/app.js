@@ -14,6 +14,7 @@ import perguntaRoutes from './routes/perguntaRoutes.js';
 import respostaQuestionarioRoutes from './routes/respostaQuestionarioRoutes.js';
 import rotaRoutes from './routes/rotaRoutes.js';
 import grupoRoutes from './routes/grupoRoutes.js';
+import configuracaoIntegracaoRoutes from './routes/configuracaoIntegracaoRoutes.js';
 import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
@@ -100,6 +101,7 @@ app.use('/api', perguntaRoutes);
 app.use('/api', respostaQuestionarioRoutes);
 app.use('/api', rotaRoutes);
 app.use('/api', grupoRoutes);
+app.use('/api', configuracaoIntegracaoRoutes);
 app.use('/api', authRoutes);
 
 app.use(notFoundHandler);
