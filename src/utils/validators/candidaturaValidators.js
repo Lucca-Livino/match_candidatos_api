@@ -20,8 +20,8 @@ export const validateCreateCandidatura = (payload) => {
     throw new AppError('vagaId e obrigatorio.', 400, 'VALIDATION_ERROR');
   }
 
-  if (![0, 1].includes(compativel)) {
-    throw new AppError('compativel deve ser 0 ou 1.', 400, 'VALIDATION_ERROR');
+  if (!Number.isFinite(compativel) || compativel < 0 || compativel > 1) {
+    throw new AppError('compativel deve estar entre 0 e 1.', 400, 'VALIDATION_ERROR');
   }
 
   return {
