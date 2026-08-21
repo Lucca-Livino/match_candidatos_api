@@ -1,11 +1,16 @@
 import mongoose from 'mongoose';
 import VagaRepository from '../repository/VagaRepository.js';
+import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
 class VagaService {
-  constructor(repository = new VagaRepository()) {
+  constructor(
+    repository = new VagaRepository(),
+    questionarioRepository = new QuestionarioRepository(),
+  ) {
     this.repository = repository;
+    this.questionarioRepository = questionarioRepository;
   }
 
   sanitize(vaga) {
@@ -46,6 +51,17 @@ class VagaService {
     }
   }
 
+  async garantirQuestionarioAtivo(vagaId) {
+    const questionarios = await this.questionarioRepository.listar({ vagaId, ativo: 1 });
+    if (!questionarios.length) {
+      throw new AppError(
+        'Vaga so pode ser ativada com um questionario ativo.',
+        400,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+  }
+
   async listar(query) {
     const result = await this.repository.listarPaginado(query);
 
@@ -68,6 +84,13 @@ class VagaService {
 
   async criar(payload) {
     const created = await this.repository.criar(payload);
+
+    // Vaga criada ja ativa precisa do questionario; sem ele, candidaturas
+    // nunca seriam avaliadas (o gatilho e a finalizacao do questionario).
+    if (payload.status === 'ativa') {
+      await this.garantirQuestionarioAtivo(String(created._id));
+    }
+
     return this.sanitize(created.toObject());
   }
 
@@ -80,6 +103,10 @@ class VagaService {
     }
 
     this.ensureStatusTransition(existente.status, payload.status);
+
+    if (payload.status === 'ativa') {
+      await this.garantirQuestionarioAtivo(id);
+    }
 
     const atualizado = await this.repository.atualizar(id, payload);
     return this.sanitize(atualizado);
