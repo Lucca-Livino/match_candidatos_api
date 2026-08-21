@@ -97,10 +97,6 @@ export const validateCreateVaga = (payload) => {
     throw new AppError('descricao e obrigatoria e deve ter ao menos 10 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
-  if (Object.hasOwn(payload, 'status') && String(payload.status).trim().toLowerCase() !== 'ativa') {
-    throw new AppError('Toda nova vaga deve iniciar com status ativa.', 400, 'VALIDATION_ERROR');
-  }
-
   const requisitos_gerais = Object.hasOwn(payload, 'requisitos_gerais')
     ? String(payload.requisitos_gerais || '').trim()
     : '';
@@ -110,7 +106,10 @@ export const validateCreateVaga = (payload) => {
     titulo,
     descricao,
     requisitos_gerais,
-    status: 'ativa',
+    // Toda vaga nasce pausada. A ativacao e um passo separado (PATCH), onde o
+    // VagaService exige um questionario ativo — sem ele as candidaturas nunca
+    // seriam avaliadas. O status enviado pelo cliente na criacao e ignorado.
+    status: 'pausada',
     criterio_vaga: normalizeCriterios(payload.criterio_vaga),
   };
 };
