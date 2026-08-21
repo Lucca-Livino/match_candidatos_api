@@ -1,6 +1,7 @@
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import PerguntaRepository from '../repository/PerguntaRepository.js';
 import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
+import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -9,10 +10,12 @@ class RespostaQuestionarioService {
     repository = new RespostaQuestionarioRepository(),
     questionarioRepository = new QuestionarioRepository(),
     perguntaRepository = new PerguntaRepository(),
+    candidaturaRepository = new CandidaturaRepository(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.perguntaRepository = perguntaRepository;
+    this.candidaturaRepository = candidaturaRepository;
   }
 
   sanitize(doc) {
@@ -46,13 +49,25 @@ class RespostaQuestionarioService {
       throw new AppError('Nao e permitido iniciar questionario inativo.', 400, 'BUSINESS_RULE_ERROR');
     }
 
+    // A avaliacao por IA atualiza a candidatura ao finalizar o questionario.
+    // Sem candidatura nao ha o que avaliar nem o que atualizar.
+    const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(
+      payload.usuarioId,
+      questionario.vagaId,
+    );
+    if (!candidatura) {
+      throw new AppError(
+        'E necessario se candidatar a vaga antes de responder o questionario.',
+        400,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+
+    // Idempotente: retomar um envio interrompido devolve a resposta em andamento
+    // em vez de bloquear o candidato, que nao tem como recuperar o id sozinho.
     const emAndamento = await this.repository.buscarRespostaEmAndamento(questionario.id, payload.usuarioId);
     if (emAndamento) {
-      throw new AppError(
-        'Ja existe uma resposta em andamento para este usuario neste questionario.',
-        409,
-        'CONFLICT',
-      );
+      return this.sanitize(emAndamento);
     }
 
     const created = await this.repository.criarRespostaQuestionario({
