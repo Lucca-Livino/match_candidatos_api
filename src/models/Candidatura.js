@@ -14,6 +14,11 @@ const CandidaturaSchema = new mongoose.Schema(
     motivoIncompat_: { type: String, trim: true, maxlength: 500, default: '' },
     status: { type: String, required: true, enum: STATUS_CANDIDATURA, default: 'inscrito' },
     movidoPor: { type: String, trim: true, maxlength: 180, default: 'sistema' },
+    scoreIA: { type: Number, min: 0, max: 1, default: null },
+    limiteAplicado: { type: Number, min: 0, max: 1, default: null },
+    versaoModelo: { type: String, trim: true, maxlength: 120, default: null },
+    avaliadoEm: { type: Date, default: null },
+    justificativa: { type: String, trim: true, maxlength: 4000, default: '' },
   },
   {
     collection: 'candidatura',
