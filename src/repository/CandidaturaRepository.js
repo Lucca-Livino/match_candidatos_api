@@ -9,6 +9,12 @@ class CandidaturaRepository {
     return Candidatura.find({ usuarioId }).sort({ criadoEm: -1 }).lean();
   }
 
+  // Ordem neutra e deliberada: ordenar por score reintroduziria o vies de
+  // ancoragem que a triagem sem ranking existe para evitar.
+  async listarPorVagaId(vagaId) {
+    return Candidatura.find({ vagaId }).sort({ criadoEm: 1 }).lean();
+  }
+
   async buscarPorUsuarioEVaga(usuarioId, vagaId) {
     return Candidatura.findOne({ usuarioId, vagaId }).lean();
   }
