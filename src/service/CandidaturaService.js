@@ -1,5 +1,7 @@
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import AvaliacaoCandidaturaService from './AvaliacaoCandidaturaService.js';
+import Usuario from '../models/Usuario.js';
+import Vaga from '../models/Vaga.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -16,13 +18,25 @@ class CandidaturaService {
     return sanitizeDoc(doc);
   }
 
-  // O score bruto e o limiar aplicado sao registro interno de auditoria:
-  // ficam no banco para a calibracao do modelo e nunca saem pela API. Expor
-  // o numero devolveria pela porta dos fundos o ranking que a triagem sem
-  // ordenacao por score existe para evitar.
-  omitirScore(candidatura) {
+  // Remove TODO o rastro da triagem. O recrutador recebe o resultado como
+  // fila (candidatura compativel ja chega em 'em_analise'), nunca como
+  // rotulo: score, veredito e justificativa da IA sao dados de calibracao e
+  // so o papel suporte os enxerga, em /avaliacoes.
+  //
+  // Esconder isso apenas no front nao contaria: o campo continuaria viajando
+  // na resposta, visivel para qualquer um que abrisse o devtools.
+  omitirTriagem(candidatura) {
     if (!candidatura) return candidatura;
-    const { scoreIA, limiteAplicado, ...visivel } = candidatura;
+    const {
+      scoreIA,
+      limiteAplicado,
+      compativel,
+      motivoIncompat_,
+      justificativa,
+      versaoModelo,
+      avaliadoEm,
+      ...visivel
+    } = candidatura;
     return visivel;
   }
 
@@ -61,14 +75,46 @@ class CandidaturaService {
 
   async listarCandidatura(usuarioId) {
     const list = await this.candidaturaRepository.listarPorUsuarioId(usuarioId);
-    return list.map((item) => this.omitirScore(this.sanitize(item)));
+    return list.map((item) => this.omitirTriagem(this.sanitize(item)));
   }
 
   // Listagem do recrutador: quem se candidatou a esta vaga, em ordem de
-  // inscricao. Sem score e sem ranking — apenas apto/nao apto.
+  // inscricao. Sem nenhum campo da triagem — o sinal da IA chega ao
+  // recrutador pela fila (status), nao por rotulo na tela.
   async listarPorVaga(vagaId) {
     const list = await this.candidaturaRepository.listarPorVagaId(vagaId);
-    return list.map((item) => this.omitirScore(this.sanitize(item)));
+    return list.map((item) => this.omitirTriagem(this.sanitize(item)));
+  }
+
+  // Visao do SUPORTE, unica saida da API que expoe scoreIA e limiteAplicado.
+  // Existe para calibrar o modelo: sem o numero nao da para saber quantas
+  // candidaturas ficaram raspando no limiar. Nao passa por `omitirTriagem` de
+  // proposito — a politica de acesso restringe a rota ao papel suporte, e o
+  // recrutador continua sem nenhum caminho para o score.
+  async listarParaAuditoria(filtros = {}) {
+    const lista = await this.candidaturaRepository.listarParaAuditoria(filtros);
+
+    const usuarioIds = [...new Set(lista.map((c) => c.usuarioId))];
+    const vagaIds = [...new Set(lista.map((c) => c.vagaId))];
+
+    const [usuarios, vagas] = await Promise.all([
+      Usuario.find({ _id: { $in: usuarioIds } }, 'nome email').lean().catch(() => []),
+      Vaga.find({ _id: { $in: vagaIds } }, 'titulo').lean().catch(() => []),
+    ]);
+
+    const nomePorUsuario = new Map(usuarios.map((u) => [String(u._id), u]));
+    const vagaPorId = new Map(vagas.map((v) => [String(v._id), v]));
+
+    return lista.map((candidatura) => {
+      const usuario = nomePorUsuario.get(String(candidatura.usuarioId));
+      const vaga = vagaPorId.get(String(candidatura.vagaId));
+
+      return {
+        ...this.sanitize(candidatura),
+        candidato: usuario ? { nome: usuario.nome, email: usuario.email } : null,
+        vaga: vaga ? { titulo: vaga.titulo } : null,
+      };
+    });
   }
 
   async detalharCandidatura(usuarioId, vagaId) {
@@ -77,7 +123,7 @@ class CandidaturaService {
       throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
     }
 
-    return this.omitirScore(this.sanitize(candidatura));
+    return this.omitirTriagem(this.sanitize(candidatura));
   }
 
   async atualizarStatusCandidatura(usuarioId, vagaId, payload) {
@@ -93,7 +139,7 @@ class CandidaturaService {
       vagaId,
       payload,
     );
-    return this.omitirScore(this.sanitize(updated));
+    return this.omitirTriagem(this.sanitize(updated));
   }
 
   // Reprocessamento manual: a Task 12 dispara a avaliacao em fire-and-forget,
@@ -113,7 +159,7 @@ class CandidaturaService {
       throw new AppError('Avaliacao por IA indisponivel.', 503, 'AI_UNAVAILABLE');
     }
 
-    return this.omitirScore(this.sanitize(atualizada));
+    return this.omitirTriagem(this.sanitize(atualizada));
   }
 
   async cancelarCandidatura(usuarioId, vagaId) {

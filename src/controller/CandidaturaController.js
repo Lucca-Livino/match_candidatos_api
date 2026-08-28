@@ -63,6 +63,19 @@ class CandidaturaController {
     }
   }
 
+  // Rota do suporte: unica que devolve os campos de auditoria da IA.
+  async listarParaAuditoria(req, res, next) {
+    try {
+      const data = await this.service.listarParaAuditoria({
+        apenasPendentes: req.query.pendentes === 'true',
+        vagaId: req.query.vagaId || null,
+      });
+      return sendSuccess(res, data, 200, 'Avaliacoes listadas com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   async reavaliarCandidatura(req, res, next) {
     try {
       const data = await this.service.reavaliarCandidatura(req.params.usuarioId, req.params.id);

@@ -21,6 +21,22 @@ class AvaliacaoCandidaturaService {
     return this.candidaturaRepository.atualizarPorUsuarioEVaga(usuarioId, vagaId, dados);
   }
 
+  // Candidatura compativel e PRE-APROVADA: entra na fila do recrutador ja em
+  // 'em_analise'. O resultado da triagem chega ao recrutador como acao, nao
+  // como rotulo — ele nunca ve o score nem o veredito, so a fila.
+  //
+  // So promove quem esta em 'inscrito'. Uma reavaliacao de candidatura ja
+  // aprovada/reprovada nao pode puxar o registro de volta: a decisao humana
+  // vale mais que a da IA, e regredir status apagaria o trabalho do recrutador.
+  async promoverSeCompativel(usuarioId, vagaId, aprovado) {
+    if (!aprovado) return {};
+
+    const atual = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
+    if (atual?.status !== 'inscrito') return {};
+
+    return { status: 'em_analise', movidoPor: 'ia' };
+  }
+
   async avaliar(usuarioId, vagaId) {
     const config = await this.configuracaoService.obter();
 
@@ -61,6 +77,7 @@ class AvaliacaoCandidaturaService {
     }
 
     const aprovado = resultado.score >= config.limiteCompatibilidade;
+    const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado);
 
     return this.persistir(usuarioId, vagaId, {
       compativel: aprovado ? 1 : 0,
@@ -78,6 +95,10 @@ class AvaliacaoCandidaturaService {
         ? ''
         : 'Compatibilidade abaixo do limiar definido para a triagem automatica.',
       movidoPor: 'sistema',
+      // Por ultimo: quando houve promocao, o `movidoPor: 'ia'` daqui precisa
+      // vencer o 'sistema' acima, senao a trilha de auditoria mente sobre
+      // quem moveu a candidatura de fila.
+      ...promocao,
     });
   }
 }

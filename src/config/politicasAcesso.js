@@ -14,6 +14,14 @@ const politicasAcesso = [
       PATCH: { roles: [SUPORTE] },
     },
   },
+  // Auditoria da triagem: exclusiva do suporte. E a unica rota que devolve
+  // scoreIA/limiteAplicado — por isso nao inclui ADMIN nem RECRUTADOR.
+  {
+    pattern: /^\/avaliacoes(?:\/?$)/,
+    methods: {
+      GET: { roles: [SUPORTE] },
+    },
+  },
   // Curriculo do proprio usuario
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
