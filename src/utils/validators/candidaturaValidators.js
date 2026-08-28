@@ -8,27 +8,24 @@ const ensureObject = (value, code = 'VALIDATION_ERROR') => {
 };
 
 
+// `compativel` e `motivoIncompat_` NAO sao aceitos do payload: quem se
+// inscreve e a pessoa avaliada, e deixar o cliente escrever o resultado da
+// triagem entrega ao candidato o campo que a triagem existe para decidir.
+// Os dois nascem do default do schema e so a avaliacao por IA os escreve
+// (AvaliacaoCandidaturaService). `movidoPor` tambem fica fixo: e trilha de
+// auditoria de quem moveu o registro, nao dado que o inscrito informa.
 export const validateCreateCandidatura = (payload) => {
   ensureObject(payload);
 
   const vagaId = String(payload.vagaId || '').trim();
-  const compativel = Object.hasOwn(payload, 'compativel') ? Number(payload.compativel) : 1;
-  const motivoIncompat_ = String(payload.motivoIncompat_ || '').trim();
-  const movidoPor = String(payload.movidoPor || 'sistema').trim();
 
   if (!vagaId) {
     throw new AppError('vagaId e obrigatorio.', 400, 'VALIDATION_ERROR');
   }
 
-  if (!Number.isFinite(compativel) || compativel < 0 || compativel > 1) {
-    throw new AppError('compativel deve estar entre 0 e 1.', 400, 'VALIDATION_ERROR');
-  }
-
   return {
     vagaId,
-    compativel,
-    motivoIncompat_,
-    movidoPor,
+    movidoPor: 'sistema',
     status: 'inscrito',
   };
 };
