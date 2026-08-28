@@ -93,10 +93,13 @@ const politicasAcesso = [
     pattern: /^\/resposta-questionario(?:\/.*)?$/,
     methods: { '*': { roles: [ADMIN, CANDIDATO] } },
   },
-  // Me
+  // Me: identidade do usuario logado. Precisa valer para TODO papel — e por
+  // aqui que o front descobre `tipos_permissao` para decidir a area. Um papel
+  // fora desta lista consegue autenticar mas nao consegue navegar: o
+  // RoleLayout nao recebe o papel e devolve a pessoa para a tela de login.
   {
     pattern: /^\/me(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO] } },
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] } },
   },
   // CRUD administrativo
   {
