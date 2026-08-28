@@ -1,4 +1,4 @@
-import { PROVEDORES, MODELO_PADRAO_POR_PROVEDOR } from '../../models/ConfiguracaoIntegracao.js';
+import { PROVEDORES, LIMITE_DEGRAUS } from '../../models/ConfiguracaoIntegracao.js';
 import AppError from '../helpers/AppError.js';
 
 export const validateUpdateConfiguracao = (payload) => {
@@ -36,16 +36,34 @@ export const validateUpdateConfiguracao = (payload) => {
     resultado.temperatura = temperatura;
   }
 
-  if (Object.hasOwn(payload, 'modelo')) {
-    const modelo = String(payload.modelo || '').trim();
-    if (!modelo) {
-      throw new AppError('modelo e obrigatorio.', 400, 'VALIDATION_ERROR');
+  if (Object.hasOwn(payload, 'cascata')) {
+    // As tres regras valem tanto aqui quanto no schema. Duplicacao proposital:
+    // o validator devolve 400 com mensagem util para o front, o schema protege
+    // quem escreve no banco por outro caminho (script, migracao, seed).
+    const bruta = payload.cascata;
+    if (!Array.isArray(bruta)) {
+      throw new AppError('cascata deve ser uma lista de modelos.', 400, 'VALIDATION_ERROR');
     }
-    resultado.modelo = modelo;
-  } else if (resultado.provedor) {
-    // Trocar de provedor sem informar modelo cairia num ID invalido para o
-    // novo provedor. Aplica o padrao daquele provedor.
-    resultado.modelo = MODELO_PADRAO_POR_PROVEDOR[resultado.provedor];
+
+    const cascata = bruta.map((m) => String(m ?? '').trim()).filter(Boolean);
+
+    if (cascata.length === 0) {
+      throw new AppError('cascata precisa de pelo menos um modelo.', 400, 'VALIDATION_ERROR');
+    }
+    if (cascata.length > LIMITE_DEGRAUS) {
+      throw new AppError(
+        `cascata aceita no maximo ${LIMITE_DEGRAUS} modelos.`,
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
+    if (new Set(cascata).size !== cascata.length) {
+      // Degrau repetido nao acrescenta cota: se o modelo esgotou, esgotou nas
+      // duas posicoes. Aceitar daria a impressao de uma reserva inexistente.
+      throw new AppError('cascata nao pode repetir modelo.', 400, 'VALIDATION_ERROR');
+    }
+
+    resultado.cascata = cascata;
   }
 
   if (Object.hasOwn(payload, 'ativo')) {
