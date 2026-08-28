@@ -113,7 +113,7 @@ const RespostaQuestionario = {
     _id: { type: 'string', example: '680a0b1c2d3e4f5a6b7c8db0' },
     id: { type: 'string', example: 'resp-quest-001' },
     questionarioId: { type: 'string', example: 'quest-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     iniciadoEm: { type: 'string', format: 'date-time' },
     criadoEm: { type: 'string', format: 'date-time' },
     finalizadoEm: { type: 'string', format: 'date-time', nullable: true },
@@ -333,14 +333,14 @@ const questionarioSchemas = {
 
   RespostaQuestionarioIniciarRequest: {
     type: 'object',
-    required: ['questionarioId', 'candidatoId'],
+    required: ['questionarioId', 'usuarioId'],
     properties: {
       questionarioId: { type: 'string', example: 'quest-001' },
-      candidatoId: { type: 'string', example: 'cand-001' },
+      usuarioId: { type: 'string', example: 'user-001' },
     },
     example: {
       questionarioId: 'quest-001',
-      candidatoId: 'cand-001',
+      usuarioId: 'user-001',
     },
   },
 
@@ -521,7 +521,7 @@ const questionarioSchemas = {
         _id: '680a0b1c2d3e4f5a6b7c8db0',
         id: 'resp-quest-001',
         questionarioId: 'quest-001',
-        candidatoId: 'cand-001',
+        usuarioId: 'user-001',
         status: 'em_andamento',
       },
     },
