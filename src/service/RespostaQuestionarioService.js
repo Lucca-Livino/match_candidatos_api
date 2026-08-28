@@ -19,6 +19,7 @@ class RespostaQuestionarioService {
     this.perguntaRepository = perguntaRepository;
     this.candidaturaRepository = candidaturaRepository;
     this.avaliacaoCandidaturaService = avaliacaoCandidaturaService;
+    this.avaliacaoEmAndamento = null;
   }
 
   sanitize(doc) {
@@ -181,11 +182,9 @@ class RespostaQuestionarioService {
 
     const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
 
-    // A finalizacao ja esta persistida acima: a triagem e um acessorio do
-    // fluxo, nao um pre-requisito dele. O catch engole a falha de proposito —
-    // a candidatura fica com `avaliadoEm: null` e e reprocessavel pelo
-    // endpoint de reavaliacao, enquanto o candidato conclui o questionario.
-    await Promise.resolve(
+    // Fire-and-forget: a resposta HTTP nao espera a IA. O `.catch` evita
+    // unhandledRejection; a promise fica exposta para quem precisar aguardar.
+    this.avaliacaoEmAndamento = Promise.resolve(
       this.avaliacaoCandidaturaService.avaliar(respostaQuestionario.usuarioId, questionario.vagaId),
     ).catch((error) => {
       console.error('[avaliacao] disparo falhou', {
