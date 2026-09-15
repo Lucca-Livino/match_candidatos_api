@@ -6,10 +6,32 @@ const Usuario = {
     email: { type: 'string', example: 'maria.rh@empresa.com' },
     tipos_permissao: {
       type: 'array',
-      items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
+      items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato', 'suporte'] },
       example: ['recrutador'],
     },
     status_ativo: { type: 'boolean', example: true },
+    groups: {
+      type: 'array',
+      description: 'Ids dos grupos de permissao aos quais o usuario pertence.',
+      items: { type: 'string', example: '67eb8c6ca9125055f940f5e1' },
+    },
+    permissions: {
+      type: 'array',
+      description: 'Permissoes por rota atribuidas diretamente ao usuario.',
+      items: {
+        type: 'object',
+        properties: {
+          route: { type: 'string', example: '/vagas' },
+          domain: { type: 'string', example: 'localhost' },
+          active: { type: 'boolean', example: true },
+          get: { type: 'boolean', example: true },
+          post: { type: 'boolean', example: false },
+          put: { type: 'boolean', example: false },
+          patch: { type: 'boolean', example: false },
+          delete: { type: 'boolean', example: false },
+        },
+      },
+    },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
   },
@@ -36,7 +58,7 @@ const usuarioSchemas = {
       tipos_permissao: {
         type: 'array',
         minItems: 1,
-        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
+        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato', 'suporte'] },
         example: ['recrutador'],
       },
       status_ativo: { type: 'boolean', example: true },
@@ -50,7 +72,7 @@ const usuarioSchemas = {
       tipos_permissao: {
         type: 'array',
         minItems: 1,
-        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato'] },
+        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato', 'suporte'] },
         example: ['candidato'],
       },
       status_ativo: { type: 'boolean', example: false },

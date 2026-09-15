@@ -2,6 +2,7 @@ import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import PerguntaRepository from '../repository/PerguntaRepository.js';
 import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
+import AvaliacaoCandidaturaService from './AvaliacaoCandidaturaService.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -11,11 +12,14 @@ class RespostaQuestionarioService {
     questionarioRepository = new QuestionarioRepository(),
     perguntaRepository = new PerguntaRepository(),
     candidaturaRepository = new CandidaturaRepository(),
+    avaliacaoCandidaturaService = new AvaliacaoCandidaturaService(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.perguntaRepository = perguntaRepository;
     this.candidaturaRepository = candidaturaRepository;
+    this.avaliacaoCandidaturaService = avaliacaoCandidaturaService;
+    this.avaliacaoEmAndamento = null;
   }
 
   sanitize(doc) {
@@ -174,6 +178,20 @@ class RespostaQuestionarioService {
     const finalizada = await this.repository.atualizarRespostaQuestionario(respostaQuestionario.id, {
       status: 'finalizado',
       finalizadoEm: new Date(),
+    });
+
+    const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
+
+    // Fire-and-forget: a resposta HTTP nao espera a IA. O `.catch` evita
+    // unhandledRejection; a promise fica exposta para quem precisar aguardar.
+    this.avaliacaoEmAndamento = Promise.resolve(
+      this.avaliacaoCandidaturaService.avaliar(respostaQuestionario.usuarioId, questionario.vagaId),
+    ).catch((error) => {
+      console.error('[avaliacao] disparo falhou', {
+        usuarioId: respostaQuestionario.usuarioId,
+        vagaId: questionario.vagaId,
+        erro: error.message,
+      });
     });
 
     return this.sanitize(finalizada);

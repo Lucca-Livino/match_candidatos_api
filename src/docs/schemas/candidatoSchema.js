@@ -72,13 +72,47 @@ const Certificacao = {
 
 const Candidatura = {
   type: 'object',
+  description:
+    'Candidatura. Os campos da triagem por IA sao escritos pelo servidor, nunca pelo cliente. ' +
+    '`scoreIA` e `limiteAplicado` existem no banco como registro de auditoria e NAO saem por ' +
+    'esta API: expor o numero devolveria o ranking que a triagem sem ordenacao evita.',
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'candv-001' },
     usuarioId: { type: 'string', example: 'user-001' },
     vagaId: { type: 'string', example: 'vaga-001' },
-    compativel: { type: 'integer', enum: [0, 1], example: 1 },
-    motivoIncompat_: { type: 'string', example: '' },
+    compativel: {
+      type: 'integer',
+      enum: [0, 1],
+      description:
+        'Resultado da triagem: 1 = apto, 0 = nao apto. Enquanto avaliadoEm for null carrega o ' +
+        'default do schema (1) e nao representa uma avaliacao.',
+      example: 1,
+    },
+    motivoIncompat_: {
+      type: 'string',
+      description: 'Preenchido pela triagem apenas quando compativel = 0.',
+      example: '',
+    },
+    justificativa: {
+      type: 'string',
+      description: 'Texto da analise por IA. Vazio enquanto a candidatura nao foi avaliada.',
+      example: 'Atende os criterios de maior peso; experiencia com Node.js comprovada.',
+    },
+    versaoModelo: {
+      type: 'string',
+      nullable: true,
+      description: 'Modelo da cascata que produziu a avaliacao.',
+      example: 'gemini-3.1-flash-lite',
+    },
+    avaliadoEm: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+      description:
+        'null enquanto a candidatura nao passou pela triagem (IA indisponivel ou desligada). ' +
+        'E o campo que distingue "sem avaliacao" de "avaliada como apta".',
+    },
     status: { type: 'string', enum: ['inscrito', 'em_analise', 'aprovado', 'reprovado'], example: 'inscrito' },
     movidoPor: { type: 'string', example: 'sistema' },
     criadoEm: { type: 'string', format: 'date-time' },
@@ -353,12 +387,14 @@ const candidatoSchemas = {
   CandidaturaCreateRequest: {
     type: 'object',
     required: ['vagaId'],
+    description:
+      'Corpo da inscricao. `vagaId` e o unico campo aceito: `compativel`, `motivoIncompat_` e ' +
+      '`movidoPor` sao escritos pelo servidor (os dois primeiros pela triagem por IA, o ultimo ' +
+      'como trilha de auditoria) e sao ignorados se enviados.',
     properties: {
       vagaId: { type: 'string', example: 'vaga-001' },
-      compativel: { type: 'integer', enum: [0, 1], example: 1 },
-      motivoIncompat_: { type: 'string', example: '' },
-      movidoPor: { type: 'string', example: 'sistema' },
     },
+    example: { vagaId: 'vaga-001' },
   },
 
   CandidaturaStatusPatchRequest: {

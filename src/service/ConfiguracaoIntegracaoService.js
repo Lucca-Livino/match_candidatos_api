@@ -8,13 +8,14 @@ class ConfiguracaoIntegracaoService {
   }
 
   // As chaves de API vivem apenas em variavel de ambiente. Aqui expomos
-  // somente o status booleano por provedor — nunca o valor.
+  // somente o status booleano por provedor — nunca o valor. O formato segue
+  // sendo um mapa, com um provedor so: e o que permite acrescentar outro sem
+  // quebrar o contrato do front.
   decorarComStatusDasChaves(config) {
     return {
       ...sanitizeDoc(config),
       chavesConfiguradas: {
         gemini: Boolean(process.env.GEMINI_API_KEY),
-        groq: Boolean(process.env.GROQ_API_KEY),
       },
     };
   }

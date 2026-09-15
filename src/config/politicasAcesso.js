@@ -14,6 +14,14 @@ const politicasAcesso = [
       PATCH: { roles: [SUPORTE] },
     },
   },
+  // Auditoria da triagem: exclusiva do suporte. E a unica rota que devolve
+  // scoreIA/limiteAplicado — por isso nao inclui ADMIN nem RECRUTADOR.
+  {
+    pattern: /^\/avaliacoes(?:\/?$)/,
+    methods: {
+      GET: { roles: [SUPORTE] },
+    },
+  },
   // Curriculo do proprio usuario
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
@@ -43,6 +51,18 @@ const politicasAcesso = [
     pattern: /^\/usuarios(?:\/?$)/,
     // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
     methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
+  },
+  // Candidaturas de uma vaga (visao do recrutador) e reavaliacao manual.
+  // Precisam vir antes do bloco generico de /vagas.
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] } },
+  },
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/reavaliar(?:\/?$)/,
+    // SUPORTE entra aqui porque e o unico papel que enxerga a pendencia da
+    // triagem (/avaliacoes) e portanto o unico que sabe que ha o que reprocessar.
+    methods: { POST: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
   },
   // Vagas
   {
@@ -75,10 +95,13 @@ const politicasAcesso = [
     pattern: /^\/resposta-questionario(?:\/.*)?$/,
     methods: { '*': { roles: [ADMIN, CANDIDATO] } },
   },
-  // Me
+  // Me: identidade do usuario logado. Precisa valer para TODO papel — e por
+  // aqui que o front descobre `tipos_permissao` para decidir a area. Um papel
+  // fora desta lista consegue autenticar mas nao consegue navegar: o
+  // RoleLayout nao recebe o papel e devolve a pessoa para a tela de login.
   {
     pattern: /^\/me(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO] } },
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] } },
   },
   // CRUD administrativo
   {
