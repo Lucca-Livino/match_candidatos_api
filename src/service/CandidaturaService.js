@@ -151,6 +151,17 @@ class CandidaturaService {
       throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
     }
 
+    // So reavalia quem ainda esta em 'inscrito'. Depois disso a candidatura ja
+    // passou por decisao humana (ou pela promocao da propria IA) e reavaliar
+    // gravaria um score que nao corresponde mais a fila em que ela esta.
+    if (candidatura.status !== 'inscrito') {
+      throw new AppError(
+        `Candidatura em '${candidatura.status}' nao pode ser reavaliada.`,
+        409,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+
     // `avaliar` devolve null no kill switch e na falha da IA. Nos dois casos
     // nada foi gravado: devolver 200 com o documento antigo faria a
     // reavaliacao parecer bem-sucedida.
