@@ -66,8 +66,12 @@ const triagemIAPaths = {
           },
         },
         401: { description: 'Token ausente ou invalido' },
-        403: { description: 'Papel sem permissao (apenas administrador e recrutador)' },
+        403: { description: 'Papel sem permissao (apenas administrador, recrutador e suporte)' },
         404: { description: 'Candidatura nao encontrada para este par usuario/vaga' },
+        409: {
+          description:
+            "Candidatura fora de 'inscrito'. Depois da promocao pela IA ou da decisao do recrutador a reavaliacao nao e mais permitida.",
+        },
         503: {
           description:
             'Avaliacao por IA indisponivel: a integracao esta desligada ou o modelo nao respondeu. Nada foi gravado.',
