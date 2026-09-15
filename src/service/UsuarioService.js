@@ -30,8 +30,15 @@ class UsuarioService {
     };
   }
 
-  async listar(query) {
-    const result = await this.repository.listarPaginado(query);
+  // `papeisDoSolicitante` decide o alcance da listagem. O recrutador chega aqui
+  // pela tela de candidatos: sem o recorte ele receberia tambem admins,
+  // suportes e outros recrutadores — dados pessoais que a tela nao pede e que
+  // a resposta carregaria de qualquer jeito, visiveis no devtools.
+  async listar(query, papeisDoSolicitante = []) {
+    const eAdmin = papeisDoSolicitante.includes('administrador');
+    const result = await this.repository.listarPaginado(
+      eAdmin ? query : { ...query, papel: 'candidato' },
+    );
 
     return {
       ...result,

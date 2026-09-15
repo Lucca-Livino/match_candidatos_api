@@ -1,8 +1,12 @@
 import Usuario from '../models/Usuario.js';
 
 class UsuarioRepository {
-  async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo } = {}) {
+  async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo, papel } = {}) {
     const filter = {};
+
+    if (papel) {
+      filter.tipos_permissao = papel;
+    }
 
     if (email) {
       filter.email = { $regex: email, $options: 'i' };
