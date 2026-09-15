@@ -88,12 +88,20 @@ class AvaliacaoPayloadService {
       respostaPergunta_: { $in: respostasPergunta.map((r) => r.id) },
     }).lean();
 
-    const textoPorOpcaoId = new Map(opcoes.map((o) => [o.id, o.texto]));
+    const opcaoPorId = new Map(opcoes.map((o) => [o.id, o]));
     const respostaPorPerguntaId = new Map(respostasPergunta.map((r) => [r.perguntaId, r]));
+
+    const opcoesPorPerguntaId = opcoes.reduce((acc, opcao) => {
+      const lista = acc.get(opcao.perguntaId) || [];
+      lista.push(opcao);
+      acc.set(opcao.perguntaId, lista);
+      return acc;
+    }, new Map());
 
     const opcoesPorRespostaPerguntaId = selecionadas.reduce((acc, item) => {
       const lista = acc.get(item.respostaPergunta_) || [];
-      lista.push(textoPorOpcaoId.get(item.opcaoRespostaId));
+      const opcao = opcaoPorId.get(item.opcaoRespostaId);
+      if (opcao) lista.push(opcao);
       acc.set(item.respostaPergunta_, lista);
       return acc;
     }, new Map());
@@ -103,17 +111,46 @@ class AvaliacaoPayloadService {
         const resposta = respostaPorPerguntaId.get(pergunta.id);
         if (!resposta) return null;
 
+        const disponiveis = (opcoesPorPerguntaId.get(pergunta.id) || []).sort(
+          (a, b) => a.ordem - b.ordem,
+        );
+        const marcadas = opcoesPorRespostaPerguntaId.get(resposta.id) || [];
+
         return {
           perguntaId: pergunta.id,
           enunciado: pergunta.enunciado,
           tipoResposta: pergunta.tipoResposta,
           textoResposta: resposta.textoResposta || '',
-          opcoesSelecionadas: (opcoesPorRespostaPerguntaId.get(resposta.id) || []).filter(Boolean),
+          opcoesSelecionadas: marcadas.map((o) => o.texto),
+          ...this.aferirObjetiva(pergunta, disponiveis, marcadas),
         };
       })
       .filter(Boolean);
 
     return { titulo: questionario.titulo, respostas };
+  }
+
+  // Multipla escolha e verdadeiro/falso so viram sinal se o gabarito for junto:
+  // "Verdadeiro" sozinho nao diz nada ao modelo. O acerto e decidido aqui, pelo
+  // campo `correta` da opcao, e nao pela IA — assim a mesma resposta pontua
+  // igual em toda avaliacao, independente do modelo que atender a rodada.
+  //
+  // `acertou: null` quando a pergunta nao tem gabarito definido (nenhuma opcao
+  // marcada como correta). Nesse caso a resposta continua no payload como
+  // contexto, mas nada nela conta como acerto ou erro.
+  aferirObjetiva(pergunta, disponiveis, marcadas) {
+    if (pergunta.tipoResposta === 'dissertativa') return {};
+
+    const gabarito = disponiveis.filter((o) => o.correta === 1).map((o) => o.texto);
+
+    return {
+      opcoesDisponiveis: disponiveis.map((o) => o.texto),
+      gabarito,
+      acertou:
+        gabarito.length === 0
+          ? null
+          : marcadas.length > 0 && marcadas.every((o) => o.correta === 1),
+    };
   }
 
   async montar(usuarioId, vagaId) {
