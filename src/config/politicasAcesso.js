@@ -60,7 +60,9 @@ const politicasAcesso = [
   },
   {
     pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/reavaliar(?:\/?$)/,
-    methods: { POST: { roles: [ADMIN, RECRUTADOR] } },
+    // SUPORTE entra aqui porque e o unico papel que enxerga a pendencia da
+    // triagem (/avaliacoes) e portanto o unico que sabe que ha o que reprocessar.
+    methods: { POST: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
   },
   // Vagas
   {
