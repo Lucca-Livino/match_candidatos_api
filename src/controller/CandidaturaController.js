@@ -1,4 +1,5 @@
 import CandidaturaService from '../service/CandidaturaService.js';
+import FichaCandidaturaService from '../service/FichaCandidaturaService.js';
 import {
   validateCreateCandidatura,
   validateUpdateStatusCandidatura,
@@ -6,8 +7,9 @@ import {
 import { sendSuccess } from '../utils/helpers/http.js';
 
 class CandidaturaController {
-  constructor(service = new CandidaturaService()) {
+  constructor(service = new CandidaturaService(), fichaService = new FichaCandidaturaService()) {
     this.service = service;
+    this.fichaService = fichaService;
   }
 
   async criarCandidatura(req, res, next) {
@@ -58,6 +60,17 @@ class CandidaturaController {
     try {
       const data = await this.service.listarPorVaga(req.params.id);
       return sendSuccess(res, data, 200, 'Candidaturas da vaga listadas com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // Ficha de impressao (recrutador, admin, suporte): curriculo e respostas,
+  // sem nada da triagem.
+  async montarFicha(req, res, next) {
+    try {
+      const data = await this.fichaService.montar(req.params.usuarioId, req.params.id);
+      return sendSuccess(res, data, 200, 'Ficha da candidatura montada com sucesso.');
     } catch (error) {
       return next(error);
     }

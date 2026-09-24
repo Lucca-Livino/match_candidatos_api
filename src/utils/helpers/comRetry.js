@@ -1,15 +1,11 @@
 import { classificarErroIA } from './classificarErroIA.js';
+import { ErroDeCotaDiaria } from './errosIA.js';
 
 const dormirDeVerdade = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export class ErroDeCotaDiaria extends Error {
-  constructor(causa, modelo = null) {
-    super(`cota diaria esgotada${modelo ? ` no modelo ${modelo}` : ''}`);
-    this.name = 'ErroDeCotaDiaria';
-    this.causa = causa;
-    this.modelo = modelo;
-  }
-}
+// Reexportado por compatibilidade: o tipo vive em errosIA.js, junto dos outros
+// erros do dominio, porque quem le a cascata precisa ver os tres lado a lado.
+export { ErroDeCotaDiaria };
 
 export const comRetry = async (
   fn,

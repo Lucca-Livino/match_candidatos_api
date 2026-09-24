@@ -4,6 +4,81 @@ import AppError from '../helpers/AppError.js';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
+// Contato do perfil: opcional em toda rota, guardado como string ja aparada.
+// O limite espelha o `maxlength` do model — validar aqui devolve 400 com a
+// causa, em vez de deixar o Mongoose lancar ValidationError na gravacao.
+const CAMPOS_CONTATO = [
+  ['telefone', 20],
+  ['cidade', 120],
+];
+
+const LINKEDIN_MAX_LENGTH = 255;
+
+// O campo existe para virar um link clicavel no perfil. Guardar "maria-silva"
+// ou "meu linkedin" deixaria a tela com um href que nao abre nada, e o defeito
+// so apareceria quando alguem clicasse — por isso a forma e exigida na entrada.
+//
+// Aceita o que as pessoas realmente copiam: com ou sem `https://`, com `www.`,
+// com prefixo de pais (`br.linkedin.com`) e com os parametros de rastreio que
+// o proprio LinkedIn gruda no "copiar link". Guarda sempre a forma canonica,
+// para que dois cadastros do mesmo perfil nao virem strings diferentes.
+const LINKEDIN_REGEX =
+  /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9\-_%]{3,100})\/?(?:\?.*)?$/i;
+
+const normalizeLinkedin = (valorBruto) => {
+  const valor = String(valorBruto ?? '').trim();
+
+  // Vazio e "nao informado": o campo continua opcional e limpavel por PATCH.
+  if (valor === '') {
+    return '';
+  }
+
+  if (valor.length > LINKEDIN_MAX_LENGTH) {
+    throw new AppError(
+      `linkedin deve ter no maximo ${LINKEDIN_MAX_LENGTH} caracteres.`,
+      400,
+      'VALIDATION_ERROR',
+    );
+  }
+
+  const achado = valor.match(LINKEDIN_REGEX);
+  if (!achado) {
+    throw new AppError(
+      'linkedin deve ser o endereco de um perfil, no formato https://www.linkedin.com/in/seu-perfil.',
+      400,
+      'VALIDATION_ERROR',
+      { exemplo: 'https://www.linkedin.com/in/maria-silva' },
+    );
+  }
+
+  return `https://www.linkedin.com/in/${achado[1]}`;
+};
+
+const normalizeContato = (payload, destino) => {
+  for (const [campo, limite] of CAMPOS_CONTATO) {
+    if (!Object.hasOwn(payload, campo)) {
+      continue;
+    }
+
+    const valor = String(payload[campo] ?? '').trim();
+    if (valor.length > limite) {
+      throw new AppError(
+        `${campo} deve ter no maximo ${limite} caracteres.`,
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
+
+    destino[campo] = valor;
+  }
+
+  if (Object.hasOwn(payload, 'linkedin')) {
+    destino.linkedin = normalizeLinkedin(payload.linkedin);
+  }
+
+  return destino;
+};
+
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new AppError('Payload invalido.', 400, code);
@@ -54,13 +129,13 @@ export const validateCreateUsuario = (payload) => {
     throw new AppError('status_ativo deve ser booleano.', 400, 'VALIDATION_ERROR');
   }
 
-  return {
+  return normalizeContato(payload, {
     nome,
     email,
     senha,
     tipos_permissao: normalizeRoles(payload.tipos_permissao),
     status_ativo: typeof status_ativo === 'boolean' ? status_ativo : true,
-  };
+  });
 };
 
 export const validatePatchUsuario = (payload) => {
@@ -107,6 +182,8 @@ export const validatePatchUsuario = (payload) => {
     }
     normalized.senha = senha;
   }
+
+  normalizeContato(payload, normalized);
 
   if (Object.keys(normalized).length === 0) {
     throw new AppError('Nenhum campo valido foi informado para atualizacao.', 400, 'VALIDATION_ERROR');

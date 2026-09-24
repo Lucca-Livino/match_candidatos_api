@@ -13,6 +13,20 @@ export const statusDoErro = (erro) => {
 };
 
 
+const CODIGOS_DE_REDE = /^(ECONNRESET|ECONNREFUSED|ECONNABORTED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|ENETUNREACH|EHOSTUNREACH|UND_ERR_\w+)$/;
+const MENSAGENS_DE_REDE = /fetch failed|socket hang up|network|timed? ?out/i;
+
+// Sem status HTTP, so e transitorio o que tem cara de rede. Um TypeError de
+// bug tambem chega sem status; repeti-lo gastaria o backoff inteiro e depois
+// desceria a cascata, escondendo o defeito atras de "modelo indisponivel".
+const ehFalhaDeRede = (erro) => {
+  if (!erro || typeof erro !== 'object') return false;
+  if (['AbortError', 'TimeoutError'].includes(erro.name)) return true;
+  const codigos = [erro.code, erro.cause?.code].filter((c) => typeof c === 'string');
+  if (codigos.some((c) => CODIGOS_DE_REDE.test(c))) return true;
+  return MENSAGENS_DE_REDE.test(String(erro.message ?? ''));
+};
+
 const ehCotaDiaria = (erro) => {
   const texto = JSON.stringify({
     message: erro?.message ?? '',
@@ -40,7 +54,9 @@ export const classificarErroIA = (erro) => {
     return { status, acao: 'escalar', motivo: 'cota diaria (RPD) esgotada', atrasoSugeridoMs };
   }
   if (status === null) {
-    return { status, acao: 'repetir', motivo: 'falha de rede sem status', atrasoSugeridoMs };
+    return ehFalhaDeRede(erro)
+      ? { status, acao: 'repetir', motivo: 'falha de rede sem status', atrasoSugeridoMs }
+      : { status, acao: 'desistir', motivo: 'erro sem status (provavel defeito)', atrasoSugeridoMs };
   }
   if (STATUS_REPETIVEIS.includes(status)) {
     return {

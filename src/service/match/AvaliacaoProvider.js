@@ -15,10 +15,8 @@ class AvaliacaoProvider {
     );
   }
 
-  // Recebe o payload consolidado e devolve o objeto ja parseado
-  // ({ score, criterios, resumo }). Erros sobem crus: normalizar e
-  // responsabilidade do Context (MatchIAService), nao da estrategia.
-  // eslint-disable-next-line no-unused-vars
+  // Recebe o payload consolidado e devolve o objeto ja validado
+  // ({ score, criterios, resumo }). Falhas sobem como erro de errosIA.js
   async gerarAvaliacao(payload, { modelo, temperatura }) {
     throw new AppError(
       `${this.constructor.name}: gerarAvaliacao nao implementado.`,

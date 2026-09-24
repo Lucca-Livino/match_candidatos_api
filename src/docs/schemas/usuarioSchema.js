@@ -4,6 +4,13 @@ const Usuario = {
     _id: { type: 'string', example: '67eb8c6ca9125055f940f5e0' },
     nome: { type: 'string', example: 'Maria RH' },
     email: { type: 'string', example: 'maria.rh@empresa.com' },
+    telefone: { type: 'string', example: '(11) 99999-9999' },
+    linkedin: {
+      type: 'string',
+      description: 'URL canonica do perfil. Armazenada sempre como https://www.linkedin.com/in/<perfil>.',
+      example: 'https://www.linkedin.com/in/maria-rh',
+    },
+    cidade: { type: 'string', example: 'Sao Paulo' },
     tipos_permissao: {
       type: 'array',
       items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato', 'suporte'] },
@@ -55,6 +62,15 @@ const usuarioSchemas = {
       nome: { type: 'string', example: 'Maria RH' },
       email: { type: 'string', format: 'email', example: 'maria.rh@empresa.com' },
       senha: { type: 'string', format: 'password', example: 'Senha@123' },
+      telefone: { type: 'string', maxLength: 20, example: '(11) 99999-9999' },
+      linkedin: {
+        type: 'string',
+        maxLength: 255,
+        description:
+          'Endereco do perfil no LinkedIn. Aceita com ou sem https://, com www. ou prefixo de pais, e com os parametros de rastreio do "copiar link"; e normalizado para https://www.linkedin.com/in/<perfil>. Qualquer outro formato devolve 400.',
+        example: 'https://www.linkedin.com/in/maria-rh',
+      },
+      cidade: { type: 'string', maxLength: 120, example: 'Sao Paulo' },
       tipos_permissao: {
         type: 'array',
         minItems: 1,
@@ -69,6 +85,14 @@ const usuarioSchemas = {
     properties: {
       nome: { type: 'string', example: 'Maria RH Atualizada' },
       email: { type: 'string', format: 'email', example: 'maria.atualizada@empresa.com' },
+      telefone: { type: 'string', maxLength: 20, example: '(11) 98888-7777' },
+      linkedin: {
+        type: 'string',
+        maxLength: 255,
+        description: 'Envie "" para remover o link do perfil.',
+        example: 'https://www.linkedin.com/in/maria-rh',
+      },
+      cidade: { type: 'string', maxLength: 120, example: 'Campinas' },
       tipos_permissao: {
         type: 'array',
         minItems: 1,

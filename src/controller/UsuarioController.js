@@ -13,7 +13,7 @@ class UsuarioController {
 
   async listar(req, res) {
     const query = validateListQuery(req.query);
-    const data = await this.service.listar(query);
+    const data = await this.service.listar(query, req.user?.tipos_permissao ?? []);
     return sendSuccess(res, data, 200, 'Usuarios listados com sucesso.');
   }
 

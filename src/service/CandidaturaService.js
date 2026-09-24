@@ -83,7 +83,40 @@ class CandidaturaService {
   // recrutador pela fila (status), nao por rotulo na tela.
   async listarPorVaga(vagaId) {
     const list = await this.candidaturaRepository.listarPorVagaId(vagaId);
-    return list.map((item) => this.omitirTriagem(this.sanitize(item)));
+    const nomePorUsuario = await this.buscarUsuariosDasCandidaturas(list);
+
+    return list.map((item) => {
+      const usuario = nomePorUsuario.get(String(item.usuarioId));
+
+      return {
+        ...this.omitirTriagem(this.sanitize(item)),
+        // A candidatura guarda so o usuarioId. Sem anexar o usuario aqui a tela
+        // do recrutador nao teria como nomear ninguem na fila.
+        // O contato vai junto porque o recrutador nao le /usuarios/:id: sem
+        // isto ele veria o candidato na fila mas nao teria como procura-lo.
+        candidato: usuario
+          ? {
+              id: String(usuario._id),
+              nome: usuario.nome,
+              email: usuario.email,
+              telefone: usuario.telefone ?? '',
+              linkedin: usuario.linkedin ?? '',
+              cidade: usuario.cidade ?? '',
+            }
+          : null,
+      };
+    });
+  }
+
+  // Usuarios das candidaturas em uma consulta so, para nao emitir um find por
+  // linha da lista.
+  async buscarUsuariosDasCandidaturas(candidaturas) {
+    const usuarioIds = [...new Set(candidaturas.map((c) => c.usuarioId))];
+    const usuarios = await Usuario.find({ _id: { $in: usuarioIds } }, 'nome email telefone linkedin cidade')
+      .lean()
+      .catch(() => []);
+
+    return new Map(usuarios.map((u) => [String(u._id), u]));
   }
 
   // Visao do SUPORTE, unica saida da API que expoe scoreIA e limiteAplicado.
@@ -94,15 +127,13 @@ class CandidaturaService {
   async listarParaAuditoria(filtros = {}) {
     const lista = await this.candidaturaRepository.listarParaAuditoria(filtros);
 
-    const usuarioIds = [...new Set(lista.map((c) => c.usuarioId))];
     const vagaIds = [...new Set(lista.map((c) => c.vagaId))];
 
-    const [usuarios, vagas] = await Promise.all([
-      Usuario.find({ _id: { $in: usuarioIds } }, 'nome email').lean().catch(() => []),
+    const [nomePorUsuario, vagas] = await Promise.all([
+      this.buscarUsuariosDasCandidaturas(lista),
       Vaga.find({ _id: { $in: vagaIds } }, 'titulo').lean().catch(() => []),
     ]);
 
-    const nomePorUsuario = new Map(usuarios.map((u) => [String(u._id), u]));
     const vagaPorId = new Map(vagas.map((v) => [String(v._id), v]));
 
     return lista.map((candidatura) => {

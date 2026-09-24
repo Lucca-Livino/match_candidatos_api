@@ -22,10 +22,14 @@ const politicasAcesso = [
       GET: { roles: [SUPORTE] },
     },
   },
-  // Curriculo do proprio usuario
+  // Curriculo do proprio usuario. O recrutador so le: o detalhe do candidato
+  // na tela de candidatos carrega as quatro secoes; editar segue com o dono.
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
-    methods: { '*': { roles: [ADMIN], allowSelf: true } },
+    methods: {
+      GET: { roles: [ADMIN, RECRUTADOR], allowSelf: true },
+      '*': { roles: [ADMIN], allowSelf: true },
+    },
   },
   // Status da candidatura (acao do recrutador/admin)
   {
@@ -63,6 +67,12 @@ const politicasAcesso = [
     // SUPORTE entra aqui porque e o unico papel que enxerga a pendencia da
     // triagem (/avaliacoes) e portanto o unico que sabe que ha o que reprocessar.
     methods: { POST: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
+  },
+  // Ficha de impressao: contato, curriculo e respostas de UMA candidatura.
+  // Sai sem nenhum campo da triagem, por isso vale para os tres papeis internos.
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/ficha(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
   },
   // Vagas
   {

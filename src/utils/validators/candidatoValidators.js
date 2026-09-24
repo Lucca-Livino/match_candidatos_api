@@ -110,7 +110,10 @@ export const validateCreateFormacao = (payload) => {
     .toLowerCase();
   const situacao = String(payload.situacao || '').trim();
   const anoInicio = Number(payload.anoInicio);
-  const anoConclusao = Object.hasOwn(payload, 'anoConclusao') ? Number(payload.anoConclusao) : null;
+  const anoConclusao =
+    payload.anoConclusao === undefined || payload.anoConclusao === null || payload.anoConclusao === ''
+      ? null
+      : Number(payload.anoConclusao);
 
   if (!instituicao || !curso || !situacao) {
     throw new AppError('instituicao, curso e situacao sao obrigatorios.', 400, 'VALIDATION_ERROR');

@@ -72,7 +72,14 @@ class AvaliacaoCandidaturaService {
     } catch (error) {
       // Falha da IA nao reprova ninguem: candidatura fica pendente
       // (avaliadoEm null) e pode ser reprocessada.
-      console.error('[avaliacao] falha na IA', { usuarioId, vagaId, erro: error.message });
+      // `detalhes` carrega causa/motivo/trilha da cascata: sem ele o log diz
+      // so "indisponivel" e nao responde se a rodada parou por cota ou defeito.
+      console.error('[avaliacao] falha na IA', {
+        usuarioId,
+        vagaId,
+        erro: error.message,
+        detalhes: error.details ?? null,
+      });
       return null;
     }
 
