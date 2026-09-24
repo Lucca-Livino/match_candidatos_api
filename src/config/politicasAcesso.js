@@ -68,6 +68,12 @@ const politicasAcesso = [
     // triagem (/avaliacoes) e portanto o unico que sabe que ha o que reprocessar.
     methods: { POST: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
   },
+  // Ficha de impressao: contato, curriculo e respostas de UMA candidatura.
+  // Sai sem nenhum campo da triagem, por isso vale para os tres papeis internos.
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/ficha(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
+  },
   // Vagas
   {
     pattern: /^\/vagas(?:\/[^/]+)?(?:\/?$)/,

@@ -19,6 +19,10 @@ router.post('/vagas/:id/candidaturas/:usuarioId/reavaliar', (req, res, next) =>
   candidaturaController.reavaliarCandidatura(req, res, next),
 );
 
+router.get('/vagas/:id/candidaturas/:usuarioId/ficha', (req, res, next) =>
+  candidaturaController.montarFicha(req, res, next),
+);
+
 router.get('/vagas/:id', (req, res, next) => {
   vagaController.listarPorId(req, res).catch(next);
 });
