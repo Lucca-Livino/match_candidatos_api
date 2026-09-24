@@ -92,7 +92,18 @@ class CandidaturaService {
         ...this.omitirTriagem(this.sanitize(item)),
         // A candidatura guarda so o usuarioId. Sem anexar o usuario aqui a tela
         // do recrutador nao teria como nomear ninguem na fila.
-        candidato: usuario ? { id: String(usuario._id), nome: usuario.nome, email: usuario.email } : null,
+        // O contato vai junto porque o recrutador nao le /usuarios/:id: sem
+        // isto ele veria o candidato na fila mas nao teria como procura-lo.
+        candidato: usuario
+          ? {
+              id: String(usuario._id),
+              nome: usuario.nome,
+              email: usuario.email,
+              telefone: usuario.telefone ?? '',
+              linkedin: usuario.linkedin ?? '',
+              cidade: usuario.cidade ?? '',
+            }
+          : null,
       };
     });
   }
@@ -101,7 +112,7 @@ class CandidaturaService {
   // linha da lista.
   async buscarUsuariosDasCandidaturas(candidaturas) {
     const usuarioIds = [...new Set(candidaturas.map((c) => c.usuarioId))];
-    const usuarios = await Usuario.find({ _id: { $in: usuarioIds } }, 'nome email')
+    const usuarios = await Usuario.find({ _id: { $in: usuarioIds } }, 'nome email telefone linkedin cidade')
       .lean()
       .catch(() => []);
 
