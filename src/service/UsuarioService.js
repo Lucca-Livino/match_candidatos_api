@@ -61,7 +61,16 @@ class UsuarioService {
   // 1) cria a conta (email/senha) via signUpEmail (hash fica na collection 'account');
   // 2) vincula papel e grupos no mesmo doc 'usuarios'.
   // Usado tanto pelo auto-cadastro de candidato quanto pela criacao administrativa.
-  async provisionarComAuth({ nome, email, senha, tipos_permissao, status_ativo = true }) {
+  async provisionarComAuth({
+    nome,
+    email,
+    senha,
+    tipos_permissao,
+    status_ativo = true,
+    telefone,
+    linkedin,
+    cidade,
+  }) {
     const jaExiste = await this.repository.buscarPorEmail(email);
     if (jaExiste) {
       throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
@@ -77,6 +86,13 @@ class UsuarioService {
       tipos_permissao,
       status_ativo,
       groups: grupos.map((grupo) => grupo._id),
+      // O signUpEmail grava em 'usuarios' por fora do schema, entao os defaults
+      // do model nao chegam a este documento. Sem gravar aqui, o contato
+      // enviado na criacao administrativa seria silenciosamente descartado, e
+      // o campo ficaria ausente em vez de vazio na leitura.
+      telefone: telefone ?? '',
+      linkedin: linkedin ?? '',
+      cidade: cidade ?? '',
     });
 
     return this.sanitize(atualizado);

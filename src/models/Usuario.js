@@ -44,6 +44,28 @@ const UsuarioSchema = new mongoose.Schema(
         message: 'tipos_permissao deve conter ao menos um papel.',
       },
     },
+    // Contato do perfil. Opcionais para todo papel: o recrutador cadastrado
+    // pelo admin nao tem LinkedIn, e o candidato costuma preencher o telefone
+    // depois do cadastro. String vazia e o "nao informado" — sem `required`,
+    // um PATCH parcial nunca esbarra neles.
+    telefone: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      default: '',
+    },
+    linkedin: {
+      type: String,
+      trim: true,
+      maxlength: 255,
+      default: '',
+    },
+    cidade: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: '',
+    },
     status_ativo: {
       type: Boolean,
       default: true,
