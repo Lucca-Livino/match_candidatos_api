@@ -22,10 +22,14 @@ const politicasAcesso = [
       GET: { roles: [SUPORTE] },
     },
   },
-  // Curriculo do proprio usuario
+  // Curriculo do proprio usuario. O recrutador so le: o detalhe do candidato
+  // na tela de candidatos carrega as quatro secoes; editar segue com o dono.
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
-    methods: { '*': { roles: [ADMIN], allowSelf: true } },
+    methods: {
+      GET: { roles: [ADMIN, RECRUTADOR], allowSelf: true },
+      '*': { roles: [ADMIN], allowSelf: true },
+    },
   },
   // Status da candidatura (acao do recrutador/admin)
   {
