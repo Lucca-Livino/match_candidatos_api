@@ -1,3 +1,5 @@
+import { ErroDeRespostaInvalida } from '../../utils/helpers/errosIA.js';
+
 // Escala descrita explicitamente: sem ela o modelo inventa uma calibragem
 // diferente a cada vaga e o limiar deixa de significar a mesma coisa.
 export const RUBRICA = `Voce avalia a compatibilidade entre um candidato e uma vaga de emprego.
@@ -80,4 +82,18 @@ export const extrairJson = (texto) => {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '');
   return JSON.parse(limpo);
+};
+
+export const validarAvaliacao = (resultado, modelo = null) => {
+  const invalido = (causa) => new ErroDeRespostaInvalida(causa, { modelo, motivo: causa });
+
+  const score = Number(resultado?.score);
+  if (!Number.isFinite(score) || score < 0 || score > 1) throw invalido('score_invalido');
+  if (!Array.isArray(resultado.criterios)) throw invalido('criterios_invalidos');
+
+  return {
+    score,
+    criterios: resultado.criterios,
+    resumo: String(resultado.resumo || ''),
+  };
 };
