@@ -40,6 +40,15 @@ class UsuarioController {
     return sendSuccess(res, data, 200, 'Usuario atualizado com sucesso.');
   }
 
+  // Autoexclusao: o alvo vem da sessao (`req.user_id`), nunca da URL, para que
+  // nao exista caminho em que um id de path decida de quem e a conta apagada.
+  async excluirPropriaConta(req, res) {
+    const data = await this.service.excluirPropriaConta(req.user_id, {
+      emailConfirmacao: req.body?.emailConfirmacao,
+    });
+    return sendSuccess(res, data, 200, 'Conta excluida com sucesso.');
+  }
+
   async deletar(req, res) {
     const data = await this.service.deletar(req.params.id);
     return sendSuccess(res, data, 200, 'Usuario excluido com sucesso.');

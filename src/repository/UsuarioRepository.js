@@ -2,7 +2,9 @@ import Usuario from '../models/Usuario.js';
 
 class UsuarioRepository {
   async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo, papel } = {}) {
-    const filter = {};
+    // Conta autoexcluida nunca aparece em listagem: o documento so sobrevive
+    // para manter o historico de candidaturas coerente.
+    const filter = { deletadoEm: null };
 
     if (papel) {
       filter.tipos_permissao = papel;
@@ -57,6 +59,36 @@ class UsuarioRepository {
 
   async deletar(id) {
     return Usuario.findByIdAndDelete(id).lean();
+  }
+
+  // Sobrescreve os dados pessoais no lugar de remover o documento. 
+  async anonimizar(id, { nome, email, deletadoEm }) {
+    return Usuario.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          nome,
+          email,
+          senha: null,
+          telefone: '',
+          linkedin: '',
+          cidade: '',
+          status_ativo: false,
+          groups: [],
+          permissions: [],
+          deletadoEm,
+        },
+      },
+      { returnDocument: 'after', runValidators: true },
+    ).lean();
+  }
+
+  async contarAdministradoresAtivos() {
+    return Usuario.countDocuments({
+      tipos_permissao: 'administrador',
+      status_ativo: true,
+      deletadoEm: null,
+    });
   }
 }
 

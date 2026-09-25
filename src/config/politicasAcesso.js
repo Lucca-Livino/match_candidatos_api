@@ -41,6 +41,15 @@ const politicasAcesso = [
     pattern: /^\/usuarios\/([^/]+)\/candidatura(?:\/|$)/,
     methods: { '*': { roles: [ADMIN], allowSelf: true } },
   },
+  // Autoexclusao da propria conta. Vale para todo papel e precisa vir antes do
+  // bloco de /usuarios/:id, que casaria com 'me' e restringiria o DELETE ao
+  // administrador. Nao usa allowSelf: o alvo nao esta na URL, vem da sessao.
+  {
+    pattern: /^\/usuarios\/me(?:\/?$)/,
+    methods: {
+      DELETE: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] },
+    },
+  },
   // Usuario individual (registro publico e liberado no app.js, nao passa aqui)
   {
     pattern: /^\/usuarios\/([^/]+)(?:\/|$)/,

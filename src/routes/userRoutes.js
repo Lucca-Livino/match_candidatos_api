@@ -25,6 +25,12 @@ router.patch('/usuarios/:id', (req, res, next) => {
   usuarioController.atualizar(req, res).catch(next);
 });
 
+// Precisa vir antes de '/usuarios/:id': registrada depois, 'me' cairia no
+// path param e seria tratada como id de outro usuario.
+router.delete('/usuarios/me', (req, res, next) => {
+  usuarioController.excluirPropriaConta(req, res).catch(next);
+});
+
 router.delete('/usuarios/:id', (req, res, next) => {
   usuarioController.deletar(req, res).catch(next);
 });
