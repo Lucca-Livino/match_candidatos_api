@@ -2,8 +2,6 @@ import AppError from '../../utils/helpers/AppError.js';
 
 export const novaCascata = (modelos) => {
   if (!Array.isArray(modelos) || modelos.length === 0) {
-    // Falha cedo e barulhenta. Uma cascata vazia so apareceria na primeira
-    // candidatura avaliada, longe da causa, como "AI_UNAVAILABLE" generico.
     throw new AppError('Cascata de modelos vazia.', 500, 'AI_CASCADE_EMPTY');
   }
   return { modelos: [...modelos], indice: 0, esgotados: [] };
