@@ -47,6 +47,7 @@ class CandidaturaController {
         req.params.id,
         req.params.vagaId,
         payload,
+        req.user?.email ?? (req.user_id ? String(req.user_id) : null),
       );
       return sendSuccess(res, data, 200, 'Status da candidatura atualizado com sucesso.');
     } catch (error) {

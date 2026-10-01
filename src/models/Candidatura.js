@@ -19,6 +19,10 @@ const CandidaturaSchema = new mongoose.Schema(
     versaoModelo: { type: String, trim: true, maxlength: 120, default: null },
     avaliadoEm: { type: Date, default: null },
     justificativa: { type: String, trim: true, maxlength: 4000, default: '' },
+    // Trilha da ultima reabertura (aprovado/reprovado -> em_analise). Vem da
+    // sessao, nunca do payload.
+    reabertoPor: { type: String, trim: true, maxlength: 180, default: null },
+    reabertoEm: { type: Date, default: null },
   },
   {
     collection: 'candidatura',
