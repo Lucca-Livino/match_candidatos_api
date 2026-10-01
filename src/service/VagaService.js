@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import VagaRepository from '../repository/VagaRepository.js';
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
+import Candidatura from '../models/Candidatura.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -8,9 +9,11 @@ class VagaService {
   constructor(
     repository = new VagaRepository(),
     questionarioRepository = new QuestionarioRepository(),
+    candidaturaModel = Candidatura,
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
+    this.Candidatura = candidaturaModel;
   }
 
   sanitize(vaga) {
@@ -64,11 +67,28 @@ class VagaService {
 
   async listar(query) {
     const result = await this.repository.listarPaginado(query);
+    const totais = await this.contarCandidaturas(result.docs.map((item) => String(item._id)));
 
     return {
       ...result,
-      docs: result.docs.map((item) => this.sanitize(item)),
+      docs: result.docs.map((item) => ({
+        ...this.sanitize(item),
+        totalCandidatos: totais.get(String(item._id)) ?? 0,
+      })),
     };
+  }
+
+  // Candidaturas de todas as vagas da pagina numa agregacao so, para nao
+  // emitir uma contagem por card.
+  async contarCandidaturas(vagaIds) {
+    if (vagaIds.length === 0) return new Map();
+
+    const grupos = await this.Candidatura.aggregate([
+      { $match: { vagaId: { $in: vagaIds } } },
+      { $group: { _id: '$vagaId', total: { $sum: 1 } } },
+    ]);
+
+    return new Map(grupos.map(({ _id, total }) => [_id, total]));
   }
 
   async buscarPorId(id) {
