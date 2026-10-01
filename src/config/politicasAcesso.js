@@ -65,6 +65,13 @@ const politicasAcesso = [
     // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
     methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
   },
+  // Relatorios (visao geral e por vaga): numeros do processo seletivo, so para
+  // quem conduz o processo. Precisa vir antes do bloco generico de /vagas, que
+  // libera GET ao candidato.
+  {
+    pattern: /^\/vagas\/(?:[^/]+\/)?relatorio(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] } },
+  },
   // Candidaturas de uma vaga (visao do recrutador) e reavaliacao manual.
   // Precisam vir antes do bloco generico de /vagas.
   {
