@@ -1,4 +1,8 @@
-import { GRAUS_ACADEMICOS } from '../../models/Formacao.js';
+import {
+  GRAUS_ACADEMICOS,
+  SITUACOES_FORMACAO,
+  SITUACOES_COM_ANO_CONCLUSAO,
+} from '../../models/Formacao.js';
 import { NIVEIS_HABILIDADE } from '../../models/Habilidade.js';
 import AppError from '../helpers/AppError.js';
 
@@ -100,6 +104,21 @@ export const validateListCandidatoQuery = (query = {}) => {
   };
 };
 
+const normalizarSituacao = (valor) => String(valor || '').trim().toLowerCase();
+
+// Regra compartilhada com o FormacaoService, que a aplica sobre o documento
+// mesclado no update parcial.
+export const validarAnoConclusaoPorSituacao = (situacao, anoConclusao) => {
+  if (SITUACOES_COM_ANO_CONCLUSAO.includes(situacao) && anoConclusao === null) {
+    const campo = situacao === 'cursando' ? 'previsao de conclusao' : 'ano de conclusao';
+    throw new AppError(
+      `Informe o ${campo} para formacao com situacao "${situacao}".`,
+      400,
+      'VALIDATION_ERROR',
+    );
+  }
+};
+
 export const validateCreateFormacao = (payload) => {
   ensureObject(payload);
 
@@ -108,7 +127,7 @@ export const validateCreateFormacao = (payload) => {
   const grau = String(payload.grau || '')
     .trim()
     .toLowerCase();
-  const situacao = String(payload.situacao || '').trim();
+  const situacao = normalizarSituacao(payload.situacao);
   const anoInicio = Number(payload.anoInicio);
   const anoConclusao =
     payload.anoConclusao === undefined || payload.anoConclusao === null || payload.anoConclusao === ''
@@ -123,6 +142,10 @@ export const validateCreateFormacao = (payload) => {
     throw new AppError('grau invalido.', 400, 'VALIDATION_ERROR', { allowed: GRAUS_ACADEMICOS });
   }
 
+  if (!SITUACOES_FORMACAO.includes(situacao)) {
+    throw new AppError('situacao invalida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
+  }
+
   if (!Number.isInteger(anoInicio) || anoInicio < 1900) {
     throw new AppError('anoInicio invalido.', 400, 'VALIDATION_ERROR');
   }
@@ -130,6 +153,8 @@ export const validateCreateFormacao = (payload) => {
   if (anoConclusao !== null && (!Number.isInteger(anoConclusao) || anoConclusao < anoInicio)) {
     throw new AppError('anoConclusao invalido.', 400, 'VALIDATION_ERROR');
   }
+
+  validarAnoConclusaoPorSituacao(situacao, anoConclusao);
 
   return {
     instituicao,
@@ -170,9 +195,9 @@ export const validateUpdateFormacao = (payload) => {
   }
 
   if (Object.hasOwn(payload, 'situacao')) {
-    normalized.situacao = String(payload.situacao || '').trim();
-    if (!normalized.situacao) {
-      throw new AppError('situacao invalida.', 400, 'VALIDATION_ERROR');
+    normalized.situacao = normalizarSituacao(payload.situacao);
+    if (!SITUACOES_FORMACAO.includes(normalized.situacao)) {
+      throw new AppError('situacao invalida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
     }
   }
 

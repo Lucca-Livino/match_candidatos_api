@@ -1,5 +1,6 @@
 import FormacaoRepository from '../repository/FormacaoRepository.js';
 import AppError from '../utils/helpers/AppError.js';
+import { validarAnoConclusaoPorSituacao } from '../utils/validators/candidatoValidators.js';
 
 class FormacaoService {
   constructor(formacaoRepository = new FormacaoRepository()) {
@@ -42,6 +43,9 @@ class FormacaoService {
     if (Number.isInteger(anoConclusao) && anoConclusao < anoInicio) {
       throw new AppError('anoConclusao nao pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
     }
+
+    const situacao = payload.situacao ?? existente.situacao;
+    validarAnoConclusaoPorSituacao(situacao, anoConclusao ?? null);
 
     const updated = await this.formacaoRepository.atualizarPorUsuarioEId(usuarioId, id, payload);
     return this.sanitize(updated);

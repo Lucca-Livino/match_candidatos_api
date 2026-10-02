@@ -11,6 +11,12 @@ export const GRAUS_ACADEMICOS = [
   'doutorado',
 ];
 
+export const SITUACOES_FORMACAO = ['cursando', 'concluido', 'trancado', 'incompleto'];
+
+// Cursando: o ano e a previsao de formatura. Concluido: o ano em que se formou.
+// Sem ele a avaliacao so consegue adivinhar em que etapa do curso a pessoa esta.
+export const SITUACOES_COM_ANO_CONCLUSAO = ['cursando', 'concluido'];
+
 const FormacaoSchema = new mongoose.Schema(
   {
     id: {
@@ -44,8 +50,7 @@ const FormacaoSchema = new mongoose.Schema(
     situacao: {
       type: String,
       required: true,
-      trim: true,
-      maxlength: 80,
+      enum: SITUACOES_FORMACAO,
     },
     anoInicio: {
       type: Number,
