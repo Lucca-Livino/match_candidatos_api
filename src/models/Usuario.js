@@ -69,6 +69,17 @@ const UsuarioSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Convite do administrador (recrutador e suporte). Pendente = convidadoEm
+    // preenchido e ativadoEm vazio: a conta existe, mas a senha dela e
+    // aleatoria e ninguem a conhece ate o convidado usar o link do e-mail.
+    convidadoEm: {
+      type: Date,
+      default: null,
+    },
+    ativadoEm: {
+      type: Date,
+      default: null,
+    },
     // Soft delete da autoexclusao. 
     deletadoEm: {
       type: Date,
