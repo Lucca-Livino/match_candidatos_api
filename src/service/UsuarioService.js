@@ -4,6 +4,7 @@ import ExclusaoContaRepository from '../repository/ExclusaoContaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { hashPassword } from '../utils/password.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
+import { situacaoDoUsuario } from '../utils/helpers/situacaoUsuario.js';
 
 class UsuarioService {
   constructor(repository = new UsuarioRepository(), exclusaoRepository = new ExclusaoContaRepository()) {
@@ -44,7 +45,7 @@ class UsuarioService {
 
     return {
       ...result,
-      docs: result.docs.map((item) => this.sanitize(item)),
+      docs: result.docs.map((item) => ({ ...this.sanitize(item), situacao: situacaoDoUsuario(item) })),
     };
   }
 

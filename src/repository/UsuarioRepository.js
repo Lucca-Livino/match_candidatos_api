@@ -1,12 +1,15 @@
 import Usuario from '../models/Usuario.js';
+import { filtroDaSituacao } from '../utils/helpers/situacaoUsuario.js';
 
 class UsuarioRepository {
-  async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo, papel } = {}) {
+  async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo, papel, situacao } = {}) {
     // Conta autoexcluida nunca aparece em listagem: o documento so sobrevive
     // para manter o historico de candidaturas coerente.
-    const filter = { deletadoEm: null };
+    const filter = { deletadoEm: null, ...filtroDaSituacao(situacao) };
 
-    if (papel) {
+    if (Array.isArray(papel)) {
+      filter.tipos_permissao = { $in: papel };
+    } else if (papel) {
       filter.tipos_permissao = papel;
     }
 
