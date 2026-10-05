@@ -6,6 +6,7 @@ import emailServicePadrao from './EmailService.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 import { situacaoDoUsuario } from '../utils/helpers/situacaoUsuario.js';
+import logger from '../utils/logger.js';
 
 const VALIDADE_CONVITE_MS = 24 * 60 * 60 * 1000;
 
@@ -77,30 +78,47 @@ class ConviteService {
       body: { email, name: nome, password: crypto.randomBytes(24).toString('base64url') },
     });
 
-    const Grupo = (await import('../models/Grupo.js')).default;
-    const grupos = await Grupo.find({ nome: papel }).select('_id').lean();
-
-    // O signUpEmail grava em 'usuarios' por fora do schema; papel, grupos,
-    // contato vazio e os campos do convite entram aqui.
-    const usuario = await this.repository.atualizarPorEmail(email, {
-      tipos_permissao: [papel],
-      status_ativo: true,
-      groups: grupos.map((grupo) => grupo._id),
-      telefone: '',
-      linkedin: '',
-      cidade: '',
-      convidadoEm: new Date(),
-      ativadoEm: null,
-    });
+    let usuarioId;
+    let usuario;
+    let falhouNoEnvio = false;
 
     try {
-      const token = await this.gerarToken(usuario._id);
+      usuarioId = (await this.repository.buscarPorEmail(email))?._id;
+
+      // Fora de producao o autoSignIn do better-auth abre uma sessao de 7 dias
+      // no signUp; o convidado nunca a usa, entao ela nao deve sobrar.
+      await this.exclusaoRepository.revogarSessoes(usuarioId);
+
+      const Grupo = (await import('../models/Grupo.js')).default;
+      const grupos = await Grupo.find({ nome: papel }).select('_id').lean();
+
+      // O signUpEmail grava em 'usuarios' por fora do schema; papel, grupos,
+      // contato vazio e os campos do convite entram aqui.
+      usuario = await this.repository.atualizarPorEmail(email, {
+        tipos_permissao: [papel],
+        status_ativo: true,
+        groups: grupos.map((grupo) => grupo._id),
+        telefone: '',
+        linkedin: '',
+        cidade: '',
+        convidadoEm: new Date(),
+        ativadoEm: null,
+      });
+
+      const token = await this.gerarToken(usuarioId);
+      falhouNoEnvio = true;
       await this.emailService.enviarConvite({ nome, email, papel, token });
     } catch (erro) {
+      logger.error(`Falha ao convidar ${email}: ${erro?.message}`);
       // Conta sem convite entregue e conta que ninguem consegue usar: desfaz
       // para o administrador poder tentar de novo com o mesmo e-mail.
-      await this.desfazerCriacao(usuario._id);
-      throw falhaNoEnvio();
+      try {
+        if (usuarioId) await this.desfazerCriacao(usuarioId);
+      } catch (erroRollback) {
+        logger.error(`Falha ao desfazer convite de ${email}: ${erroRollback?.message}`);
+      }
+      if (falhouNoEnvio) throw falhaNoEnvio();
+      throw erro;
     }
 
     return this.apresentar(usuario);
@@ -139,6 +157,9 @@ class ConviteService {
         token,
       });
     } catch (erro) {
+      logger.error(`Falha ao reenviar convite para ${usuario.email}: ${erro?.message}`);
+      // Sem e-mail entregue, nenhum token valido deve ficar para tras.
+      await this.apagarTokens(id);
       throw falhaNoEnvio();
     }
 
@@ -146,6 +167,9 @@ class ConviteService {
     return this.apresentar(atualizado);
   }
 
+  // A rota publica POST /api/auth/reset-password do better-auth tambem aceita
+  // este token, mas nao marca ativadoEm: a conta segue pendente e o
+  // authMiddleware a bloqueia ate o administrador reenviar o convite.
   async ativar({ token, senha }) {
     const auth = await this.obterAuth();
     const contexto = await auth.$context;
@@ -164,7 +188,12 @@ class ConviteService {
       throw new AppError('Esta conta ja foi ativada. Faca login.', 400, 'CONTA_JA_ATIVADA');
     }
 
-    await auth.api.resetPassword({ body: { token, newPassword: senha } });
+    try {
+      await auth.api.resetPassword({ body: { token, newPassword: senha } });
+    } catch (erro) {
+      logger.error(`Falha ao ativar convite: ${erro?.message}`);
+      throw tokenInvalido();
+    }
 
     const atualizado = await this.repository.atualizar(usuario._id, { ativadoEm: new Date() });
     return this.apresentar(atualizado);
