@@ -71,7 +71,24 @@
   },
   "jest": {
     "transform": {
-      "^.+\\.js$": "babel-jest"
+      "^.+\\.m?js$": [
+        "babel-jest",
+        {
+          "presets": [
+            [
+              "@babel/preset-env",
+              {
+                "targets": {
+                  "node": "current"
+                }
+              }
+            ]
+          ],
+          "plugins": [
+            "babel-plugin-transform-import-meta"
+          ]
+        }
+      ]
     },
     "testEnvironment": "node",
     "verbose": true,
@@ -84,6 +101,9 @@
       "/src/utils/logger.js",
       "/src/utils/helpers/http.js",
       "/src/app.js"
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(better-auth|@better-auth|better-call|@better-fetch|jose|nanostores|rou3|defu|@noble|zod|kysely)/)"
     ]
   }
 }
