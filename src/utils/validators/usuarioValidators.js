@@ -1,4 +1,5 @@
 import { TIPOS_PERMISSAO } from '../../models/Usuario.js';
+import { SITUACOES_USUARIO } from '../helpers/situacaoUsuario.js';
 import AppError from '../helpers/AppError.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -192,6 +193,17 @@ export const validatePatchUsuario = (payload) => {
   return normalized;
 };
 
+// `papel` aceita lista separada por virgula (`recrutador,suporte`): a tela do
+// administrador lista os dois papeis internos de uma vez.
+const parsePapeis = (valor) => {
+  if (typeof valor !== 'string') return undefined;
+  const papeis = valor
+    .split(',')
+    .map((papel) => papel.trim().toLowerCase())
+    .filter((papel) => TIPOS_PERMISSAO.includes(papel));
+  return papeis.length > 0 ? [...new Set(papeis)] : undefined;
+};
+
 export const validateListQuery = (query = {}) => {
   const page = Number.parseInt(query.page, 10);
   const limit = Number.parseInt(query.limit, 10);
@@ -201,6 +213,8 @@ export const validateListQuery = (query = {}) => {
     limit: Number.isNaN(limit) || limit < 1 || limit > 100 ? 10 : limit,
     email: query.email ? String(query.email).trim() : undefined,
     nome: query.nome ? String(query.nome).trim() : undefined,
+    papel: parsePapeis(query.papel),
+    situacao: SITUACOES_USUARIO.includes(query.situacao) ? query.situacao : undefined,
     status_ativo:
       typeof query.status_ativo === 'string'
         ? query.status_ativo.toLowerCase() === 'true'
@@ -210,4 +224,69 @@ export const validateListQuery = (query = {}) => {
             : undefined
         : undefined,
   };
+};
+
+// Administrador nao se convida (nasce por seed) e candidato se cadastra sozinho.
+export const PAPEIS_CONVIDAVEIS = ['recrutador', 'suporte'];
+
+export const validateConvite = (payload) => {
+  ensureObject(payload);
+
+  const nome = String(payload.nome || '').trim();
+  const email = String(payload.email || '').trim().toLowerCase();
+  const papel = String(payload.papel || '').trim().toLowerCase();
+
+  if (nome.length < 2 || nome.length > 120) {
+    throw new AppError('nome e obrigatorio e deve ter entre 2 e 120 caracteres.', 400, 'VALIDATION_ERROR');
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
+  }
+
+  if (!PAPEIS_CONVIDAVEIS.includes(papel)) {
+    throw new AppError('papel deve ser recrutador ou suporte.', 400, 'VALIDATION_ERROR', {
+      allowed: PAPEIS_CONVIDAVEIS,
+    });
+  }
+
+  return { nome, email, papel };
+};
+
+export const REGRA_SENHA_FORTE =
+  'A senha deve ter de 8 a 128 caracteres, com letra maiuscula, letra minuscula, numero e caractere especial.';
+
+const senhaForte = (senha) =>
+  senha.length >= MIN_PASSWORD_LENGTH &&
+  senha.length <= 128 &&
+  /[A-Z]/.test(senha) &&
+  /[a-z]/.test(senha) &&
+  /\d/.test(senha) &&
+  /[^A-Za-z0-9]/.test(senha);
+
+export const validateAtivacao = (payload) => {
+  ensureObject(payload);
+
+  const token = typeof payload.token === 'string' ? payload.token.trim() : '';
+  const senha = typeof payload.senha === 'string' ? payload.senha : '';
+
+  if (!token) {
+    throw new AppError('token e obrigatorio.', 400, 'VALIDATION_ERROR');
+  }
+
+  if (!senhaForte(senha)) {
+    throw new AppError(REGRA_SENHA_FORTE, 400, 'SENHA_FRACA');
+  }
+
+  return { token, senha };
+};
+
+export const validateStatus = (payload) => {
+  ensureObject(payload);
+
+  if (typeof payload.status_ativo !== 'boolean') {
+    throw new AppError('status_ativo deve ser booleano.', 400, 'VALIDATION_ERROR');
+  }
+
+  return { status_ativo: payload.status_ativo };
 };
