@@ -9,6 +9,23 @@ router.post('/usuarios/registro', (req, res, next) => {
   usuarioController.registrar(req, res).catch(next);
 });
 
+// Rota publica de ativacao da conta convidada (whitelisted no app.js)
+router.post('/usuarios/ativar', (req, res, next) => {
+  usuarioController.ativarConta(req, res).catch(next);
+});
+
+router.post('/usuarios/convite', (req, res, next) => {
+  usuarioController.convidar(req, res).catch(next);
+});
+
+router.post('/usuarios/:id/reenviar-convite', (req, res, next) => {
+  usuarioController.reenviarConvite(req, res).catch(next);
+});
+
+router.patch('/usuarios/:id/status', (req, res, next) => {
+  usuarioController.alterarStatus(req, res).catch(next);
+});
+
 router.get('/usuarios', (req, res, next) => {
   usuarioController.listar(req, res).catch(next);
 });

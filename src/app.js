@@ -74,7 +74,7 @@ app.get('/health', (req, res) => {
 
 // Rotas públicas (sem autenticação nem autorização)
 const isPublicPath = (path) =>
-	path.startsWith('/auth') || path === '/usuarios/registro';
+	path.startsWith('/auth') || path === '/usuarios/registro' || path === '/usuarios/ativar';
 
 // Autenticação (better-auth) — exceto rotas públicas
 app.use('/api', (req, res, next) => {
