@@ -32,6 +32,7 @@
     "mongodb": "^7.1.1",
     "mongoose": "^9.3.3",
     "mongoose-paginate-v2": "^1.9.4",
+    "nodemailer": "^10.0.15",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0"
