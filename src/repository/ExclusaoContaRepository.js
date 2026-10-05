@@ -35,6 +35,14 @@ class ExclusaoContaRepository {
     return resultados.reduce((total, r) => total + (r?.deletedCount ?? 0), 0);
   }
 
+  // Derruba so as sessoes. Usado ao desativar: a credencial fica, para que a
+  // reativacao devolva o acesso com a mesma senha.
+  async revogarSessoes(usuarioId) {
+    const filtro = { userId: { $in: variacoesDeId(usuarioId) } };
+    const resultado = await this.connection.db.collection(COLLECTION_SESSAO).deleteMany(filtro);
+    return resultado?.deletedCount ?? 0;
+  }
+
   // Derruba a sessao ativa e apaga a credencial de login. 
   async revogarAcesso(usuarioId) {
     const filtro = { userId: { $in: variacoesDeId(usuarioId) } };

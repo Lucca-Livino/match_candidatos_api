@@ -205,6 +205,42 @@ class UsuarioService {
     };
   }
 
+  // Desativar barra o login (authMiddleware) sem apagar nada: candidaturas,
+  // vagas e historico continuam apontando para a conta.
+  async alterarStatus(id, { status_ativo }, solicitanteId) {
+    this.ensureObjectId(id);
+
+    const usuario = await this.repository.buscarPorId(id);
+    if (!usuario || usuario.deletadoEm) {
+      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+    }
+
+    if (!status_ativo) {
+      if (String(id) === String(solicitanteId)) {
+        throw new AppError('Voce nao pode desativar a propria conta.', 409, 'AUTODESATIVACAO');
+      }
+
+      if (usuario.tipos_permissao?.includes('administrador')) {
+        const administradores = await this.repository.contarAdministradoresAtivos();
+        if (administradores <= 1) {
+          throw new AppError(
+            'Este e o unico administrador ativo. Ative outro administrador antes de desativa-lo.',
+            409,
+            'ULTIMO_ADMINISTRADOR',
+          );
+        }
+      }
+    }
+
+    const atualizado = await this.repository.atualizar(id, { status_ativo });
+
+    if (!status_ativo) {
+      await this.exclusaoRepository.revogarSessoes(id);
+    }
+
+    return { ...this.sanitize(atualizado), situacao: situacaoDoUsuario(atualizado) };
+  }
+
   async deletar(id) {
     this.ensureObjectId(id);
 
@@ -213,6 +249,9 @@ class UsuarioService {
       throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
     }
 
+    // Sem isto a credencial e a sessao sobreviviam ao documento, e um convite
+    // novo para o mesmo e-mail encontrava residuo da conta anterior.
+    await this.exclusaoRepository.revogarAcesso(id);
     await this.repository.deletar(id);
 
     return {
