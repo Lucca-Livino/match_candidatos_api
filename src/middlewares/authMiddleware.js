@@ -28,7 +28,7 @@ export async function authMiddleware(req, res, next) {
     }
 
     const usuarioDoc = await Usuario.findOne({ $or: criterios })
-      .select('tipos_permissao groups permissions deletadoEm')
+      .select('tipos_permissao groups permissions deletadoEm status_ativo convidadoEm ativadoEm')
       .lean();
 
     if (usuarioDoc?.deletadoEm) {
@@ -36,6 +36,27 @@ export async function authMiddleware(req, res, next) {
         success: false,
         code: 'CONTA_EXCLUIDA',
         message: 'Esta conta foi excluida.',
+      });
+      return;
+    }
+
+    if (usuarioDoc?.status_ativo === false) {
+      res.status(401).json({
+        success: false,
+        code: 'CONTA_DESATIVADA',
+        message: 'Esta conta esta desativada. Procure o administrador.',
+      });
+      return;
+    }
+
+    // Defesa extra: a senha de uma conta pendente e aleatoria, entao nao deveria
+    // haver sessao. Se houver (ex.: senha trocada pelo endpoint do better-auth
+    // sem passar por /usuarios/ativar), a conta ainda nao foi ativada.
+    if (usuarioDoc?.convidadoEm && !usuarioDoc?.ativadoEm) {
+      res.status(401).json({
+        success: false,
+        code: 'CONVITE_PENDENTE',
+        message: 'Ative sua conta pelo link enviado por e-mail.',
       });
       return;
     }
