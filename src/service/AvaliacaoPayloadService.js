@@ -51,7 +51,12 @@ class AvaliacaoPayloadService {
         grau: f.grau,
         instituicao: f.instituicao,
         situacao: f.situacao,
-        anoConclusao: f.anoConclusao,
+        anoInicio: f.anoInicio,
+        // Para quem esta cursando o ano e previsao, nao fato: o nome do campo
+        // diz isso ao modelo, que compara com a dataReferencia do payload.
+        ...(f.situacao === 'cursando'
+          ? { previsaoConclusao: f.anoConclusao ?? null }
+          : { anoConclusao: f.anoConclusao ?? null }),
       })),
       experiencias: experiencias.map((e) => ({
         cargo: e.cargo,
@@ -153,14 +158,19 @@ class AvaliacaoPayloadService {
     };
   }
 
-  async montar(usuarioId, vagaId) {
+  // `agora` e parametro para que o teste fixe a data de referencia.
+  async montar(usuarioId, vagaId, agora = new Date()) {
     const [vaga, curriculo, questionario] = await Promise.all([
       this.montarVaga(vagaId),
       this.montarCurriculo(usuarioId),
       this.montarQuestionario(usuarioId, vagaId),
     ]);
 
-    return { vaga, curriculo, questionario };
+    // Sem a data da avaliacao o modelo nao tem como transformar previsao de
+    // conclusao ou anoInicio em "quanto falta" ou "ha quanto tempo".
+    const dataReferencia = agora.toISOString().slice(0, 10);
+
+    return { dataReferencia, vaga, curriculo, questionario };
   }
 }
 
