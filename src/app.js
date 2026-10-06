@@ -73,12 +73,17 @@ app.get('/health', (req, res) => {
 });
 
 // Rotas públicas (sem autenticação nem autorização)
-const isPublicPath = (path) =>
-	path.startsWith('/auth') || path === '/usuarios/registro' || path === '/usuarios/ativar';
+// Publico e o par metodo + caminho, nao so o caminho: liberar por caminho
+// deixava GET/PATCH/DELETE em '/usuarios/registro' passarem sem sessao e sem
+// checagem de permissao ate o handler de '/usuarios/:id'.
+const ROTAS_PUBLICAS_POST = ['/usuarios/registro', '/usuarios/ativar'];
+
+const isPublicPath = (req) =>
+	req.path.startsWith('/auth') || (req.method === 'POST' && ROTAS_PUBLICAS_POST.includes(req.path));
 
 // Autenticação (better-auth) — exceto rotas públicas
 app.use('/api', (req, res, next) => {
-	if (isPublicPath(req.path)) {
+	if (isPublicPath(req)) {
 		return next();
 	}
 	return authMiddleware(req, res, next);
@@ -87,7 +92,7 @@ app.use('/api', (req, res, next) => {
 // Autorização (RBAC de 3 camadas) — exceto rotas públicas
 const permissao = permissaoMiddleware();
 app.use('/api', (req, res, next) => {
-	if (isPublicPath(req.path)) {
+	if (isPublicPath(req)) {
 		return next();
 	}
 	return permissao(req, res, next);
