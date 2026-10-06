@@ -47,6 +47,12 @@ export class EmailService {
     // vai para o log do servidor. Ele nunca volta na resposta da API, porque
     // quem tem o link define a senha da conta.
     if (!this.transporter) {
+      // Em producao, porem, "sucesso" sem envio deixaria o administrador
+      // achando que o convite saiu, e o link ficaria exposto no log. Falhar
+      // aqui faz o ConviteService desfazer a conta e responder EMAIL_FALHOU.
+      if (this.env.NODE_ENV === 'production') {
+        throw new Error('Servico de e-mail nao configurado.');
+      }
       logger.info(`[e-mail desativado] Convite para ${email}: ${link}`);
       return { enviado: false };
     }
