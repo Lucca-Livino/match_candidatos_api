@@ -93,13 +93,6 @@ const usuarioSchemas = {
         example: 'https://www.linkedin.com/in/maria-rh',
       },
       cidade: { type: 'string', maxLength: 120, example: 'Campinas' },
-      tipos_permissao: {
-        type: 'array',
-        minItems: 1,
-        items: { type: 'string', enum: ['administrador', 'recrutador', 'candidato', 'suporte'] },
-        example: ['candidato'],
-      },
-      status_ativo: { type: 'boolean', example: false },
     },
   },
   UsuarioSingleResponse: {

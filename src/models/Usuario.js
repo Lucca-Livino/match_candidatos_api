@@ -46,8 +46,7 @@ const UsuarioSchema = new mongoose.Schema(
     },
     // Contato do perfil. Opcionais para todo papel: o recrutador cadastrado
     // pelo admin nao tem LinkedIn, e o candidato costuma preencher o telefone
-    // depois do cadastro. String vazia e o "nao informado" — sem `required`,
-    // um PATCH parcial nunca esbarra neles.
+    // depois do cadastro.
     telefone: {
       type: String,
       trim: true,
@@ -69,6 +68,23 @@ const UsuarioSchema = new mongoose.Schema(
     status_ativo: {
       type: Boolean,
       default: true,
+    },
+    // Convite do administrador (recrutador e suporte). Pendente = convidadoEm
+    // preenchido e ativadoEm vazio: a conta existe, mas a senha dela e
+    // aleatoria e ninguem a conhece ate o convidado usar o link do e-mail.
+    convidadoEm: {
+      type: Date,
+      default: null,
+    },
+    ativadoEm: {
+      type: Date,
+      default: null,
+    },
+    // Soft delete da autoexclusao. 
+    deletadoEm: {
+      type: Date,
+      default: null,
+      index: true,
     },
     groups: [
       {

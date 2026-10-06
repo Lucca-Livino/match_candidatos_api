@@ -41,6 +41,30 @@ const politicasAcesso = [
     pattern: /^\/usuarios\/([^/]+)\/candidatura(?:\/|$)/,
     methods: { '*': { roles: [ADMIN], allowSelf: true } },
   },
+  // Autoexclusao da propria conta. Vale para todo papel e precisa vir antes do
+  // bloco de /usuarios/:id, que casaria com 'me' e restringiria o DELETE ao
+  // administrador. Nao usa allowSelf: o alvo nao esta na URL, vem da sessao.
+  {
+    pattern: /^\/usuarios\/me(?:\/?$)/,
+    methods: {
+      DELETE: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] },
+    },
+  },
+  // Convite de conta interna e situacao da conta: so o administrador. Precisam
+  // vir antes do bloco de /usuarios/:id, que casaria com estes caminhos e, no
+  // PATCH, liberaria o proprio usuario por allowSelf.
+  {
+    pattern: /^\/usuarios\/convite(?:\/?$)/,
+    methods: { POST: { roles: [ADMIN] } },
+  },
+  {
+    pattern: /^\/usuarios\/[^/]+\/reenviar-convite(?:\/?$)/,
+    methods: { POST: { roles: [ADMIN] } },
+  },
+  {
+    pattern: /^\/usuarios\/[^/]+\/status(?:\/?$)/,
+    methods: { PATCH: { roles: [ADMIN] } },
+  },
   // Usuario individual (registro publico e liberado no app.js, nao passa aqui)
   {
     pattern: /^\/usuarios\/([^/]+)(?:\/|$)/,
@@ -55,6 +79,13 @@ const politicasAcesso = [
     pattern: /^\/usuarios(?:\/?$)/,
     // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
     methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
+  },
+  // Relatorios (visao geral e por vaga): numeros do processo seletivo, so para
+  // quem conduz o processo. Precisa vir antes do bloco generico de /vagas, que
+  // libera GET ao candidato.
+  {
+    pattern: /^\/vagas\/(?:[^/]+\/)?relatorio(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] } },
   },
   // Candidaturas de uma vaga (visao do recrutador) e reavaliacao manual.
   // Precisam vir antes do bloco generico de /vagas.

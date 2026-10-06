@@ -12,6 +12,8 @@ As respostas do questionario vem em dois formatos e valem como evidencia nos doi
 - Dissertativa: use o campo textoResposta, avaliando a qualidade e a aderencia do conteudo.
 - Multipla escolha e verdadeiro/falso: a correcao ja vem pronta. "opcoesSelecionadas" e o que o candidato marcou, "gabarito" e a resposta certa e "acertou" diz se ele acertou. Trate "acertou: true" como evidencia direta de dominio do que a pergunta cobra e "acertou: false" como lacuna. Nao reavalie o gabarito nem decida por conta propria se a alternativa marcada esta certa. Quando "acertou" for null a pergunta nao tem gabarito: use a resposta apenas como contexto, sem contar acerto nem erro.
 
+A formacao traz situacao de uma lista fechada: cursando, concluido, trancado ou incompleto. Para "cursando", previsaoConclusao e o ano previsto de formatura: compare com data_referencia para saber quanto falta (previsao no mesmo ano ou no seguinte indica reta final do curso). Para "concluido", anoConclusao e o ano em que se formou. "trancado" e "incompleto" nao contam como formacao concluida. Se previsaoConclusao vier null, nao presuma em que etapa do curso o candidato esta.
+
 Depois, produza um score global de 0 a 1 ponderando os criterios pelo campo peso_percentual (criterios de maior peso pesam proporcionalmente mais) e ajustando pela qualidade das respostas dissertativas e pelos acertos das objetivas.
 
 Escala do score global:
@@ -65,6 +67,7 @@ export const SCHEMA_AVALIACAO = {
 
 export const montarMensagem = (payload) =>
   [
+    `<data_referencia>${payload.dataReferencia}</data_referencia>`,
     '<vaga>',
     JSON.stringify(payload.vaga, null, 2),
     '</vaga>',

@@ -115,6 +115,13 @@ const Candidatura = {
     },
     status: { type: 'string', enum: ['inscrito', 'em_analise', 'aprovado', 'reprovado'], example: 'inscrito' },
     movidoPor: { type: 'string', example: 'sistema' },
+    reabertoPor: {
+      type: 'string',
+      nullable: true,
+      description: 'Quem reabriu a candidatura (aprovado/reprovado -> em_analise) pela ultima vez.',
+      example: 'ana.recrutadora@match.com',
+    },
+    reabertoEm: { type: 'string', format: 'date-time', nullable: true },
     criadoEm: { type: 'string', format: 'date-time' },
     atualizadoEm: { type: 'string', format: 'date-time' },
   },

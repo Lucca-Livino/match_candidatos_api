@@ -1,12 +1,15 @@
 import mongoose from 'mongoose';
 import UsuarioRepository from '../repository/UsuarioRepository.js';
+import ExclusaoContaRepository from '../repository/ExclusaoContaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
 import { hashPassword } from '../utils/password.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
+import { situacaoDoUsuario } from '../utils/helpers/situacaoUsuario.js';
 
 class UsuarioService {
-  constructor(repository = new UsuarioRepository()) {
+  constructor(repository = new UsuarioRepository(), exclusaoRepository = new ExclusaoContaRepository()) {
     this.repository = repository;
+    this.exclusaoRepository = exclusaoRepository;
   }
 
   sanitize(usuario) {
@@ -42,7 +45,7 @@ class UsuarioService {
 
     return {
       ...result,
-      docs: result.docs.map((item) => this.sanitize(item)),
+      docs: result.docs.map((item) => ({ ...this.sanitize(item), situacao: situacaoDoUsuario(item) })),
     };
   }
 
@@ -136,14 +139,142 @@ class UsuarioService {
     return this.sanitize(atualizado);
   }
 
-  async deletar(id) {
-    this.ensureObjectId(id);
+  // Endereco de substituicao da conta excluida. O TLD `.invalido` e reservado
+  // para uso ficticio, entao nenhum email real colide com ele, e o sufixo com
+  // o proprio id garante unicidade sem depender de sorteio.
+  emailAnonimo(id) {
+    return `excluido+${String(id)}@conta-removida.invalido`;
+  }
 
-    const existente = await this.repository.buscarPorId(id);
-    if (!existente) {
+  // Autoexclusao (DELETE /usuarios/me). Diferente de `deletar`, que e o ato
+  // administrativo e remove o documento, aqui a conta e anonimizada: o _id
+  // precisa sobreviver porque as candidaturas apontam para ele.
+  async excluirPropriaConta(usuarioId, { emailConfirmacao } = {}) {
+    this.ensureObjectId(usuarioId);
+
+    const usuario = await this.repository.buscarPorId(usuarioId);
+    if (!usuario || usuario.deletadoEm) {
       throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
     }
 
+    const informado = typeof emailConfirmacao === 'string' ? emailConfirmacao.trim().toLowerCase() : '';
+    if (!informado) {
+      throw new AppError(
+        'Informe o email da conta para confirmar a exclusao.',
+        400,
+        'VALIDATION_ERROR',
+      );
+    }
+
+    if (informado !== String(usuario.email).trim().toLowerCase()) {
+      throw new AppError(
+        'O email informado nao confere com o da conta.',
+        400,
+        'CONFIRMACAO_INVALIDA',
+      );
+    }
+
+    // Sem esta guarda o ultimo administrador se excluiria e deixaria o sistema
+    // sem ninguem capaz de criar contas internas ou reativar a permissao.
+    if (usuario.tipos_permissao?.includes('administrador')) {
+      const administradores = await this.repository.contarAdministradoresAtivos();
+      if (administradores <= 1) {
+        throw new AppError(
+          'Voce e o unico administrador ativo. Promova outro administrador antes de excluir sua conta.',
+          409,
+          'ULTIMO_ADMINISTRADOR',
+        );
+      }
+    }
+
+    // A anonimizacao vem primeiro: e ela que torna a conta inalcancavel. Se um
+    // dos passos seguintes falhar, o authMiddleware ja barra o acesso pelo
+    // `deletadoEm` e o que sobrar e residuo removivel, nao conta viva.
+    await this.repository.anonimizar(usuarioId, {
+      nome: 'Conta excluida',
+      email: this.emailAnonimo(usuarioId),
+      deletadoEm: new Date(),
+    });
+
+    await this.exclusaoRepository.revogarAcesso(usuarioId);
+    await this.exclusaoRepository.removerCurriculo(usuarioId);
+
+    return {
+      id: String(usuarioId),
+      deletado: true,
+    };
+  }
+
+  // Desativar barra o login (authMiddleware) sem apagar nada: candidaturas,
+  // vagas e historico continuam apontando para a conta.
+  async alterarStatus(id, { status_ativo }, solicitanteId) {
+    this.ensureObjectId(id);
+
+    const usuario = await this.repository.buscarPorId(id);
+    if (!usuario || usuario.deletadoEm) {
+      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+    }
+
+    if (!status_ativo) {
+      if (String(id) === String(solicitanteId)) {
+        throw new AppError('Voce nao pode desativar a propria conta.', 409, 'AUTODESATIVACAO');
+      }
+
+      if (usuario.tipos_permissao?.includes('administrador')) {
+        const administradores = await this.repository.contarAdministradoresAtivos();
+        if (administradores <= 1) {
+          throw new AppError(
+            'Este e o unico administrador ativo. Ative outro administrador antes de desativa-lo.',
+            409,
+            'ULTIMO_ADMINISTRADOR',
+          );
+        }
+      }
+    }
+
+    const atualizado = await this.repository.atualizar(id, { status_ativo });
+
+    if (!status_ativo) {
+      await this.exclusaoRepository.revogarSessoes(id);
+    }
+
+    return { ...this.sanitize(atualizado), situacao: situacaoDoUsuario(atualizado) };
+  }
+
+  async deletar(id, solicitanteId) {
+    this.ensureObjectId(id);
+
+    if (String(id) === String(solicitanteId)) {
+      throw new AppError(
+        'Voce nao pode excluir a propria conta por aqui. Use a exclusao da propria conta no perfil.',
+        409,
+        'AUTOEXCLUSAO',
+      );
+    }
+
+    // Conta ja anonimizada pela autoexclusao conta como inexistente: o
+    // documento so sobrevive para manter as referencias das candidaturas.
+    const existente = await this.repository.buscarPorId(id);
+    if (!existente || existente.deletadoEm) {
+      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+    }
+
+    if (existente.tipos_permissao?.includes('administrador')) {
+      const administradores = await this.repository.contarAdministradoresAtivos();
+      if (administradores <= 1) {
+        throw new AppError(
+          'Este e o unico administrador ativo. Ative outro administrador antes de exclui-lo.',
+          409,
+          'ULTIMO_ADMINISTRADOR',
+        );
+      }
+    }
+
+    // Sem isto a credencial e a sessao sobreviviam ao documento, e um convite
+    // novo para o mesmo e-mail encontrava residuo da conta anterior. O token de
+    // convite pendente tambem sai: apontaria para um id que nao existe mais.
+    await this.exclusaoRepository.apagarTokensConvite(id);
+    await this.exclusaoRepository.revogarAcesso(id);
     await this.repository.deletar(id);
 
     return {

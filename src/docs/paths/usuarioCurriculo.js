@@ -232,6 +232,9 @@ const usuarioCurriculoPaths = {
     patch: {
       tags: ['Usuario Candidatura'],
       summary: 'Atualiza status da candidatura (recrutador/admin)',
+      description:
+        'Fluxo: inscrito -> em_analise -> aprovado | reprovado. Aprovado e reprovado podem ser ' +
+        'reabertos para em_analise; a reabertura grava `reabertoPor` (usuario da sessao) e `reabertoEm`.',
       parameters: [idParam, { name: 'vagaId', in: 'path', required: true, schema: { type: 'string' } }],
       requestBody: {
         required: true,

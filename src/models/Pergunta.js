@@ -30,11 +30,6 @@ const PerguntaSchema = new mongoose.Schema(
       required: true,
       enum: TIPOS_RESPOSTA_PERGUNTA,
     },
-    // Campo INERTE: nenhum service le `peso`. Ele nao entra no payload da
-    // triagem (ver AvaliacaoPayloadService.montarQuestionario) — a IA infere a
-    // relevancia de cada pergunta pelo enunciado. O peso que a avaliacao
-    // pondera e `peso_percentual`, dos criterios da vaga, e nao tem relacao
-    // com este. Mantido so por compatibilidade; marcado para remocao.
     peso: {
       type: Number,
       required: true,

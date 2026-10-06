@@ -41,11 +41,13 @@ class CandidaturaService {
   }
 
   validarTransicaoStatus(statusAtual, novoStatus) {
+    // Aprovado e reprovado podem ser reabertos para em_analise, para corrigir
+    // uma decisao; entre si e de volta para inscrito continuam bloqueados.
     const fluxo = {
       inscrito: ['em_analise'],
       em_analise: ['aprovado', 'reprovado'],
-      aprovado: [],
-      reprovado: [],
+      aprovado: ['em_analise'],
+      reprovado: ['em_analise'],
     };
 
     const permitidos = fluxo[statusAtual] || [];
@@ -157,7 +159,7 @@ class CandidaturaService {
     return this.omitirTriagem(this.sanitize(candidatura));
   }
 
-  async atualizarStatusCandidatura(usuarioId, vagaId, payload) {
+  async atualizarStatusCandidatura(usuarioId, vagaId, payload, ator = null) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
       throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
@@ -165,10 +167,14 @@ class CandidaturaService {
 
     this.validarTransicaoStatus(candidatura.status, payload.status);
 
+    const reabertura = ['aprovado', 'reprovado'].includes(candidatura.status)
+      ? { reabertoPor: ator ?? payload.movidoPor, reabertoEm: new Date() }
+      : {};
+
     const updated = await this.candidaturaRepository.atualizarPorUsuarioEVaga(
       usuarioId,
       vagaId,
-      payload,
+      { ...payload, ...reabertura },
     );
     return this.omitirTriagem(this.sanitize(updated));
   }
