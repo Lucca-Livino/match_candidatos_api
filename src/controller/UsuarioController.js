@@ -80,7 +80,7 @@ class UsuarioController {
   }
 
   async deletar(req, res) {
-    const data = await this.service.deletar(req.params.id);
+    const data = await this.service.deletar(req.params.id, req.user_id);
     return sendSuccess(res, data, 200, 'Usuario excluido com sucesso.');
   }
 }

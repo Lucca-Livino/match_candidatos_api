@@ -241,16 +241,39 @@ class UsuarioService {
     return { ...this.sanitize(atualizado), situacao: situacaoDoUsuario(atualizado) };
   }
 
-  async deletar(id) {
+  async deletar(id, solicitanteId) {
     this.ensureObjectId(id);
 
+    if (String(id) === String(solicitanteId)) {
+      throw new AppError(
+        'Voce nao pode excluir a propria conta por aqui. Use a exclusao da propria conta no perfil.',
+        409,
+        'AUTOEXCLUSAO',
+      );
+    }
+
+    // Conta ja anonimizada pela autoexclusao conta como inexistente: o
+    // documento so sobrevive para manter as referencias das candidaturas.
     const existente = await this.repository.buscarPorId(id);
-    if (!existente) {
+    if (!existente || existente.deletadoEm) {
       throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
     }
 
+    if (existente.tipos_permissao?.includes('administrador')) {
+      const administradores = await this.repository.contarAdministradoresAtivos();
+      if (administradores <= 1) {
+        throw new AppError(
+          'Este e o unico administrador ativo. Ative outro administrador antes de exclui-lo.',
+          409,
+          'ULTIMO_ADMINISTRADOR',
+        );
+      }
+    }
+
     // Sem isto a credencial e a sessao sobreviviam ao documento, e um convite
-    // novo para o mesmo e-mail encontrava residuo da conta anterior.
+    // novo para o mesmo e-mail encontrava residuo da conta anterior. O token de
+    // convite pendente tambem sai: apontaria para um id que nao existe mais.
+    await this.exclusaoRepository.apagarTokensConvite(id);
     await this.exclusaoRepository.revogarAcesso(id);
     await this.repository.deletar(id);
 

@@ -60,9 +60,7 @@ class ConviteService {
   }
 
   async apagarTokens(usuarioId) {
-    await mongoose.connection.db
-      .collection('verification')
-      .deleteMany({ value: String(usuarioId), identifier: /^reset-password:/ });
+    await this.exclusaoRepository.apagarTokensConvite(usuarioId);
   }
 
   async convidar({ nome, email, papel }) {

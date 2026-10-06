@@ -6,6 +6,7 @@ import Certificacao from '../models/Certificacao.js';
 
 const COLLECTION_SESSAO = 'session';
 const COLLECTION_CREDENCIAL = 'account';
+const COLLECTION_VERIFICACAO = 'verification';
 
 const MODELOS_CURRICULO = [Formacao, Experiencia, Habilidade, Certificacao];
 
@@ -57,6 +58,15 @@ class ExclusaoContaRepository {
       sessoesRevogadas: sessoes?.deletedCount ?? 0,
       credenciaisRemovidas: credenciais?.deletedCount ?? 0,
     };
+  }
+
+  // Tokens de convite (ativacao) ainda nao usados. O formato e o mesmo que o
+  // resetPassword do better-auth procura: `value` guarda o id do usuario.
+  async apagarTokensConvite(usuarioId) {
+    const resultado = await this.connection.db
+      .collection(COLLECTION_VERIFICACAO)
+      .deleteMany({ value: String(usuarioId), identifier: /^reset-password:/ });
+    return resultado?.deletedCount ?? 0;
   }
 }
 
