@@ -147,6 +147,19 @@ export const validatePatchUsuario = (payload) => {
     throw new AppError('Informe ao menos um campo para atualizar.', 400, 'VALIDATION_ERROR');
   }
 
+  // A rota aceita o proprio usuario (allowSelf): se o papel ou o status
+  // passassem por aqui, qualquer conta se promoveria a administrador com um
+  // PATCH no proprio id. Status tem rota propria (PATCH /:id/status), com as
+  // guardas de autodesativacao e ultimo administrador; papel nao muda depois
+  // do provisionamento.
+  if (Object.hasOwn(payload, 'tipos_permissao') || Object.hasOwn(payload, 'status_ativo')) {
+    throw new AppError(
+      'tipos_permissao e status_ativo nao podem ser alterados por esta rota.',
+      400,
+      'VALIDATION_ERROR',
+    );
+  }
+
   const normalized = {};
 
   if (Object.hasOwn(payload, 'nome')) {
@@ -163,17 +176,6 @@ export const validatePatchUsuario = (payload) => {
       throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
     }
     normalized.email = email;
-  }
-
-  if (Object.hasOwn(payload, 'tipos_permissao')) {
-    normalized.tipos_permissao = normalizeRoles(payload.tipos_permissao);
-  }
-
-  if (Object.hasOwn(payload, 'status_ativo')) {
-    if (typeof payload.status_ativo !== 'boolean') {
-      throw new AppError('status_ativo deve ser booleano.', 400, 'VALIDATION_ERROR');
-    }
-    normalized.status_ativo = payload.status_ativo;
   }
 
   if (Object.hasOwn(payload, 'senha')) {
