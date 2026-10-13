@@ -1,3 +1,17 @@
+const RequisitoCriterio = {
+  type: 'object',
+  description:
+    'Obrigatorio quando o criterio e obrigatorio. Campos por tipo: skill_tecnica e certificacao usam itemId (e nivelMinimo opcional na habilidade); formacao usa grauMinimo, areaId (null = qualquer area) e aceitaCursando; experiencia usa areaId e mesesMinimos.',
+  properties: {
+    itemId: { type: 'string', example: '0831bb1a-5bc7-44f1-8ef5-0ff18620c8c4' },
+    nivelMinimo: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+    grauMinimo: { type: 'string', example: 'graduação' },
+    areaId: { type: 'string', nullable: true, example: '2b04606b-e3a4-42d5-9aac-6b0c438f7c70' },
+    aceitaCursando: { type: 'boolean', example: false },
+    mesesMinimos: { type: 'integer', minimum: 0, example: 6 },
+  },
+};
+
 const CriterioVaga = {
   type: 'object',
   properties: {
@@ -11,6 +25,7 @@ const CriterioVaga = {
     peso_percentual: { type: 'number', example: 40 },
     obrigatorio: { type: 'boolean', example: true },
     descricao: { type: 'string', example: 'Conhecimento em APIs REST com Node.js e Express.' },
+    requisito: { $ref: '#/components/schemas/RequisitoCriterio' },
   },
 };
 
@@ -47,6 +62,7 @@ const Vaga = {
 };
 
 const vagaSchemas = {
+  RequisitoCriterio,
   CriterioVaga,
   Vaga,
   VagaCreateRequest: {
@@ -82,6 +98,7 @@ const vagaSchemas = {
             peso_percentual: { type: 'number', example: 40 },
             obrigatorio: { type: 'boolean', example: true },
             descricao: { type: 'string', example: 'Conhecimento em APIs REST com Node.js e Express.' },
+            requisito: { $ref: '#/components/schemas/RequisitoCriterio' },
           },
         },
       },
@@ -123,6 +140,7 @@ const vagaSchemas = {
             peso_percentual: { type: 'number', example: 50 },
             obrigatorio: { type: 'boolean', example: false },
             descricao: { type: 'string', example: 'Atuacao com sistemas de alta disponibilidade.' },
+            requisito: { $ref: '#/components/schemas/RequisitoCriterio' },
           },
         },
       },

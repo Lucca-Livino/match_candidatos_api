@@ -26,6 +26,12 @@ const Formacao = {
     situacao: { type: 'string', example: 'concluido' },
     anoInicio: { type: 'integer', example: 2018 },
     anoConclusao: { type: 'integer', nullable: true, example: 2022 },
+    areaId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '2b04606b-e3a4-42d5-9aac-6b0c438f7c70',
+    },
   },
 };
 
@@ -41,6 +47,12 @@ const Experiencia = {
     dataInicio: { type: 'string', format: 'date-time' },
     dataFim: { type: 'string', format: 'date-time', nullable: true },
     mesesDuracao: { type: 'integer', example: 24 },
+    areaId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '2b04606b-e3a4-42d5-9aac-6b0c438f7c70',
+    },
   },
 };
 
@@ -52,6 +64,12 @@ const Habilidade = {
     usuarioId: { type: 'string', example: 'user-001' },
     habilidade: { type: 'string', example: 'Node.js' },
     nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+    itemId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '0831bb1a-5bc7-44f1-8ef5-0ff18620c8c4',
+    },
   },
 };
 
@@ -67,6 +85,12 @@ const Certificacao = {
     dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
     codigo: { type: 'string', example: 'AWS-123' },
     expirada: { type: 'boolean', example: false },
+    itemId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '94adabc3-17f0-4b7a-996b-89ffd97bdee9',
+    },
   },
 };
 
@@ -241,6 +265,7 @@ const candidatoSchemas = {
       situacao: { type: 'string' },
       anoInicio: { type: 'integer' },
       anoConclusao: { type: 'integer', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -253,6 +278,7 @@ const candidatoSchemas = {
       situacao: { type: 'string' },
       anoInicio: { type: 'integer' },
       anoConclusao: { type: 'integer', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -283,6 +309,7 @@ const candidatoSchemas = {
       descricaoAtivida_: { type: 'string' },
       dataInicio: { type: 'string', format: 'date-time' },
       dataFim: { type: 'string', format: 'date-time', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -294,6 +321,7 @@ const candidatoSchemas = {
       descricaoAtivida_: { type: 'string' },
       dataInicio: { type: 'string', format: 'date-time' },
       dataFim: { type: 'string', format: 'date-time', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -321,6 +349,7 @@ const candidatoSchemas = {
     properties: {
       habilidade: { type: 'string', example: 'Node.js' },
       nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -329,6 +358,7 @@ const candidatoSchemas = {
     properties: {
       habilidade: { type: 'string' },
       nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -359,6 +389,7 @@ const candidatoSchemas = {
       dataEmissao: { type: 'string', format: 'date-time', nullable: true },
       dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
       codigo: { type: 'string' },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -370,6 +401,7 @@ const candidatoSchemas = {
       dataEmissao: { type: 'string', format: 'date-time', nullable: true },
       dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
       codigo: { type: 'string' },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
