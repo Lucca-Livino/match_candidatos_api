@@ -1,6 +1,11 @@
 import 'dotenv/config';
 import DbConnect from '../config/dbconnect.js';
 import Vaga from '../models/Vaga.js';
+import ItemCatalogo from '../models/ItemCatalogo.js';
+import { normalizarChave } from '../utils/helpers/normalizarChave.js';
+
+// Pela chave normalizada: o nome no catalogo pode ter acento que este arquivo nao tem.
+const idDe = async (tipo, nome) => (await ItemCatalogo.findOne({ tipo, chaves: normalizarChave(nome) }).lean())?.id;
 
 const vagasSeed = [
   {
@@ -87,12 +92,30 @@ async function seedVaga({ useOwnConnection = true } = {}) {
       await DbConnect.conectar();
     }
 
+    const requisitos = {
+      'Node.js': { itemId: await idDe('habilidade', 'Node.js') },
+      React: { itemId: await idDe('habilidade', 'React') },
+      Recrutamento: { areaId: await idDe('area_atuacao', 'Recrutamento e selecao'), mesesMinimos: 6 },
+      'Google Analytics': { itemId: await idDe('habilidade', 'Google Analytics') },
+    };
+    const comRequisito = (vaga) => ({
+      ...vaga,
+      criterio_vaga: vaga.criterio_vaga.map((c) => {
+        if (!c.obrigatorio) return c;
+        const requisito = requisitos[c.nome];
+        if (!requisito || Object.values(requisito).some((v) => v === undefined)) {
+          throw new Error(`Seed inconsistente: criterio obrigatorio "${c.nome}" sem requisito resolvido no catalogo.`);
+        }
+        return { ...c, requisito };
+      }),
+    });
+
     const vagasCriadas = [];
 
     for (const vaga of vagasSeed) {
       const created = await Vaga.findOneAndUpdate(
         { titulo: vaga.titulo },
-        { $set: vaga },
+        { $set: comRequisito(vaga) },
         { upsert: true, returnDocument: 'after', runValidators: true },
       ).lean();
 
