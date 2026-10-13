@@ -1,5 +1,5 @@
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
-import AvaliacaoCandidaturaService from './AvaliacaoCandidaturaService.js';
+import AvaliacaoCandidaturaService, { SEM_CRITERIOS } from './AvaliacaoCandidaturaService.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
 import AppError from '../utils/helpers/AppError.js';
@@ -53,7 +53,7 @@ class CandidaturaService {
     const permitidos = fluxo[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        `Transicao de status invalida: ${statusAtual} -> ${novoStatus}.`,
+        `Transição de status inválida: ${statusAtual} -> ${novoStatus}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -63,7 +63,7 @@ class CandidaturaService {
   async criarCandidatura(usuarioId, payload) {
     const jaExiste = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, payload.vagaId);
     if (jaExiste) {
-      throw new AppError('Usuario ja esta inscrito nesta vaga.', 409, 'CONFLICT');
+      throw new AppError('Usuário já está inscrito nesta vaga.', 409, 'CONFLICT');
     }
 
     const created = await this.candidaturaRepository.criar({
@@ -153,7 +153,7 @@ class CandidaturaService {
   async detalharCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     return this.omitirTriagem(this.sanitize(candidatura));
@@ -162,7 +162,7 @@ class CandidaturaService {
   async atualizarStatusCandidatura(usuarioId, vagaId, payload, ator = null) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     this.validarTransicaoStatus(candidatura.status, payload.status);
@@ -185,7 +185,7 @@ class CandidaturaService {
   async reavaliarCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     // So reavalia quem ainda esta em 'inscrito'. Depois disso a candidatura ja
@@ -193,7 +193,7 @@ class CandidaturaService {
     // gravaria um score que nao corresponde mais a fila em que ela esta.
     if (candidatura.status !== 'inscrito') {
       throw new AppError(
-        `Candidatura em '${candidatura.status}' nao pode ser reavaliada.`,
+        `Candidatura em '${candidatura.status}' não pode ser reavaliada.`,
         409,
         'BUSINESS_RULE_ERROR',
       );
@@ -203,8 +203,15 @@ class CandidaturaService {
     // nada foi gravado: devolver 200 com o documento antigo faria a
     // reavaliacao parecer bem-sucedida.
     const atualizada = await this.avaliacaoCandidaturaService.avaliar(usuarioId, vagaId);
+    if (atualizada === SEM_CRITERIOS) {
+      throw new AppError(
+        'Vaga sem critérios: a triagem automática não se aplica.',
+        409,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
     if (!atualizada) {
-      throw new AppError('Avaliacao por IA indisponivel.', 503, 'AI_UNAVAILABLE');
+      throw new AppError('Avaliação por IA indisponível.', 503, 'AI_UNAVAILABLE');
     }
 
     return this.omitirTriagem(this.sanitize(atualizada));
@@ -213,7 +220,7 @@ class CandidaturaService {
   async cancelarCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     if (!['inscrito', 'em_analise'].includes(candidatura.status)) {

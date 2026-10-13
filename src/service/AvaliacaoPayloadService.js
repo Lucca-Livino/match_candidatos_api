@@ -10,16 +10,27 @@ import RespostaQuestionario from '../models/RespostaQuestionario.js';
 import RespostaPergunta from '../models/RespostaPergunta.js';
 import RespostaOpcaoSelecionada from '../models/RespostaOpcaoSelecionada.js';
 import AppError from '../utils/helpers/AppError.js';
+import CatalogoService from './CatalogoService.js';
+import { requisitoCompleto } from '../utils/helpers/gateObrigatorios.js';
+import { descreverRequisito } from '../utils/helpers/descreverRequisito.js';
 
 class AvaliacaoPayloadService {
-  async montarVaga(vagaId) {
+  constructor(catalogoService = new CatalogoService()) {
+    this.catalogoService = catalogoService;
+  }
+
+  async carregarVaga(vagaId) {
     const vaga = await Vaga.findById(vagaId)
       .lean()
       .catch(() => null);
     if (!vaga) {
-      throw new AppError('Vaga nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
+    return vaga;
+  }
 
+  // Recebe o documento da vaga ja lido (carregarVaga), para ler uma vez so.
+  montarVaga(vaga, indice) {
     return {
       titulo: vaga.titulo,
       area: vaga.area,
@@ -32,6 +43,7 @@ class AvaliacaoPayloadService {
         peso_percentual: c.peso_percentual,
         obrigatorio: Boolean(c.obrigatorio),
         descricao: c.descricao || '',
+        ...(c.obrigatorio && c.requisito && requisitoCompleto(c) ? { requisito_texto: descreverRequisito(c, indice) } : {}),
       })),
     };
   }
@@ -158,19 +170,50 @@ class AvaliacaoPayloadService {
     };
   }
 
+  // Dados do gate, separados do que vai para a IA: ids do catalogo, nivel,
+  // grau, situacao e meses. montarMensagem so serializa vaga, curriculo e
+  // questionario, entao nada daqui chega ao modelo.
+  async montarVerificacao(vaga, usuarioId, indice) {
+    const [habilidades, formacoes, experiencias, certificacoes] = await Promise.all([
+      Habilidade.find({ usuarioId }).lean(),
+      Formacao.find({ usuarioId }).lean(),
+      Experiencia.find({ usuarioId }).lean(),
+      Certificacao.find({ usuarioId }).lean(),
+    ]);
+
+    return {
+      indice,
+      criterios: (vaga.criterio_vaga || []).map((c) => ({
+        nome: c.nome,
+        tipo_criterio: c.tipo_criterio,
+        obrigatorio: Boolean(c.obrigatorio),
+        requisito: c.requisito ?? null,
+      })),
+      curriculo: {
+        habilidades: habilidades.map((h) => ({ habilidade: h.habilidade, nivel: h.nivel, itemId: h.itemId ?? null })),
+        formacoes: formacoes.map((f) => ({ curso: f.curso, grau: f.grau, situacao: f.situacao, areaId: f.areaId ?? null })),
+        experiencias: experiencias.map((e) => ({ cargo: e.cargo, mesesDuracao: e.mesesDuracao, areaId: e.areaId ?? null })),
+        certificacoes: certificacoes.map((c) => ({ nome: c.nome, itemId: c.itemId ?? null })),
+      },
+    };
+  }
+
   // `agora` e parametro para que o teste fixe a data de referencia.
   async montar(usuarioId, vagaId, agora = new Date()) {
-    const [vaga, curriculo, questionario] = await Promise.all([
-      this.montarVaga(vagaId),
+    const vagaDoc = await this.carregarVaga(vagaId);
+    const indice = await this.catalogoService.carregarIndice();
+    const [curriculo, questionario, verificacao] = await Promise.all([
       this.montarCurriculo(usuarioId),
       this.montarQuestionario(usuarioId, vagaId),
+      this.montarVerificacao(vagaDoc, usuarioId, indice),
     ]);
+    const vaga = this.montarVaga(vagaDoc, indice);
 
     // Sem a data da avaliacao o modelo nao tem como transformar previsao de
     // conclusao ou anoInicio em "quanto falta" ou "ha quanto tempo".
     const dataReferencia = agora.toISOString().slice(0, 10);
 
-    return { dataReferencia, vaga, curriculo, questionario };
+    return { dataReferencia, vaga, curriculo, questionario, verificacao };
   }
 }
 
