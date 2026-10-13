@@ -33,6 +33,7 @@ class CandidaturaService {
       compativel,
       motivoIncompat_,
       justificativa,
+      criteriosAvaliados,
       versaoModelo,
       avaliadoEm,
       ...visivel

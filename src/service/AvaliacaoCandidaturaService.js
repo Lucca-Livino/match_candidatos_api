@@ -4,7 +4,7 @@ import ConfiguracaoIntegracaoService from './ConfiguracaoIntegracaoService.js';
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
 import { montarIndice } from '../utils/helpers/indiceCatalogo.js';
-import { calcularScore } from '../utils/helpers/calcularScore.js';
+import { calcularScore, detalharCriterios } from '../utils/helpers/calcularScore.js';
 
 // Retorno de `avaliar` quando a vaga nao tem criterio: nada foi gravado, mas
 // por regra, e nao por falha. Distinto do null para a reavaliacao manual nao
@@ -67,6 +67,9 @@ class AvaliacaoCandidaturaService {
           'Reprovado pela verificação automática de requisitos obrigatórios, sem consulta ao '
           + `modelo de IA. ${motivos}`).slice(0, 4000),
         motivoIncompat_: `Requisito obrigatório não atendido: ${motivos}`.slice(0, 500),
+        // Sem chamada ao modelo nao ha nota por criterio; limpa a de uma
+        // avaliacao anterior para o registro nao misturar as duas.
+        criteriosAvaliados: [],
         movidoPor: 'sistema',
       });
     }
@@ -100,6 +103,10 @@ class AvaliacaoCandidaturaService {
       versaoModelo: `${config.provedor}/${resultado.modeloUsado}`,
       avaliadoEm: new Date(),
       justificativa: resultado.resumo,
+      criteriosAvaliados: detalharCriterios(payload.vaga.criterios, resultado.criterios).map((c) => ({
+        ...c,
+        evidencia: c.evidencia.slice(0, 2000),
+      })),
       motivoIncompat_: aprovado
         ? ''
         : 'Compatibilidade abaixo do limiar definido para a triagem automática.',
