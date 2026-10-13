@@ -313,10 +313,10 @@ sequenceDiagram
         Str->>API: generateContent(...)
 
         alt sucesso
-            API-->>Str: JSON { score, criterios, resumo }
+            API-->>Str: JSON { criterios, resumo }
             Str-->>Ctx: objeto parseado
             Ctx->>Ctx: validarResultado( )
-            Ctx-->>Cli: { score, criterios, resumo, modeloUsado }
+            Ctx-->>Cli: { criterios, resumo, modeloUsado }
         else 429 de minuto (RPM)
             API-->>Str: 429
             Note over Str: comRetry espera<br/>1,5 / 3 / 6 / 12 s

@@ -3,6 +3,7 @@ import MatchIAService from './MatchIAService.js';
 import ConfiguracaoIntegracaoService from './ConfiguracaoIntegracaoService.js';
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
+import { calcularScore } from '../utils/helpers/calcularScore.js';
 
 class AvaliacaoCandidaturaService {
   constructor(
@@ -74,19 +75,21 @@ class AvaliacaoCandidaturaService {
       return null;
     }
 
-    const aprovado = resultado.score >= config.limiteCompatibilidade;
+    // O modelo da a nota por criterio; a combinacao pelos pesos e feita aqui.
+    const score = calcularScore(payload.vaga.criterios, resultado.criterios);
+    const aprovado = score >= config.limiteCompatibilidade;
     const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado);
 
     return this.persistir(usuarioId, vagaId, {
       compativel: aprovado ? 1 : 0,
-      scoreIA: resultado.score,
+      scoreIA: score,
       limiteAplicado: config.limiteCompatibilidade,
       versaoModelo: `${config.provedor}/${resultado.modeloUsado}`,
       avaliadoEm: new Date(),
       justificativa: resultado.resumo,
       motivoIncompat_: aprovado
         ? ''
-        : 'Compatibilidade abaixo do limiar definido para a triagem automatica.',
+        : 'Compatibilidade abaixo do limiar definido para a triagem automática.',
       movidoPor: 'sistema',
       ...promocao,
     });

@@ -18,7 +18,7 @@ import {
 } from '../../utils/helpers/errosIA.js';
 
 const traduzirErro = (error, modelo) => {
-  // comRetry ja converteu a cota diaria, e validarAvaliacao ja tipou a
+  // comRetry ja converteu a cota diaria, e validarAvaliacao ja tipou a 
   // resposta fora do contrato. Retipar apagaria o motivo original.
   if (error instanceof ErroDeIA) return error;
 
