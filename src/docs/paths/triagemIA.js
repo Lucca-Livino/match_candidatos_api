@@ -1,10 +1,48 @@
 const triagemIAPaths = {
+  '/api/avaliacoes': {
+    get: {
+      tags: ['Triagem por IA'],
+      summary: 'Auditoria da triagem (apenas suporte)',
+      description:
+        'Unica rota que expoe score, limiar, veredito, motivo, justificativa e modelo de cada candidatura. Serve para calibrar o limiar e monitorar pendentes (avaliadoEm null = IA desligada ou falhou). Visao global, de todas as vagas.',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          name: 'pendentes',
+          in: 'query',
+          required: false,
+          description: 'true lista so candidaturas ainda nao avaliadas.',
+          schema: { type: 'string', enum: ['true', 'false'] },
+        },
+        {
+          name: 'vagaId',
+          in: 'query',
+          required: false,
+          description: 'Restringe a uma vaga.',
+          schema: { type: 'string' },
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Avaliacoes listadas com sucesso',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AvaliacaoAuditoriaListResponse' },
+            },
+          },
+        },
+        401: { description: 'Token ausente ou invalido' },
+        403: { description: 'Papel sem permissao (apenas suporte — nem administrador nem recrutador)' },
+      },
+    },
+  },
+
   '/api/vagas/{id}/candidaturas': {
     get: {
       tags: ['Triagem por IA'],
       summary: 'Lista as candidaturas de uma vaga, sem ranking',
       description:
-        'Visao do recrutador. Devolve apto/nao apto e a justificativa do modelo, nunca o score bruto. A ordenacao e por criadoEm crescente — ordenar por score reintroduziria o vies de ancoragem que a triagem sem ranking existe para evitar.',
+        'Visao do recrutador. Nenhum campo da triagem sai aqui — nem score, nem veredito, nem justificativa; a promocao pela IA aparece como movidoPor sistema. O resultado chega so como fila (compativel ja esta em em_analise). A ordenacao e por criadoEm crescente — ordenar por score reintroduziria o vies de ancoragem que a triagem sem ranking existe para evitar.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {

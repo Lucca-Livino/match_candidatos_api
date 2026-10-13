@@ -1,11 +1,62 @@
 const CandidaturaAvaliada = {
   type: 'object',
   description:
-    'Candidatura na visao do recrutador. O score bruto (scoreIA) e o limiar aplicado sao registro interno de auditoria e nunca aparecem nesta resposta.',
+    'Candidatura na visao do recrutador. Nenhum campo da triagem sai aqui (score, limiar, veredito, motivo, justificativa, criterios, modelo, data da avaliacao) — so o papel suporte os ve, em GET /api/avaliacoes. A triagem chega ao recrutador apenas como fila: candidatura compativel ja esta em em_analise.',
   properties: {
     id: { type: 'string', example: '2df05e6e-4e1e-4dd1-a596-a34ebce6ddea' },
     usuarioId: { type: 'string', example: '6a910959edabad997a0e8407' },
     vagaId: { type: 'string', example: '6a910959edabad997a0e8417' },
+    status: {
+      type: 'string',
+      enum: ['inscrito', 'em_analise', 'aprovado', 'reprovado'],
+      example: 'em_analise',
+    },
+    movidoPor: {
+      type: 'string',
+      enum: ['sistema', 'recrutador'],
+      description:
+        'Origem da ultima movimentacao. A promocao feita pela triagem sai como sistema: expor a origem ia revelaria o veredito.',
+      example: 'sistema',
+    },
+    candidato: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        id: { type: 'string' },
+        nome: { type: 'string', example: 'Diego Candidato' },
+        email: { type: 'string', example: 'diego.candidato@match.com' },
+        telefone: { type: 'string' },
+        linkedin: { type: 'string' },
+        cidade: { type: 'string' },
+      },
+    },
+    criadoEm: { type: 'string', format: 'date-time' },
+    atualizadoEm: { type: 'string', format: 'date-time' },
+  },
+};
+
+const AvaliacaoAuditoria = {
+  type: 'object',
+  description:
+    'Candidatura na visao do SUPORTE, com todo o registro da triagem. E a unica saida da API que expoe estes campos.',
+  properties: {
+    id: { type: 'string', example: '2df05e6e-4e1e-4dd1-a596-a34ebce6ddea' },
+    usuarioId: { type: 'string', example: '6a910959edabad997a0e8407' },
+    vagaId: { type: 'string', example: '6a910959edabad997a0e8417' },
+    scoreIA: {
+      type: 'number',
+      minimum: 0,
+      maximum: 1,
+      nullable: true,
+      description: 'Score bruto da triagem. 0 quando o gate de obrigatorios barrou sem chamar o modelo.',
+      example: 0.75,
+    },
+    limiteAplicado: {
+      type: 'number',
+      nullable: true,
+      description: 'Limiar que valia no momento da avaliacao.',
+      example: 0.7,
+    },
     compativel: {
       type: 'integer',
       enum: [0, 1],
@@ -24,6 +75,24 @@ const CandidaturaAvaliada = {
       description: 'Texto produzido pelo modelo explicando a aderencia do perfil.',
       example:
         'O candidato demonstra forte dominio tecnico em React e experiencia pratica relevante com otimizacao de build.',
+    },
+    criteriosAvaliados: {
+      type: 'array',
+      description:
+        'Nota e evidencia dadas pelo modelo a cada criterio da vaga, com nome e peso copiados no momento da avaliacao. Vazio quando a candidatura foi barrada no gate, sem chamada ao modelo.',
+      items: {
+        type: 'object',
+        properties: {
+          criterioId: { type: 'string' },
+          nome: { type: 'string', example: 'React' },
+          peso: { type: 'number', example: 40 },
+          obrigatorio: { type: 'boolean' },
+          aderencia: { type: 'number', minimum: 0, maximum: 1, example: 1 },
+          evidencia: { type: 'string', example: 'Nivel especialista em React e lideranca tecnica.' },
+          atendido: { type: 'boolean' },
+          omitido: { type: 'boolean', description: 'O modelo nao deu nota; entrou como 0 no score.' },
+        },
+      },
     },
     versaoModelo: {
       type: 'string',
@@ -45,9 +114,40 @@ const CandidaturaAvaliada = {
       enum: ['inscrito', 'em_analise', 'aprovado', 'reprovado'],
       example: 'inscrito',
     },
-    movidoPor: { type: 'string', example: 'sistema' },
+    movidoPor: {
+      type: 'string',
+      enum: ['sistema', 'recrutador', 'ia'],
+      description: 'Aqui a origem ia aparece: candidatura promovida pela triagem.',
+      example: 'ia',
+    },
+    candidato: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        nome: { type: 'string', example: 'Diego Candidato' },
+        email: { type: 'string', example: 'diego.candidato@match.com' },
+      },
+    },
+    vaga: {
+      type: 'object',
+      nullable: true,
+      properties: { titulo: { type: 'string', example: 'Desenvolvedor Front-end' } },
+    },
     criadoEm: { type: 'string', format: 'date-time' },
     atualizadoEm: { type: 'string', format: 'date-time' },
+  },
+};
+
+const AvaliacaoAuditoriaListResponse = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean', example: true },
+    message: { type: 'string', example: 'Avaliacoes listadas com sucesso.' },
+    data: {
+      type: 'array',
+      description: 'Ordenada por avaliadoEm decrescente; pendentes (avaliadoEm null) vao para o fim.',
+      items: { $ref: '#/components/schemas/AvaliacaoAuditoria' },
+    },
   },
 };
 
@@ -156,6 +256,8 @@ const ConfiguracaoIntegracaoUpdateRequest = {
 
 const triagemIASchemas = {
   CandidaturaAvaliada,
+  AvaliacaoAuditoria,
+  AvaliacaoAuditoriaListResponse,
   CandidaturaVagaListResponse,
   CandidaturaReavaliadaResponse,
   ConfiguracaoIntegracao,
