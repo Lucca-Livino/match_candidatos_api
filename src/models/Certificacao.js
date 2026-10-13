@@ -42,6 +42,7 @@ const CertificacaoSchema = new mongoose.Schema(
       maxlength: 120,
       default: '',
     },
+    itemId: { type: String, default: null },
   },
   {
     collection: 'certificacao',

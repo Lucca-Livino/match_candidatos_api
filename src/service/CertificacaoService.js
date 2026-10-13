@@ -1,9 +1,11 @@
 import CertificacaoRepository from '../repository/CertificacaoRepository.js';
+import CatalogoService from './CatalogoService.js';
 import AppError from '../utils/helpers/AppError.js';
 
 class CertificacaoService {
-  constructor(certificacaoRepository = new CertificacaoRepository()) {
+  constructor(certificacaoRepository = new CertificacaoRepository(), catalogoService = new CatalogoService()) {
     this.certificacaoRepository = certificacaoRepository;
+    this.catalogoService = catalogoService;
   }
 
   sanitize(doc) {
@@ -27,6 +29,10 @@ class CertificacaoService {
   }
 
   async criarCertificacao(usuarioId, payload) {
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'certificacao', id: payload.itemId, campo: 'itemId' },
+    ]);
+
     const created = await this.certificacaoRepository.criar({
       ...payload,
       usuarioId,
@@ -43,7 +49,17 @@ class CertificacaoService {
   async atualizarCertificacao(usuarioId, id, payload) {
     const existente = await this.certificacaoRepository.buscarPorUsuarioEId(usuarioId, id);
     if (!existente) {
-      throw new AppError('Certificacao nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Certificação não encontrada.', 404, 'NOT_FOUND');
+    }
+
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'certificacao', id: payload.itemId, campo: 'itemId' },
+    ]);
+
+    // O texto do combobox e o nome do item: texto novo sem id vira texto livre,
+    // e o vinculo antigo nao pode continuar valendo.
+    if (Object.hasOwn(payload, 'nome') && !Object.hasOwn(payload, 'itemId')) {
+      payload = { ...payload, itemId: null };
     }
 
     const updated = await this.certificacaoRepository.atualizarPorUsuarioEId(usuarioId, id, payload);
@@ -53,7 +69,7 @@ class CertificacaoService {
   async deletarCertificacao(usuarioId, id) {
     const removed = await this.certificacaoRepository.deletarPorUsuarioEId(usuarioId, id);
     if (!removed) {
-      throw new AppError('Certificacao nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Certificação não encontrada.', 404, 'NOT_FOUND');
     }
 
     return {

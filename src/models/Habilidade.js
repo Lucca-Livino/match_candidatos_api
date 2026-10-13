@@ -29,6 +29,7 @@ const HabilidadeSchema = new mongoose.Schema(
       required: true,
       enum: NIVEIS_HABILIDADE,
     },
+    itemId: { type: String, default: null },
   },
   {
     collection: 'habilidade',
