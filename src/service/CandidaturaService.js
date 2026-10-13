@@ -25,6 +25,10 @@ class CandidaturaService {
   //
   // Esconder isso apenas no front nao contaria: o campo continuaria viajando
   // na resposta, visivel para qualquer um que abrisse o devtools.
+  //
+  // `movidoPor: 'ia'` e o proprio veredito com outro nome: a promocao da IA
+  // sai como movimentacao automatica comum ('sistema'). O campo fica porque
+  // as outras origens (recrutador, sistema) continuam valendo para quem le.
   omitirTriagem(candidatura) {
     if (!candidatura) return candidatura;
     const {
@@ -38,6 +42,7 @@ class CandidaturaService {
       avaliadoEm,
       ...visivel
     } = candidatura;
+    if (visivel.movidoPor === 'ia') visivel.movidoPor = 'sistema';
     return visivel;
   }
 
@@ -73,7 +78,7 @@ class CandidaturaService {
       status: 'inscrito',
     });
 
-    return this.sanitize(created.toObject());
+    return this.omitirTriagem(this.sanitize(created.toObject()));
   }
 
   async listarCandidatura(usuarioId) {
