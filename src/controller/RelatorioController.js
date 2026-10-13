@@ -11,7 +11,7 @@ class RelatorioController {
     try {
       const periodo = validatePeriodo(req.query.periodo);
       const data = await this.service.geral(periodo);
-      return sendSuccess(res, data, 200, 'Relatorio gerado com sucesso.');
+      return sendSuccess(res, data, 200, 'Relatório gerado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -21,7 +21,7 @@ class RelatorioController {
     try {
       const periodo = validatePeriodo(req.query.periodo);
       const data = await this.service.porVaga(req.params.id, periodo);
-      return sendSuccess(res, data, 200, 'Relatorio da vaga gerado com sucesso.');
+      return sendSuccess(res, data, 200, 'Relatório da vaga gerado com sucesso.');
     } catch (error) {
       return next(error);
     }

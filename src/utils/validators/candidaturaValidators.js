@@ -3,7 +3,7 @@ import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
@@ -20,7 +20,7 @@ export const validateCreateCandidatura = (payload) => {
   const vagaId = String(payload.vagaId || '').trim();
 
   if (!vagaId) {
-    throw new AppError('vagaId e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('vagaId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -39,7 +39,7 @@ export const validateUpdateStatusCandidatura = (payload) => {
   const movidoPor = String(payload.movidoPor || 'sistema').trim();
 
   if (!STATUS_CANDIDATURA.includes(status)) {
-    throw new AppError('status invalido.', 400, 'VALIDATION_ERROR', { allowed: STATUS_CANDIDATURA });
+    throw new AppError('status inválido.', 400, 'VALIDATION_ERROR', { allowed: STATUS_CANDIDATURA });
   }
 
   return {

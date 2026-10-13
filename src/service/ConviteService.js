@@ -20,13 +20,13 @@ const carregarAuth = async () => (await import('../utils/auth.js')).auth;
 
 const tokenInvalido = () =>
   new AppError(
-    'Link de ativacao invalido ou expirado. Peca um novo convite ao administrador.',
+    'Link de ativação inválido ou expirado. Peça um novo convite ao administrador.',
     400,
     'TOKEN_INVALIDO',
   );
 
 const falhaNoEnvio = () =>
-  new AppError('Nao foi possivel enviar o convite. Tente novamente.', 502, 'EMAIL_FALHOU');
+  new AppError('Não foi possível enviar o convite. Tente novamente.', 502, 'EMAIL_FALHOU');
 
 class ConviteService {
   constructor({
@@ -66,7 +66,7 @@ class ConviteService {
   async convidar({ nome, email, papel }) {
     const existente = await this.repository.buscarPorEmail(email);
     if (existente) {
-      throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
+      throw new AppError('Já existe usuário com este e-mail.', 409, 'CONFLICT');
     }
 
     const auth = await this.obterAuth();
@@ -130,16 +130,16 @@ class ConviteService {
 
   async reenviar(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new AppError('ID de usuario invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('ID de usuário inválido.', 400, 'VALIDATION_ERROR');
     }
 
     const usuario = await this.repository.buscarPorId(id);
     if (!usuario || usuario.deletadoEm) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     if (!usuario.convidadoEm || usuario.ativadoEm) {
-      throw new AppError('Esta conta ja foi ativada.', 400, 'CONTA_JA_ATIVADA');
+      throw new AppError('Esta conta já foi ativada.', 400, 'CONTA_JA_ATIVADA');
     }
 
     // Um link por vez: o reenvio invalida o anterior, que pode ter ido para a
@@ -183,7 +183,7 @@ class ConviteService {
     }
 
     if (!usuario.convidadoEm || usuario.ativadoEm) {
-      throw new AppError('Esta conta ja foi ativada. Faca login.', 400, 'CONTA_JA_ATIVADA');
+      throw new AppError('Esta conta já foi ativada. Faça login.', 400, 'CONTA_JA_ATIVADA');
     }
 
     try {

@@ -84,7 +84,7 @@ class CandidaturaController {
         apenasPendentes: req.query.pendentes === 'true',
         vagaId: req.query.vagaId || null,
       });
-      return sendSuccess(res, data, 200, 'Avaliacoes listadas com sucesso.');
+      return sendSuccess(res, data, 200, 'Avaliações listadas com sucesso.');
     } catch (error) {
       return next(error);
     }

@@ -26,7 +26,7 @@ const usuariosSeed = [
     status_ativo: true,
   },
   {
-    nome: "Carla Multipla",
+    nome: "Carla Múltipla",
     email: "carla.multipla@match.com",
     senha: 'Senha@123',
     tipos_permissao: ["recrutador"],
@@ -47,7 +47,7 @@ const usuariosSeed = [
     status_ativo: true,
   },
   {
-    nome: "Fabio Candidato",
+    nome: "Fábio Candidato",
     email: "fabio.candidato@match.com",
     senha: 'Senha@123',
     tipos_permissao: ["candidato"],

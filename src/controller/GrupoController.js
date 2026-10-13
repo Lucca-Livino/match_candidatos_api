@@ -15,7 +15,7 @@ class GrupoController {
 
   async buscarPorId(req, res) {
     const data = await this.repository.buscarPorId(req.params.id);
-    if (!data) throw new AppError('Grupo nao encontrado.', 404, 'NOT_FOUND');
+    if (!data) throw new AppError('Grupo não encontrado.', 404, 'NOT_FOUND');
     return sendSuccess(res, data, 200, 'Grupo encontrado com sucesso.');
   }
 
@@ -28,14 +28,14 @@ class GrupoController {
   async atualizar(req, res) {
     const payload = validatePatchGrupo(req.body);
     const data = await this.repository.atualizar(req.params.id, payload);
-    if (!data) throw new AppError('Grupo nao encontrado.', 404, 'NOT_FOUND');
+    if (!data) throw new AppError('Grupo não encontrado.', 404, 'NOT_FOUND');
     return sendSuccess(res, data, 200, 'Grupo atualizado com sucesso.');
   }
 
   async deletar(req, res) {
     const data = await this.repository.deletar(req.params.id);
-    if (!data) throw new AppError('Grupo nao encontrado.', 404, 'NOT_FOUND');
-    return sendSuccess(res, { id: req.params.id, deletado: true }, 200, 'Grupo excluido com sucesso.');
+    if (!data) throw new AppError('Grupo não encontrado.', 404, 'NOT_FOUND');
+    return sendSuccess(res, { id: req.params.id, deletado: true }, 200, 'Grupo excluído com sucesso.');
   }
 }
 

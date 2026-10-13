@@ -36,7 +36,7 @@ class VagaController {
 
   async deletar(req, res) {
     const data = await this.service.deletar(req.params.id);
-    return sendSuccess(res, data, 200, 'Vaga excluida com sucesso.');
+    return sendSuccess(res, data, 200, 'Vaga excluída com sucesso.');
   }
 }
 

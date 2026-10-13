@@ -13,7 +13,7 @@ export async function authMiddleware(req, res, next) {
       res.status(401).json({
         success: false,
         code: 'UNAUTHORIZED',
-        message: 'Nao autorizado. Faça login para continuar.',
+        message: 'Não autorizado. Faça login para continuar.',
       });
       return;
     }
@@ -35,7 +35,7 @@ export async function authMiddleware(req, res, next) {
       res.status(401).json({
         success: false,
         code: 'CONTA_EXCLUIDA',
-        message: 'Esta conta foi excluida.',
+        message: 'Esta conta foi excluída.',
       });
       return;
     }
@@ -44,7 +44,7 @@ export async function authMiddleware(req, res, next) {
       res.status(401).json({
         success: false,
         code: 'CONTA_DESATIVADA',
-        message: 'Esta conta esta desativada. Procure o administrador.',
+        message: 'Esta conta está desativada. Procure o administrador.',
       });
       return;
     }
@@ -75,7 +75,7 @@ export async function authMiddleware(req, res, next) {
     res.status(401).json({
       success: false,
       code: 'INVALID_SESSION',
-      message: 'Token invalido ou sessao expirada.',
+      message: 'Token inválido ou sessão expirada.',
     });
   }
 }

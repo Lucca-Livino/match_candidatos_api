@@ -3,7 +3,7 @@ import AppError from '../helpers/AppError.js';
 
 export const validateUpdateConfiguracao = (payload) => {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new AppError('Payload invalido.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Payload inválido.', 400, 'VALIDATION_ERROR');
   }
 
   const resultado = {};
@@ -23,7 +23,7 @@ export const validateUpdateConfiguracao = (payload) => {
   if (Object.hasOwn(payload, 'provedor')) {
     const provedor = String(payload.provedor || '').trim();
     if (!PROVEDORES.includes(provedor)) {
-      throw new AppError('provedor invalido.', 400, 'VALIDATION_ERROR', { allowed: PROVEDORES });
+      throw new AppError('provedor inválido.', 400, 'VALIDATION_ERROR', { allowed: PROVEDORES });
     }
     resultado.provedor = provedor;
   }
@@ -52,7 +52,7 @@ export const validateUpdateConfiguracao = (payload) => {
     }
     if (cascata.length > LIMITE_DEGRAUS) {
       throw new AppError(
-        `cascata aceita no maximo ${LIMITE_DEGRAUS} modelos.`,
+        `cascata aceita no máximo ${LIMITE_DEGRAUS} modelos.`,
         400,
         'VALIDATION_ERROR',
       );
@@ -60,7 +60,7 @@ export const validateUpdateConfiguracao = (payload) => {
     if (new Set(cascata).size !== cascata.length) {
       // Degrau repetido nao acrescenta cota: se o modelo esgotou, esgotou nas
       // duas posicoes. Aceitar daria a impressao de uma reserva inexistente.
-      throw new AppError('cascata nao pode repetir modelo.', 400, 'VALIDATION_ERROR');
+      throw new AppError('cascata não pode repetir modelo.', 400, 'VALIDATION_ERROR');
     }
 
     resultado.cascata = cascata;
@@ -71,7 +71,7 @@ export const validateUpdateConfiguracao = (payload) => {
   }
 
   if (Object.keys(resultado).length === 0) {
-    throw new AppError('Nenhum campo valido informado.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Nenhum campo válido informado.', 400, 'VALIDATION_ERROR');
   }
 
   return resultado;

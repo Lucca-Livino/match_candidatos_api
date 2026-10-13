@@ -44,11 +44,11 @@ const ConfiguracaoIntegracaoSchema = new mongoose.Schema(
         },
         {
           validator: (v) => v.length <= LIMITE_DEGRAUS,
-          message: `cascata aceita no maximo ${LIMITE_DEGRAUS} modelos.`,
+          message: `cascata aceita no máximo ${LIMITE_DEGRAUS} modelos.`,
         },
         {
           validator: (v) => new Set(v).size === v.length,
-          message: 'cascata nao pode repetir modelo.',
+          message: 'cascata não pode repetir modelo.',
         },
       ],
     },

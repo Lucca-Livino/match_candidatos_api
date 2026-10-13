@@ -51,7 +51,7 @@ export class EmailService {
       // achando que o convite saiu, e o link ficaria exposto no log. Falhar
       // aqui faz o ConviteService desfazer a conta e responder EMAIL_FALHOU.
       if (this.env.NODE_ENV === 'production') {
-        throw new Error('Servico de e-mail nao configurado.');
+        throw new Error('Serviço de e-mail não configurado.');
       }
       logger.info(`[e-mail desativado] Convite para ${email}: ${link}`);
       return { enviado: false };
@@ -64,18 +64,18 @@ export class EmailService {
       from: `"${empresa}" <${this.env.EMAIL_USER}>`,
       to: email,
       subject: `Convite para acessar ${empresa}`,
-      text: `Ola, ${nome}. Voce foi convidado(a) como ${funcao}. Defina sua senha em: ${link} (o link expira em 24 horas).`,
+      text: `Olá, ${nome}. Você foi convidado(a) como ${funcao}. Defina sua senha em: ${link} (o link expira em 24 horas).`,
       html: `<!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <h1 style="color: #1e2a4a; font-size: 22px;">Convite para acessar ${esc(empresa)}</h1>
-    <p>Ola, ${esc(nome)}.</p>
-    <p>Voce foi convidado(a) como <strong>${esc(funcao)}</strong>. Para entrar, defina sua senha:</p>
+    <p>Olá, ${esc(nome)}.</p>
+    <p>Você foi convidado(a) como <strong>${esc(funcao)}</strong>. Para entrar, defina sua senha:</p>
     <p style="margin: 28px 0;">
       <a href="${esc(link)}" style="background: #1e2a4a; color: #fff; padding: 12px 24px; border-radius: 4px; text-decoration: none;">Definir minha senha</a>
     </p>
-    <p style="font-size: 13px; color: #666;">O link expira em 24 horas. Se expirar, peca um novo convite ao administrador.</p>
+    <p style="font-size: 13px; color: #666;">O link expira em 24 horas. Se expirar, peça um novo convite ao administrador.</p>
     <p style="font-size: 12px; color: #999; word-break: break-all;">${esc(link)}</p>
   </div>
 </body>

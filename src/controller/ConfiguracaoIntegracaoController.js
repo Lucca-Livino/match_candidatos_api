@@ -9,7 +9,7 @@ class ConfiguracaoIntegracaoController {
   async obter(req, res, next) {
     try {
       const data = await this.service.obter();
-      return sendSuccess(res, data, 200, 'Configuracao obtida com sucesso.');
+      return sendSuccess(res, data, 200, 'Configuração obtida com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -18,7 +18,7 @@ class ConfiguracaoIntegracaoController {
   async atualizar(req, res, next) {
     try {
       const data = await this.service.atualizar(req.body, String(req.user_id));
-      return sendSuccess(res, data, 200, 'Configuracao atualizada com sucesso.');
+      return sendSuccess(res, data, 200, 'Configuração atualizada com sucesso.');
     } catch (error) {
       return next(error);
     }

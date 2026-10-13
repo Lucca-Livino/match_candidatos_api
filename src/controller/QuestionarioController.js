@@ -16,7 +16,7 @@ class QuestionarioController {
     try {
       const payload = validateCreateQuestionario(req.body);
       const data = await this.service.criar(payload);
-      return sendSuccess(res, data, 201, 'Questionario criado com sucesso.');
+      return sendSuccess(res, data, 201, 'Questionário criado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -26,7 +26,7 @@ class QuestionarioController {
     try {
       const query = validateListQuestionarioQuery(req.query);
       const data = await this.service.listar(query);
-      return sendSuccess(res, data, 200, 'Questionarios listados com sucesso.');
+      return sendSuccess(res, data, 200, 'Questionários listados com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -35,7 +35,7 @@ class QuestionarioController {
   async buscarPorId(req, res, next) {
     try {
       const data = await this.service.buscarPorIdComPerguntas(req.params.id);
-      return sendSuccess(res, data, 200, 'Questionario encontrado com sucesso.');
+      return sendSuccess(res, data, 200, 'Questionário encontrado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -45,7 +45,7 @@ class QuestionarioController {
     try {
       const payload = validateUpdateQuestionario(req.body);
       const data = await this.service.atualizar(req.params.id, payload);
-      return sendSuccess(res, data, 200, 'Questionario atualizado com sucesso.');
+      return sendSuccess(res, data, 200, 'Questionário atualizado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -55,7 +55,7 @@ class QuestionarioController {
     try {
       const payload = validatePatchQuestionarioAtivo(req.body);
       const data = await this.service.atualizarAtivo(req.params.id, payload.ativo);
-      return sendSuccess(res, data, 200, 'Status ativo do questionario atualizado com sucesso.');
+      return sendSuccess(res, data, 200, 'Status ativo do questionário atualizado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -64,7 +64,7 @@ class QuestionarioController {
   async deletar(req, res, next) {
     try {
       const data = await this.service.deletar(req.params.id);
-      return sendSuccess(res, data, 200, 'Questionario excluido com sucesso.');
+      return sendSuccess(res, data, 200, 'Questionário excluído com sucesso.');
     } catch (error) {
       return next(error);
     }

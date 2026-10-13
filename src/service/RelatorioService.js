@@ -79,7 +79,7 @@ class RelatorioService {
   async porVaga(vagaId, periodo, agora = new Date()) {
     const vaga = ehObjectId(vagaId) ? await this.Vaga.findById(vagaId).lean() : null;
     if (!vaga) {
-      throw new AppError('Vaga nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
 
     const inicio = inicioDoPeriodo(periodo, agora);
