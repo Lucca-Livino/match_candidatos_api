@@ -6,7 +6,7 @@ import Pergunta from '../models/Pergunta.js';
 import OpcaoResposta from '../models/OpcaoResposta.js';
 
 const VAGA_TITULO_PADRAO = 'Desenvolvedor Full Stack Node.js/React';
-const QUESTIONARIO_TITULO = 'Questionario Avaliativo Backend';
+const QUESTIONARIO_TITULO = 'Questionário Avaliativo Backend';
 
 function selecionarVaga(vagas) {
   if (Array.isArray(vagas) && vagas.length) {
@@ -43,7 +43,7 @@ async function seedQuestionario({ vagas = [], useOwnConnection = true } = {}) {
       {
         $set: {
           criadoPor: 'rh@match.com',
-          instrucoes: 'Responda todas as perguntas. Objetivas serao avaliadas automaticamente.',
+          instrucoes: 'Responda a todas as perguntas. As objetivas serão avaliadas automaticamente.',
           ativo: 1,
         },
       },
@@ -55,7 +55,7 @@ async function seedQuestionario({ vagas = [], useOwnConnection = true } = {}) {
     const [perguntaNode, perguntaDissertativa, perguntaVf] = await Pergunta.insertMany([
       {
         questionarioId: questionario.id,
-        enunciado: 'Qual stack backend voce domina mais?',
+        enunciado: 'Qual stack backend você domina mais?',
         tipoResposta: 'multipla_escolha',
         peso: 2,
         obrigatoria: 1,
@@ -63,7 +63,7 @@ async function seedQuestionario({ vagas = [], useOwnConnection = true } = {}) {
       },
       {
         questionarioId: questionario.id,
-        enunciado: 'Descreva um projeto relevante que voce desenvolveu.',
+        enunciado: 'Descreva um projeto relevante que você desenvolveu.',
         tipoResposta: 'dissertativa',
         peso: 3,
         obrigatoria: 1,
@@ -71,7 +71,7 @@ async function seedQuestionario({ vagas = [], useOwnConnection = true } = {}) {
       },
       {
         questionarioId: questionario.id,
-        enunciado: 'Voce tem experiencia com testes automatizados?',
+        enunciado: 'Você tem experiência com testes automatizados?',
         tipoResposta: 'verdadeiro_falso',
         peso: 1,
         obrigatoria: 1,
@@ -81,7 +81,7 @@ async function seedQuestionario({ vagas = [], useOwnConnection = true } = {}) {
 
     await OpcaoResposta.insertMany([
       { perguntaId: perguntaNode.id, texto: 'Node.js com Express', correta: 1, ordem: 1 },
-      { perguntaId: perguntaNode.id, texto: 'Sem experiencia com backend', correta: 0, ordem: 2 },
+      { perguntaId: perguntaNode.id, texto: 'Sem experiência com backend', correta: 0, ordem: 2 },
       { perguntaId: perguntaVf.id, texto: 'Verdadeiro', correta: 1, ordem: 1 },
       { perguntaId: perguntaVf.id, texto: 'Falso', correta: 0, ordem: 2 },
     ]);
