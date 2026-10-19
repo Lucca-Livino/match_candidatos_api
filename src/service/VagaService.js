@@ -7,6 +7,13 @@ import { TIPO_CATALOGO_POR_CRITERIO } from '../models/ItemCatalogo.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
+const ROTULO_STATUS = {
+  ativa: 'Ativa',
+  pausada: 'Pausada',
+  arquivada: 'Encerrada',
+};
+const rotuloStatus = (status) => ROTULO_STATUS[status] ?? status;
+
 class VagaService {
   constructor(
     repository = new VagaRepository(),
@@ -51,7 +58,7 @@ class VagaService {
     const permitidos = transicoesPermitidas[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        `Transição de status inválida: ${statusAtual} -> ${novoStatus}.`,
+        `Não é possível mover a vaga de ${rotuloStatus(statusAtual)} para ${rotuloStatus(novoStatus)}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );

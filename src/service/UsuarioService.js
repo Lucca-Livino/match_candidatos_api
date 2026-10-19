@@ -103,7 +103,7 @@ class UsuarioService {
 
   async registrarCandidato({ nome, email, senha }) {
     if (!nome || !email || !senha) {
-      throw new AppError('nome, email e senha são obrigatórios.', 400, 'VALIDATION_ERROR');
+      throw new AppError('nome, e-mail e senha são obrigatórios.', 400, 'VALIDATION_ERROR');
     }
 
     return this.provisionarComAuth({

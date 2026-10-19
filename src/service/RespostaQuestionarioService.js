@@ -90,7 +90,7 @@ class RespostaQuestionarioService {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
 
     if (respostaQuestionario.status !== 'em_andamento') {
-      throw new AppError('Somente respostas em andamento podem receber respostas.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Este questionário já foi finalizado e não aceita novas respostas.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(respostaQuestionario.questionarioId);

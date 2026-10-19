@@ -5,6 +5,14 @@ import Vaga from '../models/Vaga.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
+const ROTULO_STATUS = {
+  inscrito: 'Inscrito',
+  em_analise: 'Em análise',
+  aprovado: 'Aprovado',
+  reprovado: 'Reprovado',
+};
+const rotuloStatus = (status) => ROTULO_STATUS[status] ?? status;
+
 class CandidaturaService {
   constructor(
     candidaturaRepository = new CandidaturaRepository(),
@@ -59,7 +67,7 @@ class CandidaturaService {
     const permitidos = fluxo[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        `Transição de status inválida: ${statusAtual} -> ${novoStatus}.`,
+        `Não é possível mover a candidatura de ${rotuloStatus(statusAtual)} para ${rotuloStatus(novoStatus)}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -199,7 +207,7 @@ class CandidaturaService {
     // gravaria um score que nao corresponde mais a fila em que ela esta.
     if (candidatura.status !== 'inscrito') {
       throw new AppError(
-        `Candidatura em '${candidatura.status}' não pode ser reavaliada.`,
+        `Candidatura com status ${rotuloStatus(candidatura.status)} não pode ser reavaliada.`,
         409,
         'BUSINESS_RULE_ERROR',
       );
@@ -231,7 +239,7 @@ class CandidaturaService {
 
     if (!['inscrito', 'em_analise'].includes(candidatura.status)) {
       throw new AppError(
-        'Cancelamento permitido apenas para candidaturas inscrito ou em_analise.',
+        'Só é possível cancelar candidaturas com status Inscrito ou Em análise.',
         400,
         'BUSINESS_RULE_ERROR',
       );

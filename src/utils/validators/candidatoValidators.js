@@ -114,9 +114,9 @@ const normalizarSituacao = (valor) => String(valor || '').trim().toLowerCase();
 // mesclado no update parcial.
 export const validarAnoConclusaoPorSituacao = (situacao, anoConclusao) => {
   if (SITUACOES_COM_ANO_CONCLUSAO.includes(situacao) && anoConclusao === null) {
-    const campo = situacao === 'cursando' ? 'previsão de conclusão' : 'ano de conclusão';
+    const campo = situacao === 'cursando' ? 'a previsão de conclusão' : 'o ano de conclusão';
     throw new AppError(
-      `Informe o ${campo} para formação com situação "${situacao}".`,
+      `Informe ${campo} para formação com situação "${situacao}".`,
       400,
       'VALIDATION_ERROR',
     );
