@@ -6,13 +6,17 @@ import {
 import { NIVEIS_HABILIDADE } from '../../models/Habilidade.js';
 import AppError from '../helpers/AppError.js';
 
+// Vinculo opcional do item do perfil a um item do catalogo. null desfaz.
+const vinculo = (valor) => (valor === null || typeof valor === 'undefined' || String(valor).trim() === ''
+  ? null
+  : String(valor).trim());
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
@@ -23,7 +27,7 @@ const parseDateOrNull = (value, fieldName) => {
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    throw new AppError(`${fieldName} invalida.`, 400, 'VALIDATION_ERROR');
+    throw new AppError(`${fieldName} inválida.`, 400, 'VALIDATION_ERROR');
   }
 
   return date;
@@ -45,7 +49,7 @@ const normalizeCandidato = (payload, isPatch = false) => {
   if (!isPatch || Object.hasOwn(payload, 'email')) {
     const email = String(payload.email || '').trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
-      throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('e-mail inválido.', 400, 'VALIDATION_ERROR');
     }
     normalized.email = email;
   }
@@ -110,9 +114,9 @@ const normalizarSituacao = (valor) => String(valor || '').trim().toLowerCase();
 // mesclado no update parcial.
 export const validarAnoConclusaoPorSituacao = (situacao, anoConclusao) => {
   if (SITUACOES_COM_ANO_CONCLUSAO.includes(situacao) && anoConclusao === null) {
-    const campo = situacao === 'cursando' ? 'previsao de conclusao' : 'ano de conclusao';
+    const campo = situacao === 'cursando' ? 'a previsão de conclusão' : 'o ano de conclusão';
     throw new AppError(
-      `Informe o ${campo} para formacao com situacao "${situacao}".`,
+      `Informe ${campo} para formação com situação "${situacao}".`,
       400,
       'VALIDATION_ERROR',
     );
@@ -135,23 +139,23 @@ export const validateCreateFormacao = (payload) => {
       : Number(payload.anoConclusao);
 
   if (!instituicao || !curso || !situacao) {
-    throw new AppError('instituicao, curso e situacao sao obrigatorios.', 400, 'VALIDATION_ERROR');
+    throw new AppError('instituição, curso e situação são obrigatórios.', 400, 'VALIDATION_ERROR');
   }
 
   if (!GRAUS_ACADEMICOS.includes(grau)) {
-    throw new AppError('grau invalido.', 400, 'VALIDATION_ERROR', { allowed: GRAUS_ACADEMICOS });
+    throw new AppError('grau inválido.', 400, 'VALIDATION_ERROR', { allowed: GRAUS_ACADEMICOS });
   }
 
   if (!SITUACOES_FORMACAO.includes(situacao)) {
-    throw new AppError('situacao invalida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
+    throw new AppError('situação inválida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
   }
 
   if (!Number.isInteger(anoInicio) || anoInicio < 1900) {
-    throw new AppError('anoInicio invalido.', 400, 'VALIDATION_ERROR');
+    throw new AppError('anoInicio inválido.', 400, 'VALIDATION_ERROR');
   }
 
   if (anoConclusao !== null && (!Number.isInteger(anoConclusao) || anoConclusao < anoInicio)) {
-    throw new AppError('anoConclusao invalido.', 400, 'VALIDATION_ERROR');
+    throw new AppError('anoConclusao inválido.', 400, 'VALIDATION_ERROR');
   }
 
   validarAnoConclusaoPorSituacao(situacao, anoConclusao);
@@ -163,6 +167,7 @@ export const validateCreateFormacao = (payload) => {
     situacao,
     anoInicio,
     anoConclusao,
+    areaId: vinculo(payload.areaId),
   };
 };
 
@@ -174,14 +179,14 @@ export const validateUpdateFormacao = (payload) => {
   if (Object.hasOwn(payload, 'instituicao')) {
     normalized.instituicao = String(payload.instituicao || '').trim();
     if (!normalized.instituicao) {
-      throw new AppError('instituicao invalida.', 400, 'VALIDATION_ERROR');
+      throw new AppError('instituição inválida.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'curso')) {
     normalized.curso = String(payload.curso || '').trim();
     if (!normalized.curso) {
-      throw new AppError('curso invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('curso inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -190,21 +195,21 @@ export const validateUpdateFormacao = (payload) => {
       .trim()
       .toLowerCase();
     if (!GRAUS_ACADEMICOS.includes(normalized.grau)) {
-      throw new AppError('grau invalido.', 400, 'VALIDATION_ERROR', { allowed: GRAUS_ACADEMICOS });
+      throw new AppError('grau inválido.', 400, 'VALIDATION_ERROR', { allowed: GRAUS_ACADEMICOS });
     }
   }
 
   if (Object.hasOwn(payload, 'situacao')) {
     normalized.situacao = normalizarSituacao(payload.situacao);
     if (!SITUACOES_FORMACAO.includes(normalized.situacao)) {
-      throw new AppError('situacao invalida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
+      throw new AppError('situação inválida.', 400, 'VALIDATION_ERROR', { allowed: SITUACOES_FORMACAO });
     }
   }
 
   if (Object.hasOwn(payload, 'anoInicio')) {
     normalized.anoInicio = Number(payload.anoInicio);
     if (!Number.isInteger(normalized.anoInicio) || normalized.anoInicio < 1900) {
-      throw new AppError('anoInicio invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('anoInicio inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -214,10 +219,12 @@ export const validateUpdateFormacao = (payload) => {
     } else {
       normalized.anoConclusao = Number(payload.anoConclusao);
       if (!Number.isInteger(normalized.anoConclusao) || normalized.anoConclusao < 1900) {
-        throw new AppError('anoConclusao invalido.', 400, 'VALIDATION_ERROR');
+        throw new AppError('anoConclusao inválido.', 400, 'VALIDATION_ERROR');
       }
     }
   }
+
+  if (Object.hasOwn(payload, 'areaId')) normalized.areaId = vinculo(payload.areaId);
 
   if (Object.keys(normalized).length === 0) {
     throw new AppError('Informe ao menos um campo para atualizar.', 400, 'VALIDATION_ERROR');
@@ -228,7 +235,7 @@ export const validateUpdateFormacao = (payload) => {
     Number.isInteger(normalized.anoConclusao) &&
     normalized.anoConclusao < normalized.anoInicio
   ) {
-    throw new AppError('anoConclusao nao pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('anoConclusao não pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
   }
 
   return normalized;
@@ -244,15 +251,15 @@ export const validateCreateExperiencia = (payload) => {
   const dataFim = parseDateOrNull(payload.dataFim, 'dataFim');
 
   if (!empresa || !cargo || !descricaoAtivida_) {
-    throw new AppError('empresa, cargo e descricaoAtivida_ sao obrigatorios.', 400, 'VALIDATION_ERROR');
+    throw new AppError('empresa, cargo e descrição das atividades são obrigatórios.', 400, 'VALIDATION_ERROR');
   }
 
   if (!dataInicio) {
-    throw new AppError('dataInicio e obrigatoria.', 400, 'VALIDATION_ERROR');
+    throw new AppError('dataInicio é obrigatória.', 400, 'VALIDATION_ERROR');
   }
 
   if (dataFim && dataFim < dataInicio) {
-    throw new AppError('dataFim nao pode ser anterior a dataInicio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('dataFim não pode ser anterior a dataInicio.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -261,6 +268,7 @@ export const validateCreateExperiencia = (payload) => {
     descricaoAtivida_,
     dataInicio,
     dataFim,
+    areaId: vinculo(payload.areaId),
   };
 };
 
@@ -272,34 +280,36 @@ export const validateUpdateExperiencia = (payload) => {
   if (Object.hasOwn(payload, 'empresa')) {
     normalized.empresa = String(payload.empresa || '').trim();
     if (!normalized.empresa) {
-      throw new AppError('empresa invalida.', 400, 'VALIDATION_ERROR');
+      throw new AppError('empresa inválida.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'cargo')) {
     normalized.cargo = String(payload.cargo || '').trim();
     if (!normalized.cargo) {
-      throw new AppError('cargo invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('cargo inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'descricaoAtivida_')) {
     normalized.descricaoAtivida_ = String(payload.descricaoAtivida_ || '').trim();
     if (!normalized.descricaoAtivida_) {
-      throw new AppError('descricaoAtivida_ invalida.', 400, 'VALIDATION_ERROR');
+      throw new AppError('descrição das atividades inválida.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'dataInicio')) {
     normalized.dataInicio = parseDateOrNull(payload.dataInicio, 'dataInicio');
     if (!normalized.dataInicio) {
-      throw new AppError('dataInicio e obrigatoria.', 400, 'VALIDATION_ERROR');
+      throw new AppError('dataInicio é obrigatória.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'dataFim')) {
     normalized.dataFim = parseDateOrNull(payload.dataFim, 'dataFim');
   }
+
+  if (Object.hasOwn(payload, 'areaId')) normalized.areaId = vinculo(payload.areaId);
 
   if (Object.keys(normalized).length === 0) {
     throw new AppError('Informe ao menos um campo para atualizar.', 400, 'VALIDATION_ERROR');
@@ -317,16 +327,17 @@ export const validateCreateHabilidade = (payload) => {
     .toLowerCase();
 
   if (!habilidade) {
-    throw new AppError('habilidade e obrigatoria.', 400, 'VALIDATION_ERROR');
+    throw new AppError('habilidade é obrigatória.', 400, 'VALIDATION_ERROR');
   }
 
   if (!NIVEIS_HABILIDADE.includes(nivel)) {
-    throw new AppError('nivel invalido.', 400, 'VALIDATION_ERROR', { allowed: NIVEIS_HABILIDADE });
+    throw new AppError('nível inválido.', 400, 'VALIDATION_ERROR', { allowed: NIVEIS_HABILIDADE });
   }
 
   return {
     habilidade,
     nivel,
+    itemId: vinculo(payload.itemId),
   };
 };
 
@@ -338,7 +349,7 @@ export const validateUpdateHabilidade = (payload) => {
   if (Object.hasOwn(payload, 'habilidade')) {
     normalized.habilidade = String(payload.habilidade || '').trim();
     if (!normalized.habilidade) {
-      throw new AppError('habilidade invalida.', 400, 'VALIDATION_ERROR');
+      throw new AppError('habilidade inválida.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -347,9 +358,11 @@ export const validateUpdateHabilidade = (payload) => {
       .trim()
       .toLowerCase();
     if (!NIVEIS_HABILIDADE.includes(normalized.nivel)) {
-      throw new AppError('nivel invalido.', 400, 'VALIDATION_ERROR', { allowed: NIVEIS_HABILIDADE });
+      throw new AppError('nível inválido.', 400, 'VALIDATION_ERROR', { allowed: NIVEIS_HABILIDADE });
     }
   }
+
+  if (Object.hasOwn(payload, 'itemId')) normalized.itemId = vinculo(payload.itemId);
 
   if (Object.keys(normalized).length === 0) {
     throw new AppError('Informe ao menos um campo para atualizar.', 400, 'VALIDATION_ERROR');
@@ -368,7 +381,7 @@ export const validateCreateCertificacao = (payload) => {
   const dataExpiracao = parseDateOrNull(payload.dataExpiracao, 'dataExpiracao');
 
   if (!nome || !emissor) {
-    throw new AppError('nome e emissor sao obrigatorios.', 400, 'VALIDATION_ERROR');
+    throw new AppError('nome e emissor são obrigatórios.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -377,6 +390,7 @@ export const validateCreateCertificacao = (payload) => {
     codigo,
     dataEmissao,
     dataExpiracao,
+    itemId: vinculo(payload.itemId),
   };
 };
 
@@ -388,14 +402,14 @@ export const validateUpdateCertificacao = (payload) => {
   if (Object.hasOwn(payload, 'nome')) {
     normalized.nome = String(payload.nome || '').trim();
     if (!normalized.nome) {
-      throw new AppError('nome invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('nome inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
   if (Object.hasOwn(payload, 'emissor')) {
     normalized.emissor = String(payload.emissor || '').trim();
     if (!normalized.emissor) {
-      throw new AppError('emissor invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('emissor inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -410,6 +424,8 @@ export const validateUpdateCertificacao = (payload) => {
   if (Object.hasOwn(payload, 'dataExpiracao')) {
     normalized.dataExpiracao = parseDateOrNull(payload.dataExpiracao, 'dataExpiracao');
   }
+
+  if (Object.hasOwn(payload, 'itemId')) normalized.itemId = vinculo(payload.itemId);
 
   if (Object.keys(normalized).length === 0) {
     throw new AppError('Informe ao menos um campo para atualizar.', 400, 'VALIDATION_ERROR');

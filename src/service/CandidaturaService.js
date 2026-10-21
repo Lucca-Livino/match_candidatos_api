@@ -1,9 +1,17 @@
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
-import AvaliacaoCandidaturaService from './AvaliacaoCandidaturaService.js';
+import AvaliacaoCandidaturaService, { SEM_CRITERIOS } from './AvaliacaoCandidaturaService.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
+
+const ROTULO_STATUS = {
+  inscrito: 'Inscrito',
+  em_analise: 'Em análise',
+  aprovado: 'Aprovado',
+  reprovado: 'Reprovado',
+};
+const rotuloStatus = (status) => ROTULO_STATUS[status] ?? status;
 
 class CandidaturaService {
   constructor(
@@ -25,6 +33,10 @@ class CandidaturaService {
   //
   // Esconder isso apenas no front nao contaria: o campo continuaria viajando
   // na resposta, visivel para qualquer um que abrisse o devtools.
+  //
+  // `movidoPor: 'ia'` e o proprio veredito com outro nome: a promocao da IA
+  // sai como movimentacao automatica comum ('sistema'). O campo fica porque
+  // as outras origens (recrutador, sistema) continuam valendo para quem le.
   omitirTriagem(candidatura) {
     if (!candidatura) return candidatura;
     const {
@@ -33,10 +45,12 @@ class CandidaturaService {
       compativel,
       motivoIncompat_,
       justificativa,
+      criteriosAvaliados,
       versaoModelo,
       avaliadoEm,
       ...visivel
     } = candidatura;
+    if (visivel.movidoPor === 'ia') visivel.movidoPor = 'sistema';
     return visivel;
   }
 
@@ -53,7 +67,7 @@ class CandidaturaService {
     const permitidos = fluxo[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        `Transicao de status invalida: ${statusAtual} -> ${novoStatus}.`,
+        `Não é possível mover a candidatura de ${rotuloStatus(statusAtual)} para ${rotuloStatus(novoStatus)}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -63,7 +77,7 @@ class CandidaturaService {
   async criarCandidatura(usuarioId, payload) {
     const jaExiste = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, payload.vagaId);
     if (jaExiste) {
-      throw new AppError('Usuario ja esta inscrito nesta vaga.', 409, 'CONFLICT');
+      throw new AppError('Usuário já está inscrito nesta vaga.', 409, 'CONFLICT');
     }
 
     const created = await this.candidaturaRepository.criar({
@@ -72,7 +86,7 @@ class CandidaturaService {
       status: 'inscrito',
     });
 
-    return this.sanitize(created.toObject());
+    return this.omitirTriagem(this.sanitize(created.toObject()));
   }
 
   async listarCandidatura(usuarioId) {
@@ -153,7 +167,7 @@ class CandidaturaService {
   async detalharCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     return this.omitirTriagem(this.sanitize(candidatura));
@@ -162,7 +176,7 @@ class CandidaturaService {
   async atualizarStatusCandidatura(usuarioId, vagaId, payload, ator = null) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     this.validarTransicaoStatus(candidatura.status, payload.status);
@@ -185,7 +199,7 @@ class CandidaturaService {
   async reavaliarCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     // So reavalia quem ainda esta em 'inscrito'. Depois disso a candidatura ja
@@ -193,7 +207,7 @@ class CandidaturaService {
     // gravaria um score que nao corresponde mais a fila em que ela esta.
     if (candidatura.status !== 'inscrito') {
       throw new AppError(
-        `Candidatura em '${candidatura.status}' nao pode ser reavaliada.`,
+        `Candidatura com status ${rotuloStatus(candidatura.status)} não pode ser reavaliada.`,
         409,
         'BUSINESS_RULE_ERROR',
       );
@@ -203,8 +217,15 @@ class CandidaturaService {
     // nada foi gravado: devolver 200 com o documento antigo faria a
     // reavaliacao parecer bem-sucedida.
     const atualizada = await this.avaliacaoCandidaturaService.avaliar(usuarioId, vagaId);
+    if (atualizada === SEM_CRITERIOS) {
+      throw new AppError(
+        'Vaga sem critérios: a triagem automática não se aplica.',
+        409,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
     if (!atualizada) {
-      throw new AppError('Avaliacao por IA indisponivel.', 503, 'AI_UNAVAILABLE');
+      throw new AppError('Avaliação por IA indisponível.', 503, 'AI_UNAVAILABLE');
     }
 
     return this.omitirTriagem(this.sanitize(atualizada));
@@ -213,12 +234,12 @@ class CandidaturaService {
   async cancelarCandidatura(usuarioId, vagaId) {
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     if (!['inscrito', 'em_analise'].includes(candidatura.status)) {
       throw new AppError(
-        'Cancelamento permitido apenas para candidaturas inscrito ou em_analise.',
+        'Só é possível cancelar candidaturas com status Inscrito ou Em análise.',
         400,
         'BUSINESS_RULE_ERROR',
       );

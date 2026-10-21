@@ -17,6 +17,7 @@ export const rotasSeed = [
   { route: 'grupos', domain: DOMAIN, ...ALL },
   { route: 'configuracao-integracao', domain: DOMAIN, active: true, get: true, patch: true },
   { route: 'avaliacoes', domain: DOMAIN, active: true, get: true },
+  { route: 'catalogo', domain: DOMAIN, active: true, get: true, post: true, patch: true },
 ];
 
 async function seedRotas({ useOwnConnection = true } = {}) {

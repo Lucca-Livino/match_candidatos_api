@@ -15,6 +15,7 @@ import respostaQuestionarioRoutes from './routes/respostaQuestionarioRoutes.js';
 import rotaRoutes from './routes/rotaRoutes.js';
 import grupoRoutes from './routes/grupoRoutes.js';
 import configuracaoIntegracaoRoutes from './routes/configuracaoIntegracaoRoutes.js';
+import catalogoRoutes from './routes/catalogoRoutes.js';
 import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
@@ -68,7 +69,7 @@ app.get('/docs', async (req, res, next) => {
 app.get('/health', (req, res) => {
 	res.status(200).json({
 		success: true,
-		message: 'API saudavel.',
+		message: 'API saudável.',
 	});
 });
 
@@ -107,6 +108,7 @@ app.use('/api', respostaQuestionarioRoutes);
 app.use('/api', rotaRoutes);
 app.use('/api', grupoRoutes);
 app.use('/api', configuracaoIntegracaoRoutes);
+app.use('/api', catalogoRoutes);
 app.use('/api', authRoutes);
 
 app.use(notFoundHandler);

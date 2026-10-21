@@ -29,14 +29,14 @@ const LINKEDIN_REGEX =
 const normalizeLinkedin = (valorBruto) => {
   const valor = String(valorBruto ?? '').trim();
 
-  // Vazio e "nao informado": o campo continua opcional e limpavel por PATCH.
+  // Vazio e "não informado": o campo continua opcional e limpavel por PATCH.
   if (valor === '') {
     return '';
   }
 
   if (valor.length > LINKEDIN_MAX_LENGTH) {
     throw new AppError(
-      `linkedin deve ter no maximo ${LINKEDIN_MAX_LENGTH} caracteres.`,
+      `linkedin deve ter no máximo ${LINKEDIN_MAX_LENGTH} caracteres.`,
       400,
       'VALIDATION_ERROR',
     );
@@ -45,7 +45,7 @@ const normalizeLinkedin = (valorBruto) => {
   const achado = valor.match(LINKEDIN_REGEX);
   if (!achado) {
     throw new AppError(
-      'linkedin deve ser o endereco de um perfil, no formato https://www.linkedin.com/in/seu-perfil.',
+      'linkedin deve ser o endereço de um perfil, no formato https://www.linkedin.com/in/seu-perfil.',
       400,
       'VALIDATION_ERROR',
       { exemplo: 'https://www.linkedin.com/in/maria-silva' },
@@ -64,7 +64,7 @@ const normalizeContato = (payload, destino) => {
     const valor = String(payload[campo] ?? '').trim();
     if (valor.length > limite) {
       throw new AppError(
-        `${campo} deve ter no maximo ${limite} caracteres.`,
+        `${campo} deve ter no máximo ${limite} caracteres.`,
         400,
         'VALIDATION_ERROR',
       );
@@ -82,13 +82,13 @@ const normalizeContato = (payload, destino) => {
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
 export const normalizeRoles = (roles) => {
   if (!Array.isArray(roles) || roles.length === 0) {
-    throw new AppError('tipos_permissao deve ser um array nao vazio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('tipos_permissao deve ser um array não vazio.', 400, 'VALIDATION_ERROR');
   }
 
   const normalized = [...new Set(roles.map((role) => String(role).trim().toLowerCase()))];
@@ -96,7 +96,7 @@ export const normalizeRoles = (roles) => {
 
   if (invalid.length > 0) {
     throw new AppError(
-      `Papeis invalidos: ${invalid.join(', ')}.`,
+      `Papéis inválidos: ${invalid.join(', ')}.`,
       400,
       'VALIDATION_ERROR',
       { allowed: TIPOS_PERMISSAO },
@@ -115,15 +115,15 @@ export const validateCreateUsuario = (payload) => {
   const status_ativo = payload.status_ativo;
 
   if (nome.length < 2) {
-    throw new AppError('nome e obrigatorio e deve ter ao menos 2 caracteres.', 400, 'VALIDATION_ERROR');
+    throw new AppError('nome é obrigatório e deve ter ao menos 2 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
   if (!EMAIL_REGEX.test(email)) {
-    throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
+    throw new AppError('e-mail inválido.', 400, 'VALIDATION_ERROR');
   }
 
   if (senha.length < MIN_PASSWORD_LENGTH) {
-    throw new AppError('senha e obrigatoria e deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
+    throw new AppError('senha é obrigatória e deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
   if (typeof status_ativo !== 'undefined' && typeof status_ativo !== 'boolean') {
@@ -154,7 +154,7 @@ export const validatePatchUsuario = (payload) => {
   // do provisionamento.
   if (Object.hasOwn(payload, 'tipos_permissao') || Object.hasOwn(payload, 'status_ativo')) {
     throw new AppError(
-      'tipos_permissao e status_ativo nao podem ser alterados por esta rota.',
+      'tipos_permissao e status_ativo não podem ser alterados por esta rota.',
       400,
       'VALIDATION_ERROR',
     );
@@ -173,7 +173,7 @@ export const validatePatchUsuario = (payload) => {
   if (Object.hasOwn(payload, 'email')) {
     const email = String(payload.email || '').trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
-      throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('e-mail inválido.', 400, 'VALIDATION_ERROR');
     }
     normalized.email = email;
   }
@@ -189,7 +189,7 @@ export const validatePatchUsuario = (payload) => {
   normalizeContato(payload, normalized);
 
   if (Object.keys(normalized).length === 0) {
-    throw new AppError('Nenhum campo valido foi informado para atualizacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Nenhum campo válido foi informado para atualização.', 400, 'VALIDATION_ERROR');
   }
 
   return normalized;
@@ -239,11 +239,11 @@ export const validateConvite = (payload) => {
   const papel = String(payload.papel || '').trim().toLowerCase();
 
   if (nome.length < 2 || nome.length > 120) {
-    throw new AppError('nome e obrigatorio e deve ter entre 2 e 120 caracteres.', 400, 'VALIDATION_ERROR');
+    throw new AppError('nome é obrigatório e deve ter entre 2 e 120 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
   if (!EMAIL_REGEX.test(email)) {
-    throw new AppError('email invalido.', 400, 'VALIDATION_ERROR');
+    throw new AppError('e-mail inválido.', 400, 'VALIDATION_ERROR');
   }
 
   if (!PAPEIS_CONVIDAVEIS.includes(papel)) {
@@ -256,7 +256,7 @@ export const validateConvite = (payload) => {
 };
 
 export const REGRA_SENHA_FORTE =
-  'A senha deve ter de 8 a 128 caracteres, com letra maiuscula, letra minuscula, numero e caractere especial.';
+  'A senha deve ter de 8 a 128 caracteres, com letra maiúscula, letra minúscula, número e caractere especial.';
 
 const senhaForte = (senha) =>
   senha.length >= MIN_PASSWORD_LENGTH &&
@@ -273,7 +273,7 @@ export const validateAtivacao = (payload) => {
   const senha = typeof payload.senha === 'string' ? payload.senha : '';
 
   if (!token) {
-    throw new AppError('token e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('token é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   if (!senhaForte(senha)) {

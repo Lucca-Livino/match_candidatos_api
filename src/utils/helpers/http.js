@@ -1,6 +1,6 @@
 import AppError from './AppError.js';
 
-export const sendSuccess = (res, data, statusCode = 200, message = 'Operacao realizada com sucesso.') => {
+export const sendSuccess = (res, data, statusCode = 200, message = 'Operação realizada com sucesso.') => {
   return res.status(statusCode).json({
     success: true,
     message,
@@ -11,10 +11,10 @@ export const sendSuccess = (res, data, statusCode = 200, message = 'Operacao rea
 export const notFoundHandler = (req, res) => {
   return res.status(404).json({
     success: false,
-    message: 'Recurso nao encontrado.',
+    message: 'Recurso não encontrado.',
     error: {
       code: 'NOT_FOUND',
-      message: 'Recurso nao encontrado.',
+      message: 'Recurso não encontrado.',
     },
   });
 };

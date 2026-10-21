@@ -1,0 +1,44 @@
+# Projeto proprio: sem isto o compose herda o nome da pasta, o mesmo do
+# docker-compose.yml de dev, e passaria a recriar os containers dele. Pelo
+# mesmo motivo nao ha container_name fixo.
+# Banco no MongoDB Atlas: DB_URL do .env.
+name: match-de-curriculos-prod
+
+services:
+  api:
+    build: .
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=5000
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      test: curl -f http://localhost:5000/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  front:
+    build: ../match-de-curriculos-front
+    ports:
+      - '80:80'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: always
+
+  seeder:
+    build: .
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    command: npm run _seed_local
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: no
+    profiles:
+      - seed

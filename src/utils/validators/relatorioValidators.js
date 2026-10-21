@@ -7,7 +7,7 @@ export const validatePeriodo = (valor) => {
     : String(valor).trim().toLowerCase();
 
   if (!PERIODOS.includes(periodo)) {
-    throw new AppError('periodo invalido.', 400, 'VALIDATION_ERROR', { allowed: PERIODOS });
+    throw new AppError('período inválido.', 400, 'VALIDATION_ERROR', { allowed: PERIODOS });
   }
 
   return periodo;

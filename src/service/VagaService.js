@@ -2,18 +2,29 @@ import mongoose from 'mongoose';
 import VagaRepository from '../repository/VagaRepository.js';
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import Candidatura from '../models/Candidatura.js';
+import CatalogoService from './CatalogoService.js';
+import { TIPO_CATALOGO_POR_CRITERIO } from '../models/ItemCatalogo.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
+
+const ROTULO_STATUS = {
+  ativa: 'Ativa',
+  pausada: 'Pausada',
+  arquivada: 'Encerrada',
+};
+const rotuloStatus = (status) => ROTULO_STATUS[status] ?? status;
 
 class VagaService {
   constructor(
     repository = new VagaRepository(),
     questionarioRepository = new QuestionarioRepository(),
     candidaturaModel = Candidatura,
+    catalogoService = new CatalogoService(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.Candidatura = candidaturaModel;
+    this.catalogoService = catalogoService;
   }
 
   sanitize(vaga) {
@@ -29,7 +40,7 @@ class VagaService {
 
   ensureObjectId(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new AppError('ID de vaga invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('ID de vaga inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -47,7 +58,7 @@ class VagaService {
     const permitidos = transicoesPermitidas[statusAtual] || [];
     if (!permitidos.includes(novoStatus)) {
       throw new AppError(
-        `Transicao de status invalida: ${statusAtual} -> ${novoStatus}.`,
+        `Não é possível mover a vaga de ${rotuloStatus(statusAtual)} para ${rotuloStatus(novoStatus)}.`,
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -58,7 +69,7 @@ class VagaService {
     const questionarios = await this.questionarioRepository.listar({ vagaId, ativo: 1 });
     if (!questionarios.length) {
       throw new AppError(
-        'Vaga so pode ser ativada com um questionario ativo.',
+        'Vaga só pode ser ativada com um questionário ativo.',
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -96,13 +107,24 @@ class VagaService {
 
     const vaga = await this.repository.buscarPorId(id);
     if (!vaga) {
-      throw new AppError('Vaga nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
 
     return this.sanitize(vaga);
   }
 
+  async garantirRequisitos(criterios = []) {
+    const refs = criterios.flatMap((c, i) => {
+      if (!c.requisito) return [];
+      const tipo = TIPO_CATALOGO_POR_CRITERIO[c.tipo_criterio];
+      const campo = c.tipo_criterio === 'formacao' || c.tipo_criterio === 'experiencia' ? 'areaId' : 'itemId';
+      return [{ tipo, id: c.requisito[campo], campo: `criterio_vaga[${i}].requisito.${campo}` }];
+    });
+    await this.catalogoService.garantirReferencias(refs);
+  }
+
   async criar(payload) {
+    await this.garantirRequisitos(payload.criterio_vaga);
     const created = await this.repository.criar(payload);
 
     // Vaga criada ja ativa precisa do questionario; sem ele, candidaturas
@@ -119,10 +141,14 @@ class VagaService {
 
     const existente = await this.repository.buscarPorId(id);
     if (!existente) {
-      throw new AppError('Vaga nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
 
     this.ensureStatusTransition(existente.status, payload.status);
+
+    if (payload.criterio_vaga) {
+      await this.garantirRequisitos(payload.criterio_vaga);
+    }
 
     if (payload.status === 'ativa') {
       await this.garantirQuestionarioAtivo(id);
@@ -137,7 +163,7 @@ class VagaService {
 
     const existente = await this.repository.buscarPorId(id);
     if (!existente) {
-      throw new AppError('Vaga nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
 
     await this.repository.deletar(id);

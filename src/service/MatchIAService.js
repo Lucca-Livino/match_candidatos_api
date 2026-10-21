@@ -53,7 +53,7 @@ class MatchIAService {
 
         // Permanente ou inesperado (bug na estrategia): abortar preserva a
         // causa real em vez de diluir em "todos os modelos falharam".
-        throw new AppError('Avaliacao por IA indisponivel.', 503, 'AI_UNAVAILABLE', {
+        throw new AppError('Avaliação por IA indisponível.', 503, 'AI_UNAVAILABLE', {
           causa: error.message,
           motivo: error.motivo ?? 'erro nao tratado pela estrategia',
           modelo,
@@ -63,7 +63,7 @@ class MatchIAService {
 
     // Nenhum degrau respondeu. A trilha vai junto: e o que responde "a rodada
     // parou por cota ou por defeito?"
-    throw new AppError('Avaliacao por IA indisponivel.', 503, 'AI_UNAVAILABLE', {
+    throw new AppError('Avaliação por IA indisponível.', 503, 'AI_UNAVAILABLE', {
       causa: 'cascata esgotada',
       trilha: trilha(estado),
     });

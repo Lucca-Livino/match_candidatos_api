@@ -1,10 +1,13 @@
 import { ErroDeRespostaInvalida } from '../../utils/helpers/errosIA.js';
 
-// Escala descrita explicitamente: sem ela o modelo inventa uma calibragem
-// diferente a cada vaga e o limiar deixa de significar a mesma coisa.
+// O modelo so da a nota de cada criterio. O score global e calculado em
+// codigo (calcularScore), porque o modelo ponderava os pesos de forma
+// inconsistente e comprimia os scores numa faixa estreita. A nota por
+// criterio fica sem escala ancorada de proposito: uma escala de quatro
+// ancoras tornou as notas instaveis entre repeticoes (estudo D25).
 export const RUBRICA = `Voce avalia a compatibilidade entre um candidato e uma vaga de emprego.
 
-Receba: os criterios ponderados da vaga, o curriculo do candidato e as respostas dele ao questionario da vaga.
+Receba: os criterios da vaga, o curriculo do candidato e as respostas dele ao questionario da vaga.
 
 Para cada criterio da vaga, atribua uma aderencia de 0 a 1 e cite a evidencia textual do curriculo ou das respostas que sustenta a nota. Se nao houver evidencia, a aderencia e 0 e a evidencia deve dizer "sem evidencia".
 
@@ -14,24 +17,16 @@ As respostas do questionario vem em dois formatos e valem como evidencia nos doi
 
 A formacao traz situacao de uma lista fechada: cursando, concluido, trancado ou incompleto. Para "cursando", previsaoConclusao e o ano previsto de formatura: compare com data_referencia para saber quanto falta (previsao no mesmo ano ou no seguinte indica reta final do curso). Para "concluido", anoConclusao e o ano em que se formou. "trancado" e "incompleto" nao contam como formacao concluida. Se previsaoConclusao vier null, nao presuma em que etapa do curso o candidato esta.
 
-Depois, produza um score global de 0 a 1 ponderando os criterios pelo campo peso_percentual (criterios de maior peso pesam proporcionalmente mais) e ajustando pela qualidade das respostas dissertativas e pelos acertos das objetivas.
-
-Escala do score global:
-- 0.90 a 1.00 — atende todos os criterios de peso alto com evidencia direta e respostas consistentes.
-- 0.70 a 0.89 — atende os criterios de maior peso; lacunas apenas em criterios de peso baixo.
-- 0.50 a 0.69 — atende parcialmente os criterios de maior peso; lacunas relevantes.
-- 0.30 a 0.49 — evidencia fraca ou apenas tangencial nos criterios principais.
-- 0.00 a 0.29 — nao ha evidencia de aderencia aos criterios principais.
+A nota de cada criterio deve refletir apenas a evidencia daquele criterio, incluindo o que as respostas do questionario mostram sobre ele. Nao produza nota global: a combinacao das notas e feita fora do modelo.
 
 Reconheca equivalencia semantica: "React" e evidencia parcial de "front-end"; "Analista de Sistemas Junior" e evidencia de "experiencia em desenvolvimento". Nao invente evidencia que nao esteja no material fornecido.
 
 Nao compare este candidato com nenhum outro. Avalie apenas contra os criterios da vaga.
 
-Escreva o resumo em portugues do Brasil, em no maximo tres frases, dirigido ao recrutador.`;
+Escreva o resumo em portugues do Brasil, em no maximo tres frases, dirigido ao recrutador. Descreva o que o candidato atende e o que falta. Nao qualifique a aderencia global (por exemplo "atende os principais requisitos" ou "perfil compativel"): a decisao e calculada fora do modelo e o resumo nao pode contradize-la.`;
 
 export const INSTRUCAO_FORMATO = `Responda EXCLUSIVAMENTE com um objeto JSON valido, sem markdown e sem texto ao redor, neste formato:
 {
-  "score": <numero entre 0 e 1>,
   "criterios": [
     {
       "criterioId": "<id do criterio recebido>",
@@ -46,7 +41,6 @@ export const INSTRUCAO_FORMATO = `Responda EXCLUSIVAMENTE com um objeto JSON val
 export const SCHEMA_AVALIACAO = {
   type: 'object',
   properties: {
-    score: { type: 'number' },
     criterios: {
       type: 'array',
       items: {
@@ -62,7 +56,7 @@ export const SCHEMA_AVALIACAO = {
     },
     resumo: { type: 'string' },
   },
-  required: ['score', 'criterios', 'resumo'],
+  required: ['criterios', 'resumo'],
 };
 
 export const montarMensagem = (payload) =>
@@ -90,13 +84,19 @@ export const extrairJson = (texto) => {
 export const validarAvaliacao = (resultado, modelo = null) => {
   const invalido = (causa) => new ErroDeRespostaInvalida(causa, { modelo, motivo: causa });
 
-  const score = Number(resultado?.score);
-  if (!Number.isFinite(score) || score < 0 || score > 1) throw invalido('score_invalido');
-  if (!Array.isArray(resultado.criterios)) throw invalido('criterios_invalidos');
+  if (!Array.isArray(resultado?.criterios)) throw invalido('criterios_invalidos');
+
+  const criterios = resultado.criterios.map((criterio) => {
+    const aderencia = criterio?.aderencia;
+    // Sem a nota de um criterio o score calculado fica errado sem aviso.
+    if (typeof aderencia !== 'number' || !Number.isFinite(aderencia) || aderencia < 0 || aderencia > 1) {
+      throw invalido('aderencia_invalida');
+    }
+    return { ...criterio, criterioId: String(criterio.criterioId) };
+  });
 
   return {
-    score,
-    criterios: resultado.criterios,
+    criterios,
     resumo: String(resultado.resumo || ''),
   };
 };

@@ -26,6 +26,12 @@ const Formacao = {
     situacao: { type: 'string', example: 'concluido' },
     anoInicio: { type: 'integer', example: 2018 },
     anoConclusao: { type: 'integer', nullable: true, example: 2022 },
+    areaId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '2b04606b-e3a4-42d5-9aac-6b0c438f7c70',
+    },
   },
 };
 
@@ -41,6 +47,12 @@ const Experiencia = {
     dataInicio: { type: 'string', format: 'date-time' },
     dataFim: { type: 'string', format: 'date-time', nullable: true },
     mesesDuracao: { type: 'integer', example: 24 },
+    areaId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '2b04606b-e3a4-42d5-9aac-6b0c438f7c70',
+    },
   },
 };
 
@@ -52,6 +64,12 @@ const Habilidade = {
     usuarioId: { type: 'string', example: 'user-001' },
     habilidade: { type: 'string', example: 'Node.js' },
     nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+    itemId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '0831bb1a-5bc7-44f1-8ef5-0ff18620c8c4',
+    },
   },
 };
 
@@ -67,54 +85,35 @@ const Certificacao = {
     dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
     codigo: { type: 'string', example: 'AWS-123' },
     expirada: { type: 'boolean', example: false },
+    itemId: {
+      type: 'string',
+      nullable: true,
+      description: 'Opcional. Id do item do catalogo escolhido no autocomplete.',
+      example: '94adabc3-17f0-4b7a-996b-89ffd97bdee9',
+    },
   },
 };
 
 const Candidatura = {
   type: 'object',
   description:
-    'Candidatura. Os campos da triagem por IA sao escritos pelo servidor, nunca pelo cliente. ' +
-    '`scoreIA` e `limiteAplicado` existem no banco como registro de auditoria e NAO saem por ' +
-    'esta API: expor o numero devolveria o ranking que a triagem sem ordenacao evita.',
+    'Candidatura. Nenhum campo da triagem por IA sai por estas rotas (score, limiar, veredito, ' +
+    'motivo, justificativa, criterios, modelo, data da avaliacao): eles existem no banco e sao ' +
+    'visiveis apenas ao papel suporte, em GET /api/avaliacoes. O resultado da triagem chega a ' +
+    'recrutador e candidato so como fila — candidatura compativel ja aparece em em_analise.',
   properties: {
     _id: { type: 'string' },
     id: { type: 'string', example: 'candv-001' },
     usuarioId: { type: 'string', example: 'user-001' },
     vagaId: { type: 'string', example: 'vaga-001' },
-    compativel: {
-      type: 'integer',
-      enum: [0, 1],
-      description:
-        'Resultado da triagem: 1 = apto, 0 = nao apto. Enquanto avaliadoEm for null carrega o ' +
-        'default do schema (1) e nao representa uma avaliacao.',
-      example: 1,
-    },
-    motivoIncompat_: {
-      type: 'string',
-      description: 'Preenchido pela triagem apenas quando compativel = 0.',
-      example: '',
-    },
-    justificativa: {
-      type: 'string',
-      description: 'Texto da analise por IA. Vazio enquanto a candidatura nao foi avaliada.',
-      example: 'Atende os criterios de maior peso; experiencia com Node.js comprovada.',
-    },
-    versaoModelo: {
-      type: 'string',
-      nullable: true,
-      description: 'Modelo da cascata que produziu a avaliacao.',
-      example: 'gemini-3.1-flash-lite',
-    },
-    avaliadoEm: {
-      type: 'string',
-      format: 'date-time',
-      nullable: true,
-      description:
-        'null enquanto a candidatura nao passou pela triagem (IA indisponivel ou desligada). ' +
-        'E o campo que distingue "sem avaliacao" de "avaliada como apta".',
-    },
     status: { type: 'string', enum: ['inscrito', 'em_analise', 'aprovado', 'reprovado'], example: 'inscrito' },
-    movidoPor: { type: 'string', example: 'sistema' },
+    movidoPor: {
+      type: 'string',
+      enum: ['sistema', 'recrutador'],
+      description:
+        'Origem da ultima movimentacao. A promocao feita pela triagem sai como sistema: expor a origem ia revelaria o veredito.',
+      example: 'sistema',
+    },
     reabertoPor: {
       type: 'string',
       nullable: true,
@@ -241,6 +240,7 @@ const candidatoSchemas = {
       situacao: { type: 'string' },
       anoInicio: { type: 'integer' },
       anoConclusao: { type: 'integer', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -253,6 +253,7 @@ const candidatoSchemas = {
       situacao: { type: 'string' },
       anoInicio: { type: 'integer' },
       anoConclusao: { type: 'integer', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -283,6 +284,7 @@ const candidatoSchemas = {
       descricaoAtivida_: { type: 'string' },
       dataInicio: { type: 'string', format: 'date-time' },
       dataFim: { type: 'string', format: 'date-time', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -294,6 +296,7 @@ const candidatoSchemas = {
       descricaoAtivida_: { type: 'string' },
       dataInicio: { type: 'string', format: 'date-time' },
       dataFim: { type: 'string', format: 'date-time', nullable: true },
+      areaId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -321,6 +324,7 @@ const candidatoSchemas = {
     properties: {
       habilidade: { type: 'string', example: 'Node.js' },
       nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -329,6 +333,7 @@ const candidatoSchemas = {
     properties: {
       habilidade: { type: 'string' },
       nivel: { type: 'string', enum: ['basico', 'intermediario', 'avancado', 'especialista'] },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -359,6 +364,7 @@ const candidatoSchemas = {
       dataEmissao: { type: 'string', format: 'date-time', nullable: true },
       dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
       codigo: { type: 'string' },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 
@@ -370,6 +376,7 @@ const candidatoSchemas = {
       dataEmissao: { type: 'string', format: 'date-time', nullable: true },
       dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
       codigo: { type: 'string' },
+      itemId: { type: 'string', nullable: true, description: 'Opcional. Id do item do catalogo.' },
     },
   },
 

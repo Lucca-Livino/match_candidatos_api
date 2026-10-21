@@ -4,10 +4,10 @@ const CAMPOS_BOOLEANOS = ['active', 'get', 'post', 'put', 'patch', 'delete'];
 
 export function validateCreateRota(body = {}) {
   if (!body.route || typeof body.route !== 'string') {
-    throw new AppError('Campo route e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Campo route é obrigatório.', 400, 'VALIDATION_ERROR');
   }
   if (!body.domain || typeof body.domain !== 'string') {
-    throw new AppError('Campo domain e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Campo domain é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   const saida = { route: body.route, domain: body.domain };
@@ -25,7 +25,7 @@ export function validatePatchRota(body = {}) {
     if (typeof body[campo] === 'boolean') saida[campo] = body[campo];
   }
   if (Object.keys(saida).length === 0) {
-    throw new AppError('Nenhum campo valido para atualizar.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Nenhum campo válido para atualizar.', 400, 'VALIDATION_ERROR');
   }
   return saida;
 }

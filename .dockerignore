@@ -1,0 +1,7 @@
+# Sem isto o COPY . . traz o node_modules do host (compilado no Windows) por
+# cima do instalado pelo npm ci, e o bcrypt nativo quebra no container.
+node_modules
+.git
+.env
+coverage
+docs

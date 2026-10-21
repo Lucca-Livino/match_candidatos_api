@@ -27,7 +27,7 @@ class FichaCandidaturaService {
     // livre de curriculo de qualquer usuario.
     const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, vagaId);
     if (!candidatura) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     const [usuario, vaga, curriculo, questionario] = await Promise.all([
@@ -38,7 +38,7 @@ class FichaCandidaturaService {
     ]);
 
     if (!usuario || !vaga) {
-      throw new AppError('Candidatura nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
     return {

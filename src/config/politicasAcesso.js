@@ -6,6 +6,17 @@ const CANDIDATO = 'candidato';
 const SUPORTE = 'suporte';
 
 const politicasAcesso = [
+  // Catalogo de requisitos: todo papel autenticado consulta (autocomplete da
+  // vaga e do perfil); so o administrador cria e edita. Sem DELETE: vagas e
+  // perfis antigos referenciam os itens, que so podem ser desativados.
+  {
+    pattern: /^\/catalogo(?:\/[^/]+)?\/?$/,
+    methods: {
+      GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] },
+      POST: { roles: [ADMIN] },
+      PATCH: { roles: [ADMIN] },
+    },
+  },
   // Configuracao das integracoes: exclusiva do suporte (segregacao de funcoes).
   {
     pattern: /^\/configuracao-integracao(?:\/.*)?$/,

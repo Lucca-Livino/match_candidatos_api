@@ -2,7 +2,7 @@ import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
@@ -24,15 +24,15 @@ export const validateCreateQuestionario = (payload) => {
   const ativo = Object.hasOwn(payload, 'ativo') ? normalizeBinaryNumber(payload.ativo, 'ativo') : 1;
 
   if (!vagaId) {
-    throw new AppError('vagaId e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('vagaId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   if (!criadoPor) {
-    throw new AppError('criadoPor e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('criadoPor é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   if (titulo.length < 3) {
-    throw new AppError('titulo e obrigatorio e deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
+    throw new AppError('título é obrigatório e deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -52,7 +52,7 @@ export const validateUpdateQuestionario = (payload) => {
   if (Object.hasOwn(payload, 'vagaId')) {
     const vagaId = String(payload.vagaId || '').trim();
     if (!vagaId) {
-      throw new AppError('vagaId nao pode ser vazio.', 400, 'VALIDATION_ERROR');
+      throw new AppError('vagaId não pode ser vazio.', 400, 'VALIDATION_ERROR');
     }
     normalized.vagaId = vagaId;
   }
@@ -60,7 +60,7 @@ export const validateUpdateQuestionario = (payload) => {
   if (Object.hasOwn(payload, 'criadoPor')) {
     const criadoPor = String(payload.criadoPor || '').trim();
     if (!criadoPor) {
-      throw new AppError('criadoPor nao pode ser vazio.', 400, 'VALIDATION_ERROR');
+      throw new AppError('criadoPor não pode ser vazio.', 400, 'VALIDATION_ERROR');
     }
     normalized.criadoPor = criadoPor;
   }
@@ -68,7 +68,7 @@ export const validateUpdateQuestionario = (payload) => {
   if (Object.hasOwn(payload, 'titulo')) {
     const titulo = String(payload.titulo || '').trim();
     if (titulo.length < 3) {
-      throw new AppError('titulo deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
+      throw new AppError('título deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
     }
     normalized.titulo = titulo;
   }
@@ -78,7 +78,7 @@ export const validateUpdateQuestionario = (payload) => {
   }
 
   if (Object.keys(normalized).length === 0) {
-    throw new AppError('Informe ao menos um campo valido para atualizacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Informe ao menos um campo válido para atualização.', 400, 'VALIDATION_ERROR');
   }
 
   return normalized;
@@ -88,7 +88,7 @@ export const validatePatchQuestionarioAtivo = (payload) => {
   ensureObject(payload);
 
   if (!Object.hasOwn(payload, 'ativo')) {
-    throw new AppError('ativo e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('ativo é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   return {

@@ -21,6 +21,7 @@ const getSwaggerOptions = async () => {
   const rotaPaths = (await import(new URL('../paths/rota.js', import.meta.url).href + cacheBuster)).default;
   const grupoPaths = (await import(new URL('../paths/grupo.js', import.meta.url).href + cacheBuster)).default;
   const triagemIAPaths = (await import(new URL('../paths/triagemIA.js', import.meta.url).href + cacheBuster)).default;
+  const catalogoPaths = (await import(new URL('../paths/catalogo.js', import.meta.url).href + cacheBuster)).default;
   const authSchemas = (await import(new URL('../schemas/authSchema.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
@@ -97,6 +98,11 @@ const getSwaggerOptions = async () => {
             'Limiar, cascata de modelos e kill switch da triagem. Exclusiva do papel suporte.',
         },
         {
+          name: 'Catalogo',
+          description:
+            'Catalogo de habilidades, areas de curso, areas de atuacao e certificacoes usado nos criterios obrigatorios das vagas.',
+        },
+        {
           name: 'Rotas (Admin)',
           description: 'CRUD administrativo das rotas registradas para o controle de permissoes.',
         },
@@ -114,6 +120,7 @@ const getSwaggerOptions = async () => {
         ...rotaPaths,
         ...grupoPaths,
         ...triagemIAPaths,
+        ...catalogoPaths,
       },
       components: {
         securitySchemes: {

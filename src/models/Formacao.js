@@ -64,6 +64,7 @@ const FormacaoSchema = new mongoose.Schema(
       max: 3000,
       default: null,
     },
+    areaId: { type: String, default: null },
   },
   {
     collection: 'formacao',

@@ -18,7 +18,7 @@ class UsuarioService {
 
   ensureObjectId(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new AppError('ID de usuario invalido.', 400, 'VALIDATION_ERROR');
+      throw new AppError('ID de usuário inválido.', 400, 'VALIDATION_ERROR');
     }
   }
 
@@ -54,7 +54,7 @@ class UsuarioService {
 
     const usuario = await this.repository.buscarPorId(id);
     if (!usuario) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     return this.sanitize(usuario);
@@ -76,7 +76,7 @@ class UsuarioService {
   }) {
     const jaExiste = await this.repository.buscarPorEmail(email);
     if (jaExiste) {
-      throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
+      throw new AppError('Já existe usuário com este e-mail.', 409, 'CONFLICT');
     }
 
     const { auth } = await import('../utils/auth.js');
@@ -103,7 +103,7 @@ class UsuarioService {
 
   async registrarCandidato({ nome, email, senha }) {
     if (!nome || !email || !senha) {
-      throw new AppError('nome, email e senha sao obrigatorios.', 400, 'VALIDATION_ERROR');
+      throw new AppError('nome, e-mail e senha são obrigatórios.', 400, 'VALIDATION_ERROR');
     }
 
     return this.provisionarComAuth({
@@ -124,13 +124,13 @@ class UsuarioService {
 
     const existente = await this.repository.buscarPorId(id);
     if (!existente) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     if (payload.email && payload.email !== existente.email) {
       const usuarioEmail = await this.repository.buscarPorEmail(payload.email);
       if (usuarioEmail && String(usuarioEmail._id) !== String(id)) {
-        throw new AppError('Ja existe usuario com este email.', 409, 'CONFLICT');
+        throw new AppError('Já existe usuário com este e-mail.', 409, 'CONFLICT');
       }
     }
 
@@ -154,13 +154,13 @@ class UsuarioService {
 
     const usuario = await this.repository.buscarPorId(usuarioId);
     if (!usuario || usuario.deletadoEm) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     const informado = typeof emailConfirmacao === 'string' ? emailConfirmacao.trim().toLowerCase() : '';
     if (!informado) {
       throw new AppError(
-        'Informe o email da conta para confirmar a exclusao.',
+        'Informe o e-mail da conta para confirmar a exclusão.',
         400,
         'VALIDATION_ERROR',
       );
@@ -168,7 +168,7 @@ class UsuarioService {
 
     if (informado !== String(usuario.email).trim().toLowerCase()) {
       throw new AppError(
-        'O email informado nao confere com o da conta.',
+        'O e-mail informado não confere com o da conta.',
         400,
         'CONFIRMACAO_INVALIDA',
       );
@@ -180,7 +180,7 @@ class UsuarioService {
       const administradores = await this.repository.contarAdministradoresAtivos();
       if (administradores <= 1) {
         throw new AppError(
-          'Voce e o unico administrador ativo. Promova outro administrador antes de excluir sua conta.',
+          'Você é o único administrador ativo. Promova outro administrador antes de excluir sua conta.',
           409,
           'ULTIMO_ADMINISTRADOR',
         );
@@ -191,7 +191,7 @@ class UsuarioService {
     // dos passos seguintes falhar, o authMiddleware ja barra o acesso pelo
     // `deletadoEm` e o que sobrar e residuo removivel, nao conta viva.
     await this.repository.anonimizar(usuarioId, {
-      nome: 'Conta excluida',
+      nome: 'Conta excluída',
       email: this.emailAnonimo(usuarioId),
       deletadoEm: new Date(),
     });
@@ -212,19 +212,19 @@ class UsuarioService {
 
     const usuario = await this.repository.buscarPorId(id);
     if (!usuario || usuario.deletadoEm) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     if (!status_ativo) {
       if (String(id) === String(solicitanteId)) {
-        throw new AppError('Voce nao pode desativar a propria conta.', 409, 'AUTODESATIVACAO');
+        throw new AppError('Você não pode desativar a própria conta.', 409, 'AUTODESATIVACAO');
       }
 
       if (usuario.tipos_permissao?.includes('administrador')) {
         const administradores = await this.repository.contarAdministradoresAtivos();
         if (administradores <= 1) {
           throw new AppError(
-            'Este e o unico administrador ativo. Ative outro administrador antes de desativa-lo.',
+            'Este é o único administrador ativo. Ative outro administrador antes de desativá-lo.',
             409,
             'ULTIMO_ADMINISTRADOR',
           );
@@ -246,7 +246,7 @@ class UsuarioService {
 
     if (String(id) === String(solicitanteId)) {
       throw new AppError(
-        'Voce nao pode excluir a propria conta por aqui. Use a exclusao da propria conta no perfil.',
+        'Você não pode excluir a própria conta por aqui. Use a exclusão da própria conta no perfil.',
         409,
         'AUTOEXCLUSAO',
       );
@@ -256,14 +256,14 @@ class UsuarioService {
     // documento so sobrevive para manter as referencias das candidaturas.
     const existente = await this.repository.buscarPorId(id);
     if (!existente || existente.deletadoEm) {
-      throw new AppError('Usuario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Usuário não encontrado.', 404, 'NOT_FOUND');
     }
 
     if (existente.tipos_permissao?.includes('administrador')) {
       const administradores = await this.repository.contarAdministradoresAtivos();
       if (administradores <= 1) {
         throw new AppError(
-          'Este e o unico administrador ativo. Ative outro administrador antes de exclui-lo.',
+          'Este é o único administrador ativo. Ative outro administrador antes de excluí-lo.',
           409,
           'ULTIMO_ADMINISTRADOR',
         );

@@ -17,6 +17,18 @@ export const STATUS_VAGA = ['ativa', 'pausada', 'arquivada'];
 
 export const TIPOS_CRITERIO_VAGA = ['skill_tecnica', 'formacao', 'experiencia', 'certificacao'];
 
+const RequisitoSchema = new mongoose.Schema(
+  {
+    itemId: { type: String, default: undefined },
+    nivelMinimo: { type: String, default: undefined },
+    grauMinimo: { type: String, default: undefined },
+    areaId: { type: String, default: undefined },
+    aceitaCursando: { type: Boolean, default: undefined },
+    mesesMinimos: { type: Number, min: 0, default: undefined },
+  },
+  { _id: false },
+);
+
 const CriterioVagaSchema = new mongoose.Schema(
   {
     nome: {
@@ -46,6 +58,7 @@ const CriterioVagaSchema = new mongoose.Schema(
       trim: true,
       maxlength: 300,
     },
+    requisito: { type: RequisitoSchema, default: undefined },
   },
   {
     _id: true,
@@ -96,7 +109,7 @@ const VagaSchema = new mongoose.Schema(
           const somaPesos = value.reduce((acc, item) => acc + Number(item.peso_percentual || 0), 0);
           return somaPesos <= 100;
         },
-        message: 'A soma de peso_percentual em criterio_vaga nao pode ultrapassar 100.',
+        message: 'A soma de peso_percentual em criterio_vaga não pode ultrapassar 100.',
       },
     },
   },

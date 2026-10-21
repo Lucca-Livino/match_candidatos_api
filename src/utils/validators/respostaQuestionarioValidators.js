@@ -2,7 +2,7 @@ import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
@@ -14,7 +14,7 @@ const normalizeOpcaoIds = (payload) => {
 
     const normalized = payload.opcaoRespostaIds.map((id) => String(id || '').trim()).filter(Boolean);
     if (new Set(normalized).size !== normalized.length) {
-      throw new AppError('opcaoRespostaIds nao pode conter ids duplicados.', 400, 'VALIDATION_ERROR');
+      throw new AppError('opcaoRespostaIds não pode conter ids duplicados.', 400, 'VALIDATION_ERROR');
     }
 
     return normalized;
@@ -35,11 +35,11 @@ export const validateIniciarRespostaQuestionario = (payload) => {
   const usuarioId = String(payload.usuarioId || '').trim();
 
   if (!questionarioId) {
-    throw new AppError('questionarioId e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('questionarioId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   if (!usuarioId) {
-    throw new AppError('usuarioId e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('usuarioId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -52,7 +52,7 @@ export const validateResponderQuestionario = (payload) => {
   ensureObject(payload);
 
   if (!Array.isArray(payload.respostas) || payload.respostas.length === 0) {
-    throw new AppError('respostas deve ser um array nao vazio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('respostas deve ser um array não vazio.', 400, 'VALIDATION_ERROR');
   }
 
   const respostas = payload.respostas.map((item, index) => {
@@ -60,7 +60,7 @@ export const validateResponderQuestionario = (payload) => {
 
     const perguntaId = String(item.perguntaId || '').trim();
     if (!perguntaId) {
-      throw new AppError(`respostas[${index}].perguntaId e obrigatorio.`, 400, 'VALIDATION_ERROR');
+      throw new AppError(`respostas[${index}].perguntaId é obrigatório.`, 400, 'VALIDATION_ERROR');
     }
 
     return {
@@ -72,7 +72,7 @@ export const validateResponderQuestionario = (payload) => {
 
   const perguntaIds = respostas.map((item) => item.perguntaId);
   if (new Set(perguntaIds).size !== perguntaIds.length) {
-    throw new AppError('Nao e permitido enviar a mesma pergunta mais de uma vez.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Não é permitido enviar a mesma pergunta mais de uma vez.', 400, 'VALIDATION_ERROR');
   }
 
   return { respostas };

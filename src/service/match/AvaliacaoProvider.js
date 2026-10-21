@@ -16,7 +16,7 @@ class AvaliacaoProvider {
   }
 
   // Recebe o payload consolidado e devolve o objeto ja validado
-  // ({ score, criterios, resumo }). Falhas sobem como erro de errosIA.js
+  // ({ criterios, resumo }); o score e calculado depois, em codigo. Falhas sobem como erro de errosIA.js
   async gerarAvaliacao(payload, { modelo, temperatura }) {
     throw new AppError(
       `${this.constructor.name}: gerarAvaliacao nao implementado.`,
