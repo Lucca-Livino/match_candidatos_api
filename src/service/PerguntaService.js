@@ -28,7 +28,7 @@ class PerguntaService {
   async garantirQuestionarioExiste(questionarioId) {
     const questionario = await this.questionarioRepository.buscarPorId(questionarioId);
     if (!questionario) {
-      throw new AppError('Questionario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Questionário não encontrado.', 404, 'NOT_FOUND');
     }
 
     return questionario;
@@ -37,7 +37,7 @@ class PerguntaService {
   async garantirPerguntaExiste(id) {
     const pergunta = await this.repository.buscarPorId(id);
     if (!pergunta) {
-      throw new AppError('Pergunta nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Pergunta não encontrada.', 404, 'NOT_FOUND');
     }
 
     return pergunta;
@@ -48,7 +48,7 @@ class PerguntaService {
 
     const ordemEmUso = perguntas.some((item) => item.ordem === ordem && item.id !== perguntaIgnoradaId);
     if (ordemEmUso) {
-      throw new AppError('Ja existe pergunta com a ordem informada neste questionario.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Já existe pergunta com a ordem informada neste questionário.', 400, 'BUSINESS_RULE_ERROR');
     }
   }
 
@@ -124,7 +124,7 @@ class PerguntaService {
     const totalRespostas = await this.respostaQuestionarioRepository.contarRespostasPorPergunta(id);
     if (totalRespostas > 0) {
       throw new AppError(
-        'Nao e permitido excluir pergunta com respostas vinculadas.',
+        'Não é permitido excluir pergunta com respostas vinculadas.',
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -145,20 +145,20 @@ class PerguntaService {
     }
 
     if (pergunta.tipoResposta === 'dissertativa') {
-      throw new AppError('Perguntas dissertativas nao aceitam opcoes de resposta.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Perguntas dissertativas não aceitam opções de resposta.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const existeCorreta = opcoes.some((item) => item.correta === 1 && item.id !== opcaoIgnoradaId);
 
     if (existeCorreta) {
-      throw new AppError('A pergunta ja possui uma opcao marcada como correta.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('A pergunta já possui uma opção marcada como correta.', 400, 'BUSINESS_RULE_ERROR');
     }
   }
 
   validarOrdemOpcaoDisponivel(opcoes, ordem, opcaoIgnoradaId = null) {
     const ordemEmUso = opcoes.some((item) => item.ordem === ordem && item.id !== opcaoIgnoradaId);
     if (ordemEmUso) {
-      throw new AppError('Ja existe opcao de resposta com a ordem informada.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Já existe opção de resposta com a ordem informada.', 400, 'BUSINESS_RULE_ERROR');
     }
   }
 
@@ -166,7 +166,7 @@ class PerguntaService {
     const pergunta = await this.garantirPerguntaExiste(perguntaId);
 
     if (pergunta.tipoResposta === 'dissertativa') {
-      throw new AppError('Perguntas dissertativas nao aceitam opcoes de resposta.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Perguntas dissertativas não aceitam opções de resposta.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const opcoes = await this.repository.listarOpcoesPorPerguntaId(pergunta.id);
@@ -186,12 +186,12 @@ class PerguntaService {
     const pergunta = await this.garantirPerguntaExiste(perguntaId);
 
     if (pergunta.tipoResposta === 'dissertativa') {
-      throw new AppError('Perguntas dissertativas nao aceitam opcoes de resposta.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Perguntas dissertativas não aceitam opções de resposta.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const opcaoExistente = await this.repository.buscarOpcaoPorId(pergunta.id, opcaoId);
     if (!opcaoExistente) {
-      throw new AppError('Opcao de resposta nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Opção de resposta não encontrada.', 404, 'NOT_FOUND');
     }
 
     const opcoes = await this.repository.listarOpcoesPorPerguntaId(pergunta.id);
@@ -213,7 +213,7 @@ class PerguntaService {
 
     const opcao = await this.repository.buscarOpcaoPorId(pergunta.id, opcaoId);
     if (!opcao) {
-      throw new AppError('Opcao de resposta nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Opção de resposta não encontrada.', 404, 'NOT_FOUND');
     }
 
     await this.repository.deletarOpcao(pergunta.id, opcao.id);
@@ -229,7 +229,7 @@ class PerguntaService {
     const perguntasDoPayload = await this.repository.buscarPorIds(idsPerguntas);
 
     if (perguntasDoPayload.length !== idsPerguntas.length) {
-      throw new AppError('Uma ou mais perguntas nao foram encontradas.', 404, 'NOT_FOUND');
+      throw new AppError('Uma ou mais perguntas não foram encontradas.', 404, 'NOT_FOUND');
     }
 
     const questionarioIdResolvido = payload.questionarioId || perguntasDoPayload[0].questionarioId;
@@ -237,7 +237,7 @@ class PerguntaService {
     const questionarioIds = new Set(perguntasDoPayload.map((item) => item.questionarioId));
     if (questionarioIds.size !== 1 || !questionarioIds.has(questionarioIdResolvido)) {
       throw new AppError(
-        'Nao e permitido reordenar perguntas de questionarios diferentes.',
+        'Não é permitido reordenar perguntas de questionários diferentes.',
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -249,7 +249,7 @@ class PerguntaService {
 
     if (perguntasAtuais.length !== payload.perguntas.length) {
       throw new AppError(
-        'Para reordenar, informe todas as perguntas do questionario.',
+        'Para reordenar, informe todas as perguntas do questionário.',
         400,
         'BUSINESS_RULE_ERROR',
       );
@@ -260,7 +260,7 @@ class PerguntaService {
 
     for (const id of idsPayload) {
       if (!idsAtuais.has(id)) {
-        throw new AppError('Uma ou mais perguntas nao pertencem ao questionario informado.', 400, 'BUSINESS_RULE_ERROR');
+        throw new AppError('Uma ou mais perguntas não pertencem ao questionário informado.', 400, 'BUSINESS_RULE_ERROR');
       }
     }
 

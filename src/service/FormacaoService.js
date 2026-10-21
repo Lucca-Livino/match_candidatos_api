@@ -1,9 +1,12 @@
 import FormacaoRepository from '../repository/FormacaoRepository.js';
+import CatalogoService from './CatalogoService.js';
 import AppError from '../utils/helpers/AppError.js';
+import { validarAnoConclusaoPorSituacao } from '../utils/validators/candidatoValidators.js';
 
 class FormacaoService {
-  constructor(formacaoRepository = new FormacaoRepository()) {
+  constructor(formacaoRepository = new FormacaoRepository(), catalogoService = new CatalogoService()) {
     this.formacaoRepository = formacaoRepository;
+    this.catalogoService = catalogoService;
   }
 
   sanitize(doc) {
@@ -17,6 +20,10 @@ class FormacaoService {
   }
 
   async criarFormacao(usuarioId, payload) {
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'area_curso', id: payload.areaId, campo: 'areaId' },
+    ]);
+
     const created = await this.formacaoRepository.criar({
       ...payload,
       usuarioId,
@@ -33,15 +40,22 @@ class FormacaoService {
   async atualizarFormacao(usuarioId, id, payload) {
     const existente = await this.formacaoRepository.buscarPorUsuarioEId(usuarioId, id);
     if (!existente) {
-      throw new AppError('Formacao nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Formação não encontrada.', 404, 'NOT_FOUND');
     }
+
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'area_curso', id: payload.areaId, campo: 'areaId' },
+    ]);
 
     const anoInicio = payload.anoInicio ?? existente.anoInicio;
     const anoConclusao = Object.hasOwn(payload, 'anoConclusao') ? payload.anoConclusao : existente.anoConclusao;
 
     if (Number.isInteger(anoConclusao) && anoConclusao < anoInicio) {
-      throw new AppError('anoConclusao nao pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
+      throw new AppError('anoConclusao não pode ser menor que anoInicio.', 400, 'VALIDATION_ERROR');
     }
+
+    const situacao = payload.situacao ?? existente.situacao;
+    validarAnoConclusaoPorSituacao(situacao, anoConclusao ?? null);
 
     const updated = await this.formacaoRepository.atualizarPorUsuarioEId(usuarioId, id, payload);
     return this.sanitize(updated);
@@ -50,7 +64,7 @@ class FormacaoService {
   async deletarFormacao(usuarioId, id) {
     const removed = await this.formacaoRepository.deletarPorUsuarioEId(usuarioId, id);
     if (!removed) {
-      throw new AppError('Formacao nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Formação não encontrada.', 404, 'NOT_FOUND');
     }
 
     return {

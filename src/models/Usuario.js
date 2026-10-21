@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import mongoosePaginate from 'mongoose-paginate-v2';
 
-export const TIPOS_PERMISSAO = ['administrador', 'recrutador', 'candidato'];
+export const TIPOS_PERMISSAO = ['administrador', 'recrutador', 'candidato', 'suporte'];
 
 const UsuarioSchema = new mongoose.Schema(
   {
@@ -44,9 +44,47 @@ const UsuarioSchema = new mongoose.Schema(
         message: 'tipos_permissao deve conter ao menos um papel.',
       },
     },
+    // Contato do perfil. Opcionais para todo papel: o recrutador cadastrado
+    // pelo admin nao tem LinkedIn, e o candidato costuma preencher o telefone
+    // depois do cadastro.
+    telefone: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      default: '',
+    },
+    linkedin: {
+      type: String,
+      trim: true,
+      maxlength: 255,
+      default: '',
+    },
+    cidade: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: '',
+    },
     status_ativo: {
       type: Boolean,
       default: true,
+    },
+    // Convite do administrador (recrutador e suporte). Pendente = convidadoEm
+    // preenchido e ativadoEm vazio: a conta existe, mas a senha dela e
+    // aleatoria e ninguem a conhece ate o convidado usar o link do e-mail.
+    convidadoEm: {
+      type: Date,
+      default: null,
+    },
+    ativadoEm: {
+      type: Date,
+      default: null,
+    },
+    // Soft delete da autoexclusao. 
+    deletadoEm: {
+      type: Date,
+      default: null,
+      index: true,
     },
     groups: [
       {

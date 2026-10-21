@@ -47,6 +47,7 @@ const ExperienciaSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    areaId: { type: String, default: null },
   },
   {
     collection: 'experiencia',

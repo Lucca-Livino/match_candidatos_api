@@ -14,7 +14,7 @@ class ExperienciaController {
     try {
       const payload = validateCreateExperiencia(req.body);
       const data = await this.service.criarExperiencia(req.params.id, payload);
-      return sendSuccess(res, data, 201, 'Experiencia criada com sucesso.');
+      return sendSuccess(res, data, 201, 'Experiência criada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -23,7 +23,7 @@ class ExperienciaController {
   async listarExperiencia(req, res, next) {
     try {
       const data = await this.service.listarExperiencia(req.params.id);
-      return sendSuccess(res, data, 200, 'Experiencias listadas com sucesso.');
+      return sendSuccess(res, data, 200, 'Experiências listadas com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -33,7 +33,7 @@ class ExperienciaController {
     try {
       const payload = validateUpdateExperiencia(req.body);
       const data = await this.service.atualizarExperiencia(req.params.id, req.params.experienciaId, payload);
-      return sendSuccess(res, data, 200, 'Experiencia atualizada com sucesso.');
+      return sendSuccess(res, data, 200, 'Experiência atualizada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -42,7 +42,7 @@ class ExperienciaController {
   async deletarExperiencia(req, res, next) {
     try {
       const data = await this.service.deletarExperiencia(req.params.id, req.params.experienciaId);
-      return sendSuccess(res, data, 200, 'Experiencia removida com sucesso.');
+      return sendSuccess(res, data, 200, 'Experiência removida com sucesso.');
     } catch (error) {
       return next(error);
     }

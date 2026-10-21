@@ -22,7 +22,12 @@ const Pergunta = {
       enum: ['multipla_escolha', 'dissertativa', 'verdadeiro_falso'],
       example: 'multipla_escolha',
     },
-    peso: { type: 'number', example: 2 },
+    peso: {
+      type: 'number',
+      example: 1,
+      description:
+        'Sempre 1. Campo inerte, mantido por compatibilidade: nenhum service o le e ele nao entra no payload da triagem por IA. O peso que a avaliacao pondera e `peso_percentual`, dos criterios da vaga, e nao tem relacao com este.',
+    },
     obrigatoria: { type: 'integer', enum: [0, 1], example: 1 },
     ordem: { type: 'integer', example: 1 },
     criadoEm: { type: 'string', format: 'date-time' },
@@ -108,7 +113,7 @@ const RespostaQuestionario = {
     _id: { type: 'string', example: '680a0b1c2d3e4f5a6b7c8db0' },
     id: { type: 'string', example: 'resp-quest-001' },
     questionarioId: { type: 'string', example: 'quest-001' },
-    candidatoId: { type: 'string', example: 'cand-001' },
+    usuarioId: { type: 'string', example: 'user-001' },
     iniciadoEm: { type: 'string', format: 'date-time' },
     criadoEm: { type: 'string', format: 'date-time' },
     finalizadoEm: { type: 'string', format: 'date-time', nullable: true },
@@ -226,7 +231,12 @@ const questionarioSchemas = {
         enum: ['multipla_escolha', 'dissertativa', 'verdadeiro_falso'],
         example: 'multipla_escolha',
       },
-      peso: { type: 'number', example: 2 },
+      peso: {
+      type: 'number',
+      example: 1,
+      description:
+        'Sempre 1. Campo inerte, mantido por compatibilidade: nenhum service o le e ele nao entra no payload da triagem por IA. O peso que a avaliacao pondera e `peso_percentual`, dos criterios da vaga, e nao tem relacao com este.',
+    },
       obrigatoria: { type: 'integer', enum: [0, 1], example: 1 },
       ordem: { type: 'integer', example: 1 },
     },
@@ -234,7 +244,7 @@ const questionarioSchemas = {
       questionarioId: 'quest-001',
       enunciado: 'Qual destas tecnologias voce domina mais?',
       tipoResposta: 'multipla_escolha',
-      peso: 2,
+      peso: 1,
       obrigatoria: 1,
       ordem: 1,
     },
@@ -248,13 +258,18 @@ const questionarioSchemas = {
         type: 'string',
         enum: ['multipla_escolha', 'dissertativa', 'verdadeiro_falso'],
       },
-      peso: { type: 'number', example: 3 },
+      peso: {
+      type: 'number',
+      example: 1,
+      description:
+        'Sempre 1. Campo inerte, mantido por compatibilidade: nenhum service o le e ele nao entra no payload da triagem por IA. O peso que a avaliacao pondera e `peso_percentual`, dos criterios da vaga, e nao tem relacao com este.',
+    },
       obrigatoria: { type: 'integer', enum: [0, 1], example: 1 },
       ordem: { type: 'integer', example: 2 },
     },
     example: {
       enunciado: 'Atualizacao do enunciado da pergunta',
-      peso: 3,
+      peso: 1,
       ordem: 2,
     },
   },
@@ -318,14 +333,14 @@ const questionarioSchemas = {
 
   RespostaQuestionarioIniciarRequest: {
     type: 'object',
-    required: ['questionarioId', 'candidatoId'],
+    required: ['questionarioId', 'usuarioId'],
     properties: {
       questionarioId: { type: 'string', example: 'quest-001' },
-      candidatoId: { type: 'string', example: 'cand-001' },
+      usuarioId: { type: 'string', example: 'user-001' },
     },
     example: {
       questionarioId: 'quest-001',
-      candidatoId: 'cand-001',
+      usuarioId: 'user-001',
     },
   },
 
@@ -439,7 +454,7 @@ const questionarioSchemas = {
         questionarioId: 'quest-001',
         enunciado: 'Qual tecnologia voce domina mais?',
         tipoResposta: 'multipla_escolha',
-        peso: 2,
+        peso: 1,
         obrigatoria: 1,
         ordem: 1,
         opcaoResposta: [
@@ -506,7 +521,7 @@ const questionarioSchemas = {
         _id: '680a0b1c2d3e4f5a6b7c8db0',
         id: 'resp-quest-001',
         questionarioId: 'quest-001',
-        candidatoId: 'cand-001',
+        usuarioId: 'user-001',
         status: 'em_andamento',
       },
     },

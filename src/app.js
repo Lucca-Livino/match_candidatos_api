@@ -14,6 +14,8 @@ import perguntaRoutes from './routes/perguntaRoutes.js';
 import respostaQuestionarioRoutes from './routes/respostaQuestionarioRoutes.js';
 import rotaRoutes from './routes/rotaRoutes.js';
 import grupoRoutes from './routes/grupoRoutes.js';
+import configuracaoIntegracaoRoutes from './routes/configuracaoIntegracaoRoutes.js';
+import catalogoRoutes from './routes/catalogoRoutes.js';
 import getSwaggerOptions from './docs/config/head.js';
 import { errorHandler, notFoundHandler } from './utils/helpers/http.js';
 
@@ -67,17 +69,22 @@ app.get('/docs', async (req, res, next) => {
 app.get('/health', (req, res) => {
 	res.status(200).json({
 		success: true,
-		message: 'API saudavel.',
+		message: 'API saudável.',
 	});
 });
 
 // Rotas públicas (sem autenticação nem autorização)
-const isPublicPath = (path) =>
-	path.startsWith('/auth') || path === '/usuarios/registro';
+// Publico e o par metodo + caminho, nao so o caminho: liberar por caminho
+// deixava GET/PATCH/DELETE em '/usuarios/registro' passarem sem sessao e sem
+// checagem de permissao ate o handler de '/usuarios/:id'.
+const ROTAS_PUBLICAS_POST = ['/usuarios/registro', '/usuarios/ativar'];
+
+const isPublicPath = (req) =>
+	req.path.startsWith('/auth') || (req.method === 'POST' && ROTAS_PUBLICAS_POST.includes(req.path));
 
 // Autenticação (better-auth) — exceto rotas públicas
 app.use('/api', (req, res, next) => {
-	if (isPublicPath(req.path)) {
+	if (isPublicPath(req)) {
 		return next();
 	}
 	return authMiddleware(req, res, next);
@@ -86,7 +93,7 @@ app.use('/api', (req, res, next) => {
 // Autorização (RBAC de 3 camadas) — exceto rotas públicas
 const permissao = permissaoMiddleware();
 app.use('/api', (req, res, next) => {
-	if (isPublicPath(req.path)) {
+	if (isPublicPath(req)) {
 		return next();
 	}
 	return permissao(req, res, next);
@@ -100,6 +107,8 @@ app.use('/api', perguntaRoutes);
 app.use('/api', respostaQuestionarioRoutes);
 app.use('/api', rotaRoutes);
 app.use('/api', grupoRoutes);
+app.use('/api', configuracaoIntegracaoRoutes);
+app.use('/api', catalogoRoutes);
 app.use('/api', authRoutes);
 
 app.use(notFoundHandler);

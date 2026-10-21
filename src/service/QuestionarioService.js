@@ -25,14 +25,14 @@ class QuestionarioService {
   async garantirVagaExiste(vagaId) {
     const vaga = await this.vagaRepository.buscarPorId(vagaId);
     if (!vaga) {
-      throw new AppError('Vaga informada nao foi encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Vaga informada não foi encontrada.', 404, 'NOT_FOUND');
     }
   }
 
   async garantirQuestionarioExiste(id) {
     const questionario = await this.repository.buscarPorId(id);
     if (!questionario) {
-      throw new AppError('Questionario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Questionário não encontrado.', 404, 'NOT_FOUND');
     }
 
     return questionario;
@@ -108,7 +108,7 @@ class QuestionarioService {
     const totalRespostas = await this.respostaQuestionarioRepository.contarRespostasPorQuestionario(id);
     if (totalRespostas > 0) {
       throw new AppError(
-        'Nao e permitido excluir questionario com respostas vinculadas.',
+        'Não é permitido excluir questionário com respostas vinculadas.',
         400,
         'BUSINESS_RULE_ERROR',
       );

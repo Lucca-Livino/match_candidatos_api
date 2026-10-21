@@ -167,6 +167,41 @@ const vagaPaths = {
       },
     },
   },
+  '/api/vagas/relatorio': {
+    get: {
+      tags: ['Vagas RH'],
+      summary: 'Relatorio geral do processo seletivo (recrutador/admin)',
+      description:
+        'Vagas por status e area, candidaturas por etapa, taxa de aprovacao (aprovado / decididas; ' +
+        'null sem decisoes) e serie de inscricoes (semana em 30d/90d, mes em 12m/tudo). ' +
+        'Nao inclui nenhum campo da triagem por IA.',
+      parameters: [
+        { name: 'periodo', in: 'query', schema: { type: 'string', enum: ['30d', '90d', '12m', 'tudo'], default: 'tudo' } },
+      ],
+      responses: {
+        200: { description: 'Relatorio gerado com sucesso' },
+        400: { description: 'periodo invalido' },
+        403: { description: 'Apenas recrutador e administrador' },
+      },
+    },
+  },
+  '/api/vagas/{id}/relatorio': {
+    get: {
+      tags: ['Vagas RH'],
+      summary: 'Relatorio de uma vaga (recrutador/admin)',
+      description: 'Mesmos numeros do relatorio geral, restritos a vaga, e a lista de candidatos (nome, etapa, data de inscricao).',
+      parameters: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        { name: 'periodo', in: 'query', schema: { type: 'string', enum: ['30d', '90d', '12m', 'tudo'], default: 'tudo' } },
+      ],
+      responses: {
+        200: { description: 'Relatorio da vaga gerado com sucesso' },
+        400: { description: 'periodo invalido' },
+        403: { description: 'Apenas recrutador e administrador' },
+        404: { description: 'Vaga nao encontrada' },
+      },
+    },
+  },
 };
 
 export default vagaPaths;

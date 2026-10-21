@@ -1,4 +1,5 @@
 import CandidaturaService from '../service/CandidaturaService.js';
+import FichaCandidaturaService from '../service/FichaCandidaturaService.js';
 import {
   validateCreateCandidatura,
   validateUpdateStatusCandidatura,
@@ -6,8 +7,9 @@ import {
 import { sendSuccess } from '../utils/helpers/http.js';
 
 class CandidaturaController {
-  constructor(service = new CandidaturaService()) {
+  constructor(service = new CandidaturaService(), fichaService = new FichaCandidaturaService()) {
     this.service = service;
+    this.fichaService = fichaService;
   }
 
   async criarCandidatura(req, res, next) {
@@ -45,8 +47,53 @@ class CandidaturaController {
         req.params.id,
         req.params.vagaId,
         payload,
+        req.user?.email ?? (req.user_id ? String(req.user_id) : null),
       );
       return sendSuccess(res, data, 200, 'Status da candidatura atualizado com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // Listagem da vaga: :id e a vaga, nao o usuario (nas rotas de /usuarios o
+  // :id e o usuario). Trocar os dois devolveria lista vazia em silencio.
+  async listarPorVaga(req, res, next) {
+    try {
+      const data = await this.service.listarPorVaga(req.params.id);
+      return sendSuccess(res, data, 200, 'Candidaturas da vaga listadas com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // Ficha de impressao (recrutador, admin, suporte): curriculo e respostas,
+  // sem nada da triagem.
+  async montarFicha(req, res, next) {
+    try {
+      const data = await this.fichaService.montar(req.params.usuarioId, req.params.id);
+      return sendSuccess(res, data, 200, 'Ficha da candidatura montada com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // Rota do suporte: unica que devolve os campos de auditoria da IA.
+  async listarParaAuditoria(req, res, next) {
+    try {
+      const data = await this.service.listarParaAuditoria({
+        apenasPendentes: req.query.pendentes === 'true',
+        vagaId: req.query.vagaId || null,
+      });
+      return sendSuccess(res, data, 200, 'Avaliações listadas com sucesso.');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async reavaliarCandidatura(req, res, next) {
+    try {
+      const data = await this.service.reavaliarCandidatura(req.params.usuarioId, req.params.id);
+      return sendSuccess(res, data, 200, 'Candidatura reavaliada com sucesso.');
     } catch (error) {
       return next(error);
     }

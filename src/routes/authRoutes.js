@@ -13,6 +13,7 @@ router.get('/me', authMiddleware, (req, res) => {
       name: user.name,
       email: user.email,
       image: user.image,
+      tipos_permissao: user.tipos_permissao,
     },
   });
 });

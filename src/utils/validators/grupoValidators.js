@@ -2,10 +2,10 @@ import AppError from '../helpers/AppError.js';
 
 export function validateCreateGrupo(body = {}) {
   if (!body.nome || typeof body.nome !== 'string') {
-    throw new AppError('Campo nome e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Campo nome é obrigatório.', 400, 'VALIDATION_ERROR');
   }
   if (!body.descricao || typeof body.descricao !== 'string') {
-    throw new AppError('Campo descricao e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Campo descrição é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -23,7 +23,7 @@ export function validatePatchGrupo(body = {}) {
   if (typeof body.ativo === 'boolean') out.ativo = body.ativo;
   if (Array.isArray(body.permissions)) out.permissions = body.permissions;
   if (Object.keys(out).length === 0) {
-    throw new AppError('Nenhum campo valido para atualizar.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Nenhum campo válido para atualizar.', 400, 'VALIDATION_ERROR');
   }
   return out;
 }

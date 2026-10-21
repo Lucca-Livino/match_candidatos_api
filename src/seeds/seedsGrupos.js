@@ -16,24 +16,35 @@ const gruposSeed = [
   },
   {
     nome: 'recrutador',
-    descricao: 'Gestao de vagas, questionarios e perguntas',
+    descricao: 'Gestão de vagas, questionários e perguntas',
     permissions: [
       perm('vagas', R(['get', 'post', 'patch', 'delete'])),
       perm('questionario', R(['get', 'post', 'put', 'patch', 'delete'])),
       perm('pergunta', R(['get', 'post', 'put', 'patch', 'delete'])),
       perm('usuarios', R(['get'])),
       perm('me', R(['get'])),
+      perm('catalogo', R(['get'])),
     ],
   },
   {
     nome: 'candidato',
-    descricao: 'Curriculo proprio, vagas (leitura), respostas',
+    descricao: 'Currículo próprio, vagas (leitura), respostas',
     permissions: [
       perm('vagas', R(['get'])),
       perm('questionario', R(['get'])),
       perm('resposta-questionario', R(['get', 'post', 'patch'])),
       perm('usuarios', R(['get', 'put', 'patch'])),
       perm('me', R(['get'])),
+      perm('catalogo', R(['get'])),
+    ],
+  },
+  {
+    nome: 'suporte',
+    descricao: 'Configuração das integrações e do limiar de compatibilidade',
+    permissions: [
+      perm('configuracao-integracao', R(['get', 'patch'])),
+      perm('me', R(['get'])),
+      perm('catalogo', R(['get'])),
     ],
   },
 ];

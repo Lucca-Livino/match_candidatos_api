@@ -20,6 +20,8 @@ const getSwaggerOptions = async () => {
   const questionarioPaths = (await import(new URL('../paths/questionario.js', import.meta.url).href + cacheBuster)).default;
   const rotaPaths = (await import(new URL('../paths/rota.js', import.meta.url).href + cacheBuster)).default;
   const grupoPaths = (await import(new URL('../paths/grupo.js', import.meta.url).href + cacheBuster)).default;
+  const triagemIAPaths = (await import(new URL('../paths/triagemIA.js', import.meta.url).href + cacheBuster)).default;
+  const catalogoPaths = (await import(new URL('../paths/catalogo.js', import.meta.url).href + cacheBuster)).default;
   const authSchemas = (await import(new URL('../schemas/authSchema.js', import.meta.url).href + cacheBuster)).default;
   const usuarioSchemas = (await import(new URL('../schemas/usuarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const vagaSchemas = (await import(new URL('../schemas/vagaSchema.js', import.meta.url).href + cacheBuster)).default;
@@ -28,6 +30,8 @@ const getSwaggerOptions = async () => {
     (await import(new URL('../schemas/questionarioSchema.js', import.meta.url).href + cacheBuster)).default;
   const rotaSchemas = (await import(new URL('../schemas/rotaSchema.js', import.meta.url).href + cacheBuster)).default;
   const grupoSchemas = (await import(new URL('../schemas/grupoSchema.js', import.meta.url).href + cacheBuster)).default;
+  const triagemIASchemas =
+    (await import(new URL('../schemas/triagemIASchema.js', import.meta.url).href + cacheBuster)).default;
 
   return {
     definition: {
@@ -84,6 +88,21 @@ const getSwaggerOptions = async () => {
           description: 'Fluxo de resposta do candidato: iniciar, responder, finalizar e consultar.',
         },
         {
+          name: 'Triagem por IA',
+          description:
+            'Avaliacao automatica de candidaturas: listagem sem ranking e reavaliacao manual.',
+        },
+        {
+          name: 'Configuracao da IA (Suporte)',
+          description:
+            'Limiar, cascata de modelos e kill switch da triagem. Exclusiva do papel suporte.',
+        },
+        {
+          name: 'Catalogo',
+          description:
+            'Catalogo de habilidades, areas de curso, areas de atuacao e certificacoes usado nos criterios obrigatorios das vagas.',
+        },
+        {
           name: 'Rotas (Admin)',
           description: 'CRUD administrativo das rotas registradas para o controle de permissoes.',
         },
@@ -100,6 +119,8 @@ const getSwaggerOptions = async () => {
         ...questionarioPaths,
         ...rotaPaths,
         ...grupoPaths,
+        ...triagemIAPaths,
+        ...catalogoPaths,
       },
       components: {
         securitySchemes: {
@@ -117,6 +138,7 @@ const getSwaggerOptions = async () => {
           ...questionarioSchemas,
           ...rotaSchemas,
           ...grupoSchemas,
+          ...triagemIASchemas,
         },
       },
     },

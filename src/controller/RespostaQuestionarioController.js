@@ -14,7 +14,7 @@ class RespostaQuestionarioController {
     try {
       const payload = validateIniciarRespostaQuestionario(req.body);
       const data = await this.service.iniciar(payload);
-      return sendSuccess(res, data, 201, 'Resposta de questionario iniciada com sucesso.');
+      return sendSuccess(res, data, 201, 'Resposta de questionário iniciada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -33,7 +33,7 @@ class RespostaQuestionarioController {
   async finalizar(req, res, next) {
     try {
       const data = await this.service.finalizar(req.params.id);
-      return sendSuccess(res, data, 200, 'Questionario finalizado com sucesso.');
+      return sendSuccess(res, data, 200, 'Questionário finalizado com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -42,7 +42,7 @@ class RespostaQuestionarioController {
   async buscarPorId(req, res, next) {
     try {
       const data = await this.service.buscarCompleta(req.params.id);
-      return sendSuccess(res, data, 200, 'Resposta de questionario encontrada com sucesso.');
+      return sendSuccess(res, data, 200, 'Resposta de questionário encontrada com sucesso.');
     } catch (error) {
       return next(error);
     }

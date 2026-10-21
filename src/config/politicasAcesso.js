@@ -3,12 +3,44 @@
 const ADMIN = 'administrador';
 const RECRUTADOR = 'recrutador';
 const CANDIDATO = 'candidato';
+const SUPORTE = 'suporte';
 
 const politicasAcesso = [
-  // Curriculo do proprio usuario
+  // Catalogo de requisitos: todo papel autenticado consulta (autocomplete da
+  // vaga e do perfil); so o administrador cria e edita. Sem DELETE: vagas e
+  // perfis antigos referenciam os itens, que so podem ser desativados.
+  {
+    pattern: /^\/catalogo(?:\/[^/]+)?\/?$/,
+    methods: {
+      GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] },
+      POST: { roles: [ADMIN] },
+      PATCH: { roles: [ADMIN] },
+    },
+  },
+  // Configuracao das integracoes: exclusiva do suporte (segregacao de funcoes).
+  {
+    pattern: /^\/configuracao-integracao(?:\/.*)?$/,
+    methods: {
+      GET: { roles: [SUPORTE] },
+      PATCH: { roles: [SUPORTE] },
+    },
+  },
+  // Auditoria da triagem: exclusiva do suporte. E a unica rota que devolve
+  // scoreIA/limiteAplicado — por isso nao inclui ADMIN nem RECRUTADOR.
+  {
+    pattern: /^\/avaliacoes(?:\/?$)/,
+    methods: {
+      GET: { roles: [SUPORTE] },
+    },
+  },
+  // Curriculo do proprio usuario. O recrutador so le: o detalhe do candidato
+  // na tela de candidatos carrega as quatro secoes; editar segue com o dono.
   {
     pattern: /^\/usuarios\/([^/]+)\/(formacao|experiencia|habilidade|certificacao)(?:\/|$)/,
-    methods: { '*': { roles: [ADMIN], allowSelf: true } },
+    methods: {
+      GET: { roles: [ADMIN, RECRUTADOR], allowSelf: true },
+      '*': { roles: [ADMIN], allowSelf: true },
+    },
   },
   // Status da candidatura (acao do recrutador/admin)
   {
@@ -19,6 +51,30 @@ const politicasAcesso = [
   {
     pattern: /^\/usuarios\/([^/]+)\/candidatura(?:\/|$)/,
     methods: { '*': { roles: [ADMIN], allowSelf: true } },
+  },
+  // Autoexclusao da propria conta. Vale para todo papel e precisa vir antes do
+  // bloco de /usuarios/:id, que casaria com 'me' e restringiria o DELETE ao
+  // administrador. Nao usa allowSelf: o alvo nao esta na URL, vem da sessao.
+  {
+    pattern: /^\/usuarios\/me(?:\/?$)/,
+    methods: {
+      DELETE: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] },
+    },
+  },
+  // Convite de conta interna e situacao da conta: so o administrador. Precisam
+  // vir antes do bloco de /usuarios/:id, que casaria com estes caminhos e, no
+  // PATCH, liberaria o proprio usuario por allowSelf.
+  {
+    pattern: /^\/usuarios\/convite(?:\/?$)/,
+    methods: { POST: { roles: [ADMIN] } },
+  },
+  {
+    pattern: /^\/usuarios\/[^/]+\/reenviar-convite(?:\/?$)/,
+    methods: { POST: { roles: [ADMIN] } },
+  },
+  {
+    pattern: /^\/usuarios\/[^/]+\/status(?:\/?$)/,
+    methods: { PATCH: { roles: [ADMIN] } },
   },
   // Usuario individual (registro publico e liberado no app.js, nao passa aqui)
   {
@@ -32,7 +88,33 @@ const politicasAcesso = [
   // Colecao de usuarios
   {
     pattern: /^\/usuarios(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN] }, POST: { roles: [ADMIN] } },
+    // Recrutador lista usuarios para a tela de candidatos; criar continua restrito ao admin.
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] }, POST: { roles: [ADMIN] } },
+  },
+  // Relatorios (visao geral e por vaga): numeros do processo seletivo, so para
+  // quem conduz o processo. Precisa vir antes do bloco generico de /vagas, que
+  // libera GET ao candidato.
+  {
+    pattern: /^\/vagas\/(?:[^/]+\/)?relatorio(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] } },
+  },
+  // Candidaturas de uma vaga (visao do recrutador) e reavaliacao manual.
+  // Precisam vir antes do bloco generico de /vagas.
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR] } },
+  },
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/reavaliar(?:\/?$)/,
+    // SUPORTE entra aqui porque e o unico papel que enxerga a pendencia da
+    // triagem (/avaliacoes) e portanto o unico que sabe que ha o que reprocessar.
+    methods: { POST: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
+  },
+  // Ficha de impressao: contato, curriculo e respostas de UMA candidatura.
+  // Sai sem nenhum campo da triagem, por isso vale para os tres papeis internos.
+  {
+    pattern: /^\/vagas\/[^/]+\/candidaturas\/[^/]+\/ficha(?:\/?$)/,
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, SUPORTE] } },
   },
   // Vagas
   {
@@ -65,10 +147,13 @@ const politicasAcesso = [
     pattern: /^\/resposta-questionario(?:\/.*)?$/,
     methods: { '*': { roles: [ADMIN, CANDIDATO] } },
   },
-  // Me
+  // Me: identidade do usuario logado. Precisa valer para TODO papel — e por
+  // aqui que o front descobre `tipos_permissao` para decidir a area. Um papel
+  // fora desta lista consegue autenticar mas nao consegue navegar: o
+  // RoleLayout nao recebe o papel e devolve a pessoa para a tela de login.
   {
     pattern: /^\/me(?:\/?$)/,
-    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO] } },
+    methods: { GET: { roles: [ADMIN, RECRUTADOR, CANDIDATO, SUPORTE] } },
   },
   // CRUD administrativo
   {

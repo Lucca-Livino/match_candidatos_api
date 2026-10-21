@@ -1,9 +1,11 @@
 import ExperienciaRepository from '../repository/ExperienciaRepository.js';
+import CatalogoService from './CatalogoService.js';
 import AppError from '../utils/helpers/AppError.js';
 
 class ExperienciaService {
-  constructor(experienciaRepository = new ExperienciaRepository()) {
+  constructor(experienciaRepository = new ExperienciaRepository(), catalogoService = new CatalogoService()) {
     this.experienciaRepository = experienciaRepository;
+    this.catalogoService = catalogoService;
   }
 
   sanitize(doc) {
@@ -21,7 +23,7 @@ class ExperienciaService {
     const fim = dataFim ? new Date(dataFim) : new Date();
 
     if (fim < inicio) {
-      throw new AppError('dataFim nao pode ser anterior a dataInicio.', 400, 'VALIDATION_ERROR');
+      throw new AppError('dataFim não pode ser anterior a dataInicio.', 400, 'VALIDATION_ERROR');
     }
 
     let meses = (fim.getFullYear() - inicio.getFullYear()) * 12;
@@ -35,6 +37,10 @@ class ExperienciaService {
   }
 
   async criarExperiencia(usuarioId, payload) {
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'area_atuacao', id: payload.areaId, campo: 'areaId' },
+    ]);
+
     const mesesDuracao = this.calcularMesesDuracao(payload.dataInicio, payload.dataFim);
 
     const created = await this.experienciaRepository.criar({
@@ -54,8 +60,12 @@ class ExperienciaService {
   async atualizarExperiencia(usuarioId, id, payload) {
     const existente = await this.experienciaRepository.buscarPorUsuarioEId(usuarioId, id);
     if (!existente) {
-      throw new AppError('Experiencia nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Experiência não encontrada.', 404, 'NOT_FOUND');
     }
+
+    await this.catalogoService.garantirReferencias([
+      { tipo: 'area_atuacao', id: payload.areaId, campo: 'areaId' },
+    ]);
 
     const dataInicio = payload.dataInicio || existente.dataInicio;
     const dataFim = Object.hasOwn(payload, 'dataFim') ? payload.dataFim : existente.dataFim;
@@ -73,7 +83,7 @@ class ExperienciaService {
   async deletarExperiencia(usuarioId, id) {
     const removed = await this.experienciaRepository.deletarPorUsuarioEId(usuarioId, id);
     if (!removed) {
-      throw new AppError('Experiencia nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Experiência não encontrada.', 404, 'NOT_FOUND');
     }
 
     return {

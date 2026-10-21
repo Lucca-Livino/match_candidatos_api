@@ -3,7 +3,7 @@ import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
@@ -18,7 +18,7 @@ const normalizeBinaryNumber = (value, fieldName) => {
 const normalizePeso = (value) => {
   const peso = Number(value);
   if (!Number.isFinite(peso) || peso < 0) {
-    throw new AppError('peso deve ser um numero maior ou igual a 0.', 400, 'VALIDATION_ERROR');
+    throw new AppError('peso deve ser um número maior ou igual a 0.', 400, 'VALIDATION_ERROR');
   }
   return peso;
 };
@@ -35,7 +35,7 @@ const normalizeTipoResposta = (value) => {
   const tipoResposta = String(value || '').trim().toLowerCase();
 
   if (!TIPOS_RESPOSTA_PERGUNTA.includes(tipoResposta)) {
-    throw new AppError('tipoResposta invalido.', 400, 'VALIDATION_ERROR', {
+    throw new AppError('tipoResposta inválido.', 400, 'VALIDATION_ERROR', {
       allowed: TIPOS_RESPOSTA_PERGUNTA,
     });
   }
@@ -50,11 +50,11 @@ export const validateCreatePergunta = (payload) => {
   const enunciado = String(payload.enunciado || '').trim();
 
   if (!questionarioId) {
-    throw new AppError('questionarioId e obrigatorio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('questionarioId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   if (enunciado.length < 3) {
-    throw new AppError('enunciado e obrigatorio e deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
+    throw new AppError('enunciado é obrigatório e deve ter ao menos 3 caracteres.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -99,7 +99,7 @@ export const validateUpdatePergunta = (payload) => {
   }
 
   if (Object.keys(normalized).length === 0) {
-    throw new AppError('Informe ao menos um campo valido para atualizacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Informe ao menos um campo válido para atualização.', 400, 'VALIDATION_ERROR');
   }
 
   return normalized;
@@ -110,7 +110,7 @@ export const validateCreateOpcaoResposta = (payload) => {
 
   const texto = String(payload.texto || '').trim();
   if (!texto) {
-    throw new AppError('texto e obrigatorio para a opcao de resposta.', 400, 'VALIDATION_ERROR');
+    throw new AppError('texto é obrigatório para a opção de resposta.', 400, 'VALIDATION_ERROR');
   }
 
   return {
@@ -128,7 +128,7 @@ export const validateUpdateOpcaoResposta = (payload) => {
   if (Object.hasOwn(payload, 'texto')) {
     const texto = String(payload.texto || '').trim();
     if (!texto) {
-      throw new AppError('texto nao pode ser vazio.', 400, 'VALIDATION_ERROR');
+      throw new AppError('texto não pode ser vazio.', 400, 'VALIDATION_ERROR');
     }
     normalized.texto = texto;
   }
@@ -142,7 +142,7 @@ export const validateUpdateOpcaoResposta = (payload) => {
   }
 
   if (Object.keys(normalized).length === 0) {
-    throw new AppError('Informe ao menos um campo valido para atualizacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Informe ao menos um campo válido para atualização.', 400, 'VALIDATION_ERROR');
   }
 
   return normalized;
@@ -151,7 +151,7 @@ export const validateUpdateOpcaoResposta = (payload) => {
 export const validateListPerguntaQuery = (query = {}) => {
   const questionarioId = String(query.questionarioId || '').trim();
   if (!questionarioId) {
-    throw new AppError('questionarioId e obrigatorio na query.', 400, 'VALIDATION_ERROR');
+    throw new AppError('questionarioId é obrigatório na query.', 400, 'VALIDATION_ERROR');
   }
 
   return { questionarioId };
@@ -167,7 +167,7 @@ export const validateReorderPerguntas = (payload) => {
   const perguntasInput = payloadEmArray ? payload : payload.perguntas;
 
   if (!Array.isArray(perguntasInput) || perguntasInput.length === 0) {
-    throw new AppError('perguntas deve ser um array nao vazio.', 400, 'VALIDATION_ERROR');
+    throw new AppError('perguntas deve ser um array não vazio.', 400, 'VALIDATION_ERROR');
   }
 
   const perguntas = perguntasInput.map((item, index) => {
@@ -175,7 +175,7 @@ export const validateReorderPerguntas = (payload) => {
 
     const id = String(item.id || '').trim();
     if (!id) {
-      throw new AppError(`perguntas[${index}].id e obrigatorio.`, 400, 'VALIDATION_ERROR');
+      throw new AppError(`perguntas[${index}].id é obrigatório.`, 400, 'VALIDATION_ERROR');
     }
 
     return {
@@ -186,12 +186,12 @@ export const validateReorderPerguntas = (payload) => {
 
   const ids = perguntas.map((item) => item.id);
   if (new Set(ids).size !== ids.length) {
-    throw new AppError('Nao e permitido repetir id na reordenacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Não é permitido repetir id na reordenação.', 400, 'VALIDATION_ERROR');
   }
 
   const ordens = perguntas.map((item) => item.ordem);
   if (new Set(ordens).size !== ordens.length) {
-    throw new AppError('Nao e permitido repetir ordem na reordenacao.', 400, 'VALIDATION_ERROR');
+    throw new AppError('Não é permitido repetir ordem na reordenação.', 400, 'VALIDATION_ERROR');
   }
 
   const questionarioId = payloadEmArray ? '' : String(payload.questionarioId || '').trim();

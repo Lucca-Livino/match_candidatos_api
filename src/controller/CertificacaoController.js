@@ -14,7 +14,7 @@ class CertificacaoController {
     try {
       const payload = validateCreateCertificacao(req.body);
       const data = await this.service.criarCertificacao(req.params.id, payload);
-      return sendSuccess(res, data, 201, 'Certificacao criada com sucesso.');
+      return sendSuccess(res, data, 201, 'Certificação criada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -23,7 +23,7 @@ class CertificacaoController {
   async listarCertificacao(req, res, next) {
     try {
       const data = await this.service.listarCertificacao(req.params.id);
-      return sendSuccess(res, data, 200, 'Certificacoes listadas com sucesso.');
+      return sendSuccess(res, data, 200, 'Certificações listadas com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -33,7 +33,7 @@ class CertificacaoController {
     try {
       const payload = validateUpdateCertificacao(req.body);
       const data = await this.service.atualizarCertificacao(req.params.id, req.params.certificacaoId, payload);
-      return sendSuccess(res, data, 200, 'Certificacao atualizada com sucesso.');
+      return sendSuccess(res, data, 200, 'Certificação atualizada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -42,7 +42,7 @@ class CertificacaoController {
   async deletarCertificacao(req, res, next) {
     try {
       const data = await this.service.deletarCertificacao(req.params.id, req.params.certificacaoId);
-      return sendSuccess(res, data, 200, 'Certificacao removida com sucesso.');
+      return sendSuccess(res, data, 200, 'Certificação removida com sucesso.');
     } catch (error) {
       return next(error);
     }

@@ -1,6 +1,8 @@
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
 import PerguntaRepository from '../repository/PerguntaRepository.js';
 import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
+import CandidaturaRepository from '../repository/CandidaturaRepository.js';
+import AvaliacaoCandidaturaService from './AvaliacaoCandidaturaService.js';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -9,10 +11,15 @@ class RespostaQuestionarioService {
     repository = new RespostaQuestionarioRepository(),
     questionarioRepository = new QuestionarioRepository(),
     perguntaRepository = new PerguntaRepository(),
+    candidaturaRepository = new CandidaturaRepository(),
+    avaliacaoCandidaturaService = new AvaliacaoCandidaturaService(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.perguntaRepository = perguntaRepository;
+    this.candidaturaRepository = candidaturaRepository;
+    this.avaliacaoCandidaturaService = avaliacaoCandidaturaService;
+    this.avaliacaoEmAndamento = null;
   }
 
   sanitize(doc) {
@@ -23,7 +30,7 @@ class RespostaQuestionarioService {
     const questionario = await this.questionarioRepository.buscarPorId(questionarioId);
 
     if (!questionario) {
-      throw new AppError('Questionario nao encontrado.', 404, 'NOT_FOUND');
+      throw new AppError('Questionário não encontrado.', 404, 'NOT_FOUND');
     }
 
     return questionario;
@@ -33,7 +40,7 @@ class RespostaQuestionarioService {
     const respostaQuestionario = await this.repository.buscarRespostaQuestionarioPorId(respostaQuestionarioId);
 
     if (!respostaQuestionario) {
-      throw new AppError('Resposta de questionario nao encontrada.', 404, 'NOT_FOUND');
+      throw new AppError('Resposta de questionário não encontrada.', 404, 'NOT_FOUND');
     }
 
     return respostaQuestionario;
@@ -43,16 +50,28 @@ class RespostaQuestionarioService {
     const questionario = await this.garantirQuestionarioExiste(payload.questionarioId);
 
     if (questionario.ativo !== 1) {
-      throw new AppError('Nao e permitido iniciar questionario inativo.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Não é permitido iniciar questionário inativo.', 400, 'BUSINESS_RULE_ERROR');
     }
 
+    // A avaliacao por IA atualiza a candidatura ao finalizar o questionario.
+    // Sem candidatura nao ha o que avaliar nem o que atualizar.
+    const candidatura = await this.candidaturaRepository.buscarPorUsuarioEVaga(
+      payload.usuarioId,
+      questionario.vagaId,
+    );
+    if (!candidatura) {
+      throw new AppError(
+        'É necessário se candidatar à vaga antes de responder ao questionário.',
+        400,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+
+    // Idempotente: retomar um envio interrompido devolve a resposta em andamento
+    // em vez de bloquear o candidato, que nao tem como recuperar o id sozinho.
     const emAndamento = await this.repository.buscarRespostaEmAndamento(questionario.id, payload.usuarioId);
     if (emAndamento) {
-      throw new AppError(
-        'Ja existe uma resposta em andamento para este usuario neste questionario.',
-        409,
-        'CONFLICT',
-      );
+      return this.sanitize(emAndamento);
     }
 
     const created = await this.repository.criarRespostaQuestionario({
@@ -71,7 +90,7 @@ class RespostaQuestionarioService {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
 
     if (respostaQuestionario.status !== 'em_andamento') {
-      throw new AppError('Somente respostas em andamento podem receber respostas.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('Este questionário já foi finalizado e não aceita novas respostas.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(respostaQuestionario.questionarioId);
@@ -82,7 +101,7 @@ class RespostaQuestionarioService {
     for (const respostaInput of payload.respostas) {
       const pergunta = perguntaPorId.get(respostaInput.perguntaId);
       if (!pergunta) {
-        throw new AppError(`Pergunta ${respostaInput.perguntaId} nao pertence ao questionario informado.`, 400, 'VALIDATION_ERROR');
+        throw new AppError(`Pergunta ${respostaInput.perguntaId} não pertence ao questionário informado.`, 400, 'VALIDATION_ERROR');
       }
 
       const opcaoRespostaIds = respostaInput.opcaoRespostaIds || [];
@@ -90,30 +109,30 @@ class RespostaQuestionarioService {
 
       if (pergunta.tipoResposta === 'dissertativa') {
         if (opcaoRespostaIds.length > 0) {
-          throw new AppError('Pergunta dissertativa nao aceita opcao de resposta.', 400, 'VALIDATION_ERROR');
+          throw new AppError('Pergunta dissertativa não aceita opção de resposta.', 400, 'VALIDATION_ERROR');
         }
 
         if (pergunta.obrigatoria === 1 && !textoResposta) {
-          throw new AppError(`A pergunta ${pergunta.id} e obrigatoria e exige texto de resposta.`, 400, 'VALIDATION_ERROR');
+          throw new AppError(`A pergunta ${pergunta.id} é obrigatória e exige texto de resposta.`, 400, 'VALIDATION_ERROR');
         }
       } else {
         if (opcaoRespostaIds.length > 1) {
-          throw new AppError('Esta versao aceita apenas uma opcao selecionada por pergunta objetiva.', 400, 'VALIDATION_ERROR');
+          throw new AppError('Esta versão aceita apenas uma opção selecionada por pergunta objetiva.', 400, 'VALIDATION_ERROR');
         }
 
         if (pergunta.obrigatoria === 1 && opcaoRespostaIds.length === 0) {
-          throw new AppError(`A pergunta ${pergunta.id} e obrigatoria e exige opcao selecionada.`, 400, 'VALIDATION_ERROR');
+          throw new AppError(`A pergunta ${pergunta.id} é obrigatória e exige opção selecionada.`, 400, 'VALIDATION_ERROR');
         }
 
         if (opcaoRespostaIds.length > 0) {
           const opcoesValidas = await this.perguntaRepository.buscarOpcaoPorIds(opcaoRespostaIds);
           if (opcoesValidas.length !== opcaoRespostaIds.length) {
-            throw new AppError('Uma ou mais opcoes de resposta informadas nao existem.', 400, 'VALIDATION_ERROR');
+            throw new AppError('Uma ou mais opções de resposta informadas não existem.', 400, 'VALIDATION_ERROR');
           }
 
           const opcaoInvalida = opcoesValidas.find((item) => item.perguntaId !== pergunta.id);
           if (opcaoInvalida) {
-            throw new AppError('Opcao de resposta nao pertence a pergunta informada.', 400, 'VALIDATION_ERROR');
+            throw new AppError('Opção de resposta não pertence à pergunta informada.', 400, 'VALIDATION_ERROR');
           }
         }
       }
@@ -153,12 +172,26 @@ class RespostaQuestionarioService {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
 
     if (respostaQuestionario.status !== 'em_andamento') {
-      throw new AppError('A resposta ja foi finalizada.', 400, 'BUSINESS_RULE_ERROR');
+      throw new AppError('A resposta já foi finalizada.', 400, 'BUSINESS_RULE_ERROR');
     }
 
     const finalizada = await this.repository.atualizarRespostaQuestionario(respostaQuestionario.id, {
       status: 'finalizado',
       finalizadoEm: new Date(),
+    });
+
+    const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
+
+    // Fire-and-forget: a resposta HTTP nao espera a IA. O `.catch` evita
+    // unhandledRejection; a promise fica exposta para quem precisar aguardar.
+    this.avaliacaoEmAndamento = Promise.resolve(
+      this.avaliacaoCandidaturaService.avaliar(respostaQuestionario.usuarioId, questionario.vagaId),
+    ).catch((error) => {
+      console.error('[avaliacao] disparo falhou', {
+        usuarioId: respostaQuestionario.usuarioId,
+        vagaId: questionario.vagaId,
+        erro: error.message,
+      });
     });
 
     return this.sanitize(finalizada);

@@ -3,32 +3,29 @@ import AppError from '../helpers/AppError.js';
 
 const ensureObject = (value, code = 'VALIDATION_ERROR') => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new AppError('Payload invalido.', 400, code);
+    throw new AppError('Payload inválido.', 400, code);
   }
 };
 
 
+// `compativel` e `motivoIncompat_` NAO sao aceitos do payload: quem se
+// inscreve e a pessoa avaliada, e deixar o cliente escrever o resultado da
+// triagem entrega ao candidato o campo que a triagem existe para decidir.
+// Os dois nascem do default do schema e so a avaliacao por IA os escreve
+// (AvaliacaoCandidaturaService). `movidoPor` tambem fica fixo: e trilha de
+// auditoria de quem moveu o registro, nao dado que o inscrito informa.
 export const validateCreateCandidatura = (payload) => {
   ensureObject(payload);
 
   const vagaId = String(payload.vagaId || '').trim();
-  const compativel = Object.hasOwn(payload, 'compativel') ? Number(payload.compativel) : 1;
-  const motivoIncompat_ = String(payload.motivoIncompat_ || '').trim();
-  const movidoPor = String(payload.movidoPor || 'sistema').trim();
 
   if (!vagaId) {
-    throw new AppError('vagaId e obrigatorio.', 400, 'VALIDATION_ERROR');
-  }
-
-  if (![0, 1].includes(compativel)) {
-    throw new AppError('compativel deve ser 0 ou 1.', 400, 'VALIDATION_ERROR');
+    throw new AppError('vagaId é obrigatório.', 400, 'VALIDATION_ERROR');
   }
 
   return {
     vagaId,
-    compativel,
-    motivoIncompat_,
-    movidoPor,
+    movidoPor: 'sistema',
     status: 'inscrito',
   };
 };
@@ -42,7 +39,7 @@ export const validateUpdateStatusCandidatura = (payload) => {
   const movidoPor = String(payload.movidoPor || 'sistema').trim();
 
   if (!STATUS_CANDIDATURA.includes(status)) {
-    throw new AppError('status invalido.', 400, 'VALIDATION_ERROR', { allowed: STATUS_CANDIDATURA });
+    throw new AppError('status inválido.', 400, 'VALIDATION_ERROR', { allowed: STATUS_CANDIDATURA });
   }
 
   return {

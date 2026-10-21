@@ -9,6 +9,23 @@ router.post('/usuarios/registro', (req, res, next) => {
   usuarioController.registrar(req, res).catch(next);
 });
 
+// Rota publica de ativacao da conta convidada (whitelisted no app.js)
+router.post('/usuarios/ativar', (req, res, next) => {
+  usuarioController.ativarConta(req, res).catch(next);
+});
+
+router.post('/usuarios/convite', (req, res, next) => {
+  usuarioController.convidar(req, res).catch(next);
+});
+
+router.post('/usuarios/:id/reenviar-convite', (req, res, next) => {
+  usuarioController.reenviarConvite(req, res).catch(next);
+});
+
+router.patch('/usuarios/:id/status', (req, res, next) => {
+  usuarioController.alterarStatus(req, res).catch(next);
+});
+
 router.get('/usuarios', (req, res, next) => {
   usuarioController.listar(req, res).catch(next);
 });
@@ -23,6 +40,12 @@ router.post('/usuarios', (req, res, next) => {
 
 router.patch('/usuarios/:id', (req, res, next) => {
   usuarioController.atualizar(req, res).catch(next);
+});
+
+// Precisa vir antes de '/usuarios/:id': registrada depois, 'me' cairia no
+// path param e seria tratada como id de outro usuario.
+router.delete('/usuarios/me', (req, res, next) => {
+  usuarioController.excluirPropriaConta(req, res).catch(next);
 });
 
 router.delete('/usuarios/:id', (req, res, next) => {

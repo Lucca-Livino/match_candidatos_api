@@ -56,7 +56,7 @@ class PerguntaController {
   async deletar(req, res, next) {
     try {
       const data = await this.service.deletar(req.params.id);
-      return sendSuccess(res, data, 200, 'Pergunta excluida com sucesso.');
+      return sendSuccess(res, data, 200, 'Pergunta excluída com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -66,7 +66,7 @@ class PerguntaController {
     try {
       const payload = validateCreateOpcaoResposta(req.body);
       const data = await this.service.adicionarOpcao(req.params.id, payload);
-      return sendSuccess(res, data, 201, 'Opcao de resposta criada com sucesso.');
+      return sendSuccess(res, data, 201, 'Opção de resposta criada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -76,7 +76,7 @@ class PerguntaController {
     try {
       const payload = validateUpdateOpcaoResposta(req.body);
       const data = await this.service.atualizarOpcao(req.params.id, req.params.opcaoId, payload);
-      return sendSuccess(res, data, 200, 'Opcao de resposta atualizada com sucesso.');
+      return sendSuccess(res, data, 200, 'Opção de resposta atualizada com sucesso.');
     } catch (error) {
       return next(error);
     }
@@ -85,7 +85,7 @@ class PerguntaController {
   async removerOpcao(req, res, next) {
     try {
       const data = await this.service.removerOpcao(req.params.id, req.params.opcaoId);
-      return sendSuccess(res, data, 200, 'Opcao de resposta removida com sucesso.');
+      return sendSuccess(res, data, 200, 'Opção de resposta removida com sucesso.');
     } catch (error) {
       return next(error);
     }
