@@ -1,7 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { bearer } from 'better-auth/plugins';
+import { APIError } from 'better-auth/api';
 import mongoose from 'mongoose';
+
+const toObjectId = (id) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(String(id)) : id);
 
 const getTrustedOrigins = () => {
   if (!process.env.BETTER_AUTH_TRUSTED_ORIGINS) {
@@ -50,6 +53,28 @@ export const auth = betterAuth({
     },
   },
   plugins: [bearer()],
+  databaseHooks: {
+    session: {
+      create: {
+        // Desativar a conta revoga as sessoes abertas; sem esta guarda o login
+        // seguinte criaria uma sessao nova e a pessoa so descobriria o motivo
+        // na primeira chamada a API. Barrando aqui, o proprio login responde
+        // CONTA_DESATIVADA.
+        before: async (session) => {
+          const usuario = await mongoose.connection.db
+            .collection('usuarios')
+            .findOne({ _id: toObjectId(session.userId) }, { projection: { status_ativo: 1 } });
+
+          if (usuario?.status_ativo === false) {
+            throw new APIError('FORBIDDEN', {
+              code: 'CONTA_DESATIVADA',
+              message: 'Esta conta está desativada. Procure o administrador.',
+            });
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: process.env.NODE_ENV !== 'production',
