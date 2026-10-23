@@ -1,6 +1,19 @@
 import { connectTestDatabase, clearTestDatabase, disconnectTestDatabase } from '../setup/db.js';
 import AvaliacaoCandidaturaService from '../../service/AvaliacaoCandidaturaService.js';
 import Candidatura from '../../models/Candidatura.js';
+import { montarIndice } from '../../utils/helpers/indiceCatalogo.js';
+
+// O gate de obrigatorios confere o perfil contra o catalogo pelo bloco
+// `verificacao` que o AvaliacaoPayloadService monta. Sem ele o gate e pulado.
+const INDICE = montarIndice([{ id: 'item-react', tipo: 'habilidade', nome: 'React', chaves: ['react'], implica: [] }]);
+
+const verificacaoCom = (habilidades) => ({
+  indice: INDICE,
+  criterios: [
+    { nome: 'React', tipo_criterio: 'skill_tecnica', obrigatorio: true, requisito: { itemId: 'item-react' } },
+  ],
+  curriculo: { habilidades, formacoes: [], experiencias: [], certificacoes: [] },
+});
 
 const PAYLOAD = {
   vaga: {
@@ -26,6 +39,7 @@ const PAYLOAD = {
     certificacoes: [],
   },
   questionario: { titulo: 'Triagem', respostas: [] },
+  verificacao: verificacaoCom([{ habilidade: 'React', nivel: 'avancado', itemId: null }]),
 };
 
 const fakes = ({ payload = PAYLOAD, score = 0.84, limite = 0.7, iaFalha = false } = {}) => ({
@@ -34,8 +48,9 @@ const fakes = ({ payload = PAYLOAD, score = 0.84, limite = 0.7, iaFalha = false 
     avaliar: iaFalha
       ? jest.fn().mockRejectedValue(new Error('down'))
       : jest.fn().mockResolvedValue({
-          score,
-          criterios: [],
+          // O score e calculado em codigo pelas notas por criterio. Com um
+          // criterio so, o score final e a propria aderencia.
+          criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'Perfil cita React.' }],
           resumo: 'Perfil aderente.',
           // O modelo que DE FATO respondeu vem do proprio MatchIAService: com
           // cascata, o degrau que atendeu e decisao de runtime.
@@ -115,6 +130,7 @@ describe('AvaliacaoCandidaturaService', () => {
     const payloadSemReact = {
       ...PAYLOAD,
       curriculo: { habilidades: [], formacoes: [], experiencias: [], certificacoes: [] },
+      verificacao: verificacaoCom([]),
     };
     const f = fakes({ payload: payloadSemReact });
     const service = new AvaliacaoCandidaturaService(

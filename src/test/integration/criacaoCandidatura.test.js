@@ -33,7 +33,7 @@ describe('Criacao de candidatura — campos da triagem nao vem do cliente', () =
   });
 
   it('vagaId continua obrigatorio', () => {
-    expect(() => validateCreateCandidatura({ compativel: 1 })).toThrow('vagaId e obrigatorio.');
+    expect(() => validateCreateCandidatura({ compativel: 1 })).toThrow('vagaId é obrigatório.');
   });
 
   it('nada da triagem chega ao banco pela inscricao', async () => {
