@@ -4,6 +4,7 @@ import {
   validateResponderQuestionario,
 } from '../utils/validators/respostaQuestionarioValidators.js';
 import { sendSuccess } from '../utils/helpers/http.js';
+import { conduzProcesso } from '../utils/helpers/papeis.js';
 
 // Quem esta logado, para o service conferir o dono da resposta.
 const solicitanteDe = (req) => ({ id: req.user_id, tipos_permissao: req.user?.tipos_permissao ?? [] });
@@ -44,7 +45,9 @@ class RespostaQuestionarioController {
 
   async buscarPorId(req, res, next) {
     try {
-      const data = await this.service.buscarCompleta(req.params.id, solicitanteDe(req));
+      const data = await this.service.buscarCompleta(req.params.id, solicitanteDe(req), {
+        comGabarito: conduzProcesso(req),
+      });
       return sendSuccess(res, data, 200, 'Resposta de questionário encontrada com sucesso.');
     } catch (error) {
       return next(error);

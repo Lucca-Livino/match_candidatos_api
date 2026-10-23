@@ -38,12 +38,15 @@ class QuestionarioService {
     return questionario;
   }
 
-  montarPerguntasComOpcoes(perguntas, opcoes) {
+  // Sem gabarito, a opcao sai sem `correta`: o candidato responde pela mesma
+  // rota que o recrutador usa no editor e nao pode receber a resposta certa.
+  montarPerguntasComOpcoes(perguntas, opcoes, { comGabarito = true } = {}) {
+    const camposOcultos = comGabarito ? [] : ['correta'];
     const opcoesPorPerguntaId = opcoes.reduce((acc, item) => {
       if (!acc[item.perguntaId]) {
         acc[item.perguntaId] = [];
       }
-      acc[item.perguntaId].push(this.sanitize(item));
+      acc[item.perguntaId].push(sanitizeDoc(item, camposOcultos));
       return acc;
     }, {});
 
@@ -71,7 +74,7 @@ class QuestionarioService {
     return list.map((item) => this.sanitize(item));
   }
 
-  async buscarPorIdComPerguntas(id) {
+  async buscarPorIdComPerguntas(id, { comGabarito = true } = {}) {
     const questionario = await this.garantirQuestionarioExiste(id);
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(questionario.id);
 
@@ -81,7 +84,7 @@ class QuestionarioService {
 
     return {
       ...this.sanitize(questionario),
-      perguntas: this.montarPerguntasComOpcoes(perguntas, opcoes),
+      perguntas: this.montarPerguntasComOpcoes(perguntas, opcoes, { comGabarito }),
     };
   }
 

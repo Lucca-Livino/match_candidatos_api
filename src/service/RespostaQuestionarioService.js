@@ -214,7 +214,9 @@ class RespostaQuestionarioService {
     return this.sanitize(finalizada);
   }
 
-  async buscarCompleta(respostaQuestionarioId, solicitante) {
+  // Sem gabarito, as opcoes saem sem `correta`: o candidato consulta a propria
+  // resposta em andamento e nao pode ver a opcao certa antes de responder.
+  async buscarCompleta(respostaQuestionarioId, solicitante, { comGabarito = true } = {}) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
     this.garantirDono(respostaQuestionario.usuarioId, solicitante);
     const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
@@ -237,7 +239,7 @@ class RespostaQuestionarioService {
       if (!acc[item.perguntaId]) {
         acc[item.perguntaId] = [];
       }
-      acc[item.perguntaId].push(this.sanitize(item));
+      acc[item.perguntaId].push(sanitizeDoc(item, comGabarito ? [] : ['correta']));
       return acc;
     }, {});
 
