@@ -46,7 +46,22 @@ class RespostaQuestionarioService {
     return respostaQuestionario;
   }
 
-  async iniciar(payload) {
+  // O RBAC libera estas rotas por papel (administrador e candidato), sem olhar
+  // de quem e a resposta. O candidato so age sobre a propria; o administrador
+  // segue com acesso a qualquer uma. Sem solicitante (chamada interna, fora do
+  // HTTP) nao ha o que conferir.
+  garantirDono(usuarioIdDono, solicitante) {
+    if (!solicitante) return;
+    if (solicitante.tipos_permissao?.includes('administrador')) return;
+
+    if (String(usuarioIdDono) !== String(solicitante.id)) {
+      throw new AppError('Acesso negado. Você não tem permissão para realizar esta ação.', 403, 'FORBIDDEN');
+    }
+  }
+
+  async iniciar(payload, solicitante) {
+    this.garantirDono(payload.usuarioId, solicitante);
+
     const questionario = await this.garantirQuestionarioExiste(payload.questionarioId);
 
     if (questionario.ativo !== 1) {
@@ -86,8 +101,9 @@ class RespostaQuestionarioService {
     return this.sanitize(created);
   }
 
-  async responder(respostaQuestionarioId, payload) {
+  async responder(respostaQuestionarioId, payload, solicitante) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
 
     if (respostaQuestionario.status !== 'em_andamento') {
       throw new AppError('Este questionário já foi finalizado e não aceita novas respostas.', 400, 'BUSINESS_RULE_ERROR');
@@ -168,8 +184,9 @@ class RespostaQuestionarioService {
     };
   }
 
-  async finalizar(respostaQuestionarioId) {
+  async finalizar(respostaQuestionarioId, solicitante) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
 
     if (respostaQuestionario.status !== 'em_andamento') {
       throw new AppError('A resposta já foi finalizada.', 400, 'BUSINESS_RULE_ERROR');
@@ -197,8 +214,9 @@ class RespostaQuestionarioService {
     return this.sanitize(finalizada);
   }
 
-  async buscarCompleta(respostaQuestionarioId) {
+  async buscarCompleta(respostaQuestionarioId, solicitante) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
     const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
 
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(questionario.id);
