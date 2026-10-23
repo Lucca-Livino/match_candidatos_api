@@ -102,12 +102,22 @@ class VagaService {
     return new Map(grupos.map(({ _id, total }) => [_id, total]));
   }
 
-  async buscarPorId(id) {
+  // Com `candidatoId`, vaga fora do ar so aparece para quem ja se candidatou:
+  // as telas de "minhas candidaturas" continuam abrindo a vaga depois de
+  // pausada, e ninguem descobre vaga fechada pelo id.
+  async buscarPorId(id, { candidatoId } = {}) {
     this.ensureObjectId(id);
 
     const vaga = await this.repository.buscarPorId(id);
     if (!vaga) {
       throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
+    }
+
+    if (candidatoId && vaga.status !== 'ativa') {
+      const inscrito = await this.Candidatura.exists({ usuarioId: String(candidatoId), vagaId: String(vaga._id) });
+      if (!inscrito) {
+        throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
+      }
     }
 
     return this.sanitize(vaga);

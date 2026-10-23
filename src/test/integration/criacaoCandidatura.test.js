@@ -1,6 +1,7 @@
 import { connectTestDatabase, clearTestDatabase, disconnectTestDatabase } from '../setup/db.js';
 import CandidaturaService from '../../service/CandidaturaService.js';
 import Candidatura from '../../models/Candidatura.js';
+import Vaga from '../../models/Vaga.js';
 import { validateCreateCandidatura } from '../../utils/validators/candidaturaValidators.js';
 
 // Quem se inscreve e a pessoa avaliada. Se o payload da inscricao pudesse
@@ -37,9 +38,18 @@ describe('Criacao de candidatura — campos da triagem nao vem do cliente', () =
   });
 
   it('nada da triagem chega ao banco pela inscricao', async () => {
-    await service.criarCandidatura('u1', validateCreateCandidatura(payloadMalicioso));
+    // A inscricao exige uma vaga ativa de verdade.
+    const vaga = await Vaga.create({
+      area: 'TI',
+      titulo: 'Desenvolvedor',
+      descricao: 'Vaga de desenvolvimento.',
+      status: 'ativa',
+    });
+    const vagaId = String(vaga._id);
 
-    const doc = await Candidatura.findOne({ usuarioId: 'u1', vagaId: 'v1' }).lean();
+    await service.criarCandidatura('u1', validateCreateCandidatura({ ...payloadMalicioso, vagaId }));
+
+    const doc = await Candidatura.findOne({ usuarioId: 'u1', vagaId }).lean();
     expect(doc.status).toBe('inscrito');
     expect(doc.movidoPor).toBe('sistema');
     // Defaults do schema, nao o que o cliente mandou.
