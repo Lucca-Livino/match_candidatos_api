@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import VagaRepository from '../repository/VagaRepository.js';
 import QuestionarioRepository from '../repository/QuestionarioRepository.js';
+import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
+import QuestionarioService from './QuestionarioService.js';
 import Candidatura from '../models/Candidatura.js';
 import CatalogoService from './CatalogoService.js';
 import { TIPO_CATALOGO_POR_CRITERIO } from '../models/ItemCatalogo.js';
@@ -20,11 +22,15 @@ class VagaService {
     questionarioRepository = new QuestionarioRepository(),
     candidaturaModel = Candidatura,
     catalogoService = new CatalogoService(),
+    questionarioService = new QuestionarioService(),
+    respostaQuestionarioRepository = new RespostaQuestionarioRepository(),
   ) {
     this.repository = repository;
     this.questionarioRepository = questionarioRepository;
     this.Candidatura = candidaturaModel;
     this.catalogoService = catalogoService;
+    this.questionarioService = questionarioService;
+    this.respostaQuestionarioRepository = respostaQuestionarioRepository;
   }
 
   sanitize(vaga) {
@@ -176,7 +182,23 @@ class VagaService {
       throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
     }
 
+    const questionarios = await this.questionarioRepository.listar({ vagaId: id });
+    const temCandidatura = await this.Candidatura.exists({ vagaId: id });
+    const totaisRespostas = await Promise.all(
+      questionarios.map((item) => this.respostaQuestionarioRepository.contarRespostasPorQuestionario(item.id)),
+    );
+    if (temCandidatura || totaisRespostas.some((total) => total > 0)) {
+      throw new AppError(
+        'Não é permitido excluir vaga com candidaturas ou respostas. Encerre a vaga para tirá-la do ar.',
+        400,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+
     await this.repository.deletar(id);
+    for (const questionario of questionarios) {
+      await this.questionarioService.excluirComPerguntas(questionario.id);
+    }
 
     return {
       id,
