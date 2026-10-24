@@ -54,7 +54,7 @@ class PermissaoService {
     let permissoes = Array.isArray(usuario.permissions) ? [...usuario.permissions] : [];
     if (Array.isArray(usuario.groups)) {
       for (const grupo of usuario.groups) {
-        if (grupo && Array.isArray(grupo.permissions)) {
+        if (grupo && grupo.ativo !== false && Array.isArray(grupo.permissions)) {
           permissoes = permissoes.concat(grupo.permissions);
         }
       }
