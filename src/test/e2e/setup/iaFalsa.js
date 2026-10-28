@@ -11,13 +11,22 @@ const espionar = () => {
 
 // Substitui a chamada ao Gemini: o e2e nunca toca a rede. A nota de cada
 // criterio e fixa, o que torna o score (e a decisao da triagem) previsivel.
-export const configurarIA = ({ aderencia = 1, resumo = 'Avaliacao simulada no e2e.' } = {}) =>
+//
+// `notas` da a nota por nome de criterio, para exercitar a conta ponderada.
+// Criterio ausente de `notas` sai da resposta, como um modelo que o omitiu.
+export const configurarIA = ({ aderencia = 1, notas, resumo = 'Avaliacao simulada no e2e.' } = {}) =>
   espionar().mockImplementation(async (payload) => ({
-    criterios: payload.vaga.criterios.map((criterio) => ({
-      criterioId: String(criterio.id),
-      aderencia,
-      evidencia: 'Evidencia simulada.',
-    })),
+    criterios: payload.vaga.criterios
+      .filter((criterio) => !notas || Object.hasOwn(notas, criterio.nome))
+      .map((criterio) => {
+        const nota = notas ? notas[criterio.nome] : aderencia;
+        return {
+          criterioId: String(criterio.id),
+          aderencia: nota,
+          evidencia: `Evidencia simulada de ${criterio.nome}.`,
+          atendido: nota >= 0.5,
+        };
+      }),
     resumo,
   }));
 
