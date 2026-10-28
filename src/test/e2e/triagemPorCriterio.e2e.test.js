@@ -12,9 +12,6 @@ import {
   aguardarDisparo,
 } from './setup/cenarios.js';
 
-// Triagem vista por dentro: o modelo da nota por criterio e o sistema combina
-// pelos pesos da vaga. Aqui a IA falsa da notas diferentes por criterio, para
-// que o score dependa da conta, e nao de uma nota unica repetida.
 describe('E2E — triagem por critério', () => {
   let app;
 
@@ -41,7 +38,6 @@ describe('E2E — triagem por critério', () => {
   };
 
   it('pondera pelo peso: 10/10/80 com notas 1/1/0,5 dá 0,60 e não promove', async () => {
-    // Caso do D22: a media simples seria 0,83 e promoveria.
     configurarIA({ notas: { 'Node.js': 1, Express: 1, 'Banco de dados': 0.5 } });
     const { avaliada } = await triar([criterio('Node.js', 10), criterio('Express', 10), criterio('Banco de dados', 80)]);
 
@@ -54,7 +50,6 @@ describe('E2E — triagem por critério', () => {
     configurarIA({ notas: { 'Node.js': 1, Express: 0.5 } });
     const { avaliada } = await triar([criterio('Node.js', 30), criterio('Express', 20)]);
 
-    // (30 x 1 + 20 x 0,5) / 50; dividir por 100 daria 0,40.
     expect(avaliada.scoreIA).toBe(0.8);
     expect(avaliada.status).toBe('em_analise');
   });
@@ -74,7 +69,6 @@ describe('E2E — triagem por critério', () => {
     const { recrutador, vaga } = await triar([criterio('Node.js', 60), criterio('Express', 40)]);
     const suporte = await criarUsuarioLogado(app, 'suporte');
 
-    // O recrutador muda os pesos depois; o registro guarda os que valiam.
     await recrutador
       .patch(`/api/vagas/${vaga.vagaId}`)
       .send({ criterio_vaga: [criterio('Node.js', 20), criterio('Express', 80)] })
@@ -215,7 +209,6 @@ describe('E2E — triagem por critério', () => {
       const vaga = await publicarVaga(recrutador, { criterios });
       const candidato = await registrarCandidato(app);
       await montarCurriculo(candidato);
-      // Texto livre, sem itemId, em caixa e acento diferentes do sinônimo.
       await candidato
         .post(`/api/usuarios/${candidato.id}/habilidade`)
         .send({ habilidade: 'docker engine', nivel: 'intermediario' })

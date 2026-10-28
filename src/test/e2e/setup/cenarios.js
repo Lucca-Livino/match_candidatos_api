@@ -109,8 +109,8 @@ export const candidatarEResponder = async (candidato, { vagaId, questionarioId, 
   return { respostaId, finalizada: finalizada.body.data };
 };
 
-export const aguardarAvaliacao = (usuarioId, vagaId) =>
-  aguardar(() => Candidatura.findOne({ usuarioId, vagaId, avaliadoEm: { $ne: null } }).lean());
+export const aguardarAvaliacao = (usuarioId, vagaId, opcoes) =>
+  aguardar(() => Candidatura.findOne({ usuarioId, vagaId, avaliadoEm: { $ne: null } }).lean(), opcoes);
 
 // Espera o disparo da triagem terminar mesmo quando ela nao grava nada (IA
 // fora do ar ou kill switch), para o teste nao sair com a promise pendente.
