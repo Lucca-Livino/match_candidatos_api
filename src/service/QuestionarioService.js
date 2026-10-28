@@ -38,12 +38,15 @@ class QuestionarioService {
     return questionario;
   }
 
-  montarPerguntasComOpcoes(perguntas, opcoes) {
+  // Sem gabarito, a opcao sai sem `correta`: o candidato responde pela mesma
+  // rota que o recrutador usa no editor e nao pode receber a resposta certa.
+  montarPerguntasComOpcoes(perguntas, opcoes, { comGabarito = true } = {}) {
+    const camposOcultos = comGabarito ? [] : ['correta'];
     const opcoesPorPerguntaId = opcoes.reduce((acc, item) => {
       if (!acc[item.perguntaId]) {
         acc[item.perguntaId] = [];
       }
-      acc[item.perguntaId].push(this.sanitize(item));
+      acc[item.perguntaId].push(sanitizeDoc(item, camposOcultos));
       return acc;
     }, {});
 
@@ -59,6 +62,22 @@ class QuestionarioService {
       }));
   }
 
+  async garantirNaoSustentaVagaAtiva(questionario) {
+    if (questionario.ativo !== 1) return;
+
+    const vaga = await this.vagaRepository.buscarPorId(questionario.vagaId);
+    if (vaga?.status !== 'ativa') return;
+
+    const ativos = await this.repository.listar({ vagaId: questionario.vagaId, ativo: 1 });
+    if (ativos.some((item) => item.id !== questionario.id)) return;
+
+    throw new AppError(
+      'Este é o único questionário ativo de uma vaga ativa. Pause a vaga antes de alterá-lo.',
+      400,
+      'BUSINESS_RULE_ERROR',
+    );
+  }
+
   async criar(payload) {
     await this.garantirVagaExiste(payload.vagaId);
 
@@ -71,7 +90,7 @@ class QuestionarioService {
     return list.map((item) => this.sanitize(item));
   }
 
-  async buscarPorIdComPerguntas(id) {
+  async buscarPorIdComPerguntas(id, { comGabarito = true } = {}) {
     const questionario = await this.garantirQuestionarioExiste(id);
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(questionario.id);
 
@@ -81,7 +100,7 @@ class QuestionarioService {
 
     return {
       ...this.sanitize(questionario),
-      perguntas: this.montarPerguntasComOpcoes(perguntas, opcoes),
+      perguntas: this.montarPerguntasComOpcoes(perguntas, opcoes, { comGabarito }),
     };
   }
 
@@ -90,6 +109,7 @@ class QuestionarioService {
 
     if (payload.vagaId && payload.vagaId !== existente.vagaId) {
       await this.garantirVagaExiste(payload.vagaId);
+      await this.garantirNaoSustentaVagaAtiva(existente);
     }
 
     const updated = await this.repository.atualizarPorId(id, payload);
@@ -97,14 +117,16 @@ class QuestionarioService {
   }
 
   async atualizarAtivo(id, ativo) {
-    await this.garantirQuestionarioExiste(id);
+    const existente = await this.garantirQuestionarioExiste(id);
+    if (ativo === 0) {
+      await this.garantirNaoSustentaVagaAtiva(existente);
+    }
+
     const updated = await this.repository.atualizarPorId(id, { ativo });
     return this.sanitize(updated);
   }
 
-  async deletar(id) {
-    await this.garantirQuestionarioExiste(id);
-
+  async garantirSemRespostas(id) {
     const totalRespostas = await this.respostaQuestionarioRepository.contarRespostasPorQuestionario(id);
     if (totalRespostas > 0) {
       throw new AppError(
@@ -113,7 +135,23 @@ class QuestionarioService {
         'BUSINESS_RULE_ERROR',
       );
     }
+  }
 
+  async deletar(id) {
+    const existente = await this.garantirQuestionarioExiste(id);
+
+    await this.garantirSemRespostas(id);
+    await this.garantirNaoSustentaVagaAtiva(existente);
+
+    await this.excluirComPerguntas(id);
+
+    return {
+      id,
+      deletado: true,
+    };
+  }
+
+  async excluirComPerguntas(id) {
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(id);
     if (perguntas.length) {
       await this.perguntaRepository.deletarOpcoesPorPerguntaIds(perguntas.map((item) => item.id));
@@ -121,11 +159,6 @@ class QuestionarioService {
     }
 
     await this.repository.deletarPorId(id);
-
-    return {
-      id,
-      deletado: true,
-    };
   }
 }
 

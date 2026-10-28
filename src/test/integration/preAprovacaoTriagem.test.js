@@ -14,16 +14,24 @@ const configuracaoFake = (ativo = true) => ({
   }),
 });
 
+// Vaga sem criterio nao chega a IA (fica pendente por regra), entao o payload
+// precisa de pelo menos um criterio para a triagem acontecer.
 const payloadFake = {
   montar: async () => ({
-    vaga: { criterios: [] },
+    vaga: { criterios: [{ id: 'crit-1', nome: 'Node.js', tipo_criterio: 'skill_tecnica', peso_percentual: 100 }] },
     curriculo: { habilidades: [], formacoes: [], experiencias: [], certificacoes: [] },
     questionario: { titulo: null, respostas: [] },
   }),
 };
 
+// O score e calculado em codigo a partir da nota por criterio: com um criterio
+// so, o score final e a propria aderencia.
 const iaFake = (score) => ({
-  avaliar: async () => ({ score, resumo: 'analise de teste', modeloUsado: 'modelo-a' }),
+  avaliar: async () => ({
+    criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'evidencia de teste' }],
+    resumo: 'analise de teste',
+    modeloUsado: 'modelo-a',
+  }),
 });
 
 const montarService = (score, ativo = true) =>

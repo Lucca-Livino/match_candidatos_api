@@ -2,6 +2,7 @@ import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import AvaliacaoCandidaturaService, { SEM_CRITERIOS } from './AvaliacaoCandidaturaService.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
+import mongoose from 'mongoose';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -74,11 +75,26 @@ class CandidaturaService {
     }
   }
 
+  // Inscricao so em vaga que existe e esta no ar. Vem depois da checagem de
+  // duplicidade de proposito: o front trata o 409 como "reenvio apos falha no
+  // questionario" e segue, mesmo que a vaga tenha sido pausada no meio.
+  async garantirVagaAberta(vagaId) {
+    const vaga = mongoose.isValidObjectId(vagaId) ? await Vaga.findById(vagaId, 'status').lean() : null;
+    if (!vaga) {
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
+    }
+    if (vaga.status !== 'ativa') {
+      throw new AppError('Esta vaga não está recebendo candidaturas.', 400, 'BUSINESS_RULE_ERROR');
+    }
+  }
+
   async criarCandidatura(usuarioId, payload) {
     const jaExiste = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, payload.vagaId);
     if (jaExiste) {
       throw new AppError('Usuário já está inscrito nesta vaga.', 409, 'CONFLICT');
     }
+
+    await this.garantirVagaAberta(payload.vagaId);
 
     const created = await this.candidaturaRepository.criar({
       ...payload,
