@@ -112,7 +112,9 @@ class RespostaQuestionarioService {
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(respostaQuestionario.questionarioId);
     const perguntaPorId = new Map(perguntas.map((item) => [item.id, item]));
 
-    const respostasCriadasOuAtualizadas = [];
+    // Valida o lote inteiro antes de gravar: uma resposta invalida no meio nao
+    // pode deixar as anteriores salvas atras de um 400.
+    const respostasValidadas = [];
 
     for (const respostaInput of payload.respostas) {
       const pergunta = perguntaPorId.get(respostaInput.perguntaId);
@@ -153,6 +155,12 @@ class RespostaQuestionarioService {
         }
       }
 
+      respostasValidadas.push({ pergunta, opcaoRespostaIds, textoResposta });
+    }
+
+    const respostasCriadasOuAtualizadas = [];
+
+    for (const { pergunta, opcaoRespostaIds, textoResposta } of respostasValidadas) {
       const existente = await this.repository.buscarRespostaPergunta(respostaQuestionario.id, pergunta.id);
 
       const respostaPergunta = existente

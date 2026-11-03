@@ -335,6 +335,23 @@ describe('RespostaQuestionarioService', () => {
       expect(repository.criarRespostaPergunta).not.toHaveBeenCalled();
     });
 
+    it('resposta inválida no fim do lote não deixa as anteriores gravadas', async () => {
+      const { service, repository } = montarService();
+
+      await esperarAppError(
+        service.responder(
+          'rq1',
+          { respostas: [{ perguntaId: 'p3', textoResposta: 'ok' }, { perguntaId: 'p-estranha' }] },
+          candidato,
+        ),
+        { message: 'Pergunta p-estranha não pertence ao questionário informado.', statusCode: 400, code: 'VALIDATION_ERROR' },
+      );
+      expect(repository.buscarRespostaPergunta).not.toHaveBeenCalled();
+      expect(repository.criarRespostaPergunta).not.toHaveBeenCalled();
+      expect(repository.atualizarRespostaPergunta).not.toHaveBeenCalled();
+      expect(repository.deletarOpcoesSelecionadasPorRespostaPerguntaId).not.toHaveBeenCalled();
+    });
+
     it('rejeita opção de resposta em pergunta dissertativa', async () => {
       const { service } = montarService();
 
