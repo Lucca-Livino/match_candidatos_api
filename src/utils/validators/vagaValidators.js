@@ -107,7 +107,7 @@ const normalizeCriterios = (criterios) => {
     }
 
     const peso_percentual = Number(item.peso_percentual);
-    if (!Number.isFinite(peso_percentual) || peso_percentual <= 0 || peso_percentual > 100) {
+    if (!Number.isFinite(peso_percentual) || peso_percentual < 1 || peso_percentual > 100) {
       throw new AppError(
         `criterio_vaga[${index}].peso_percentual deve ser número entre 1 e 100.`,
         400,

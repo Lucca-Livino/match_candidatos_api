@@ -184,6 +184,7 @@ describe('validateCreateVaga', () => {
     [{ ...valida, criterio_vaga: [{ ...criterio, tipo_criterio: 'idioma' }] }, 'criterio_vaga[0].tipo_criterio inválido.'],
     [{ ...valida, criterio_vaga: [{ ...criterio, peso_percentual: undefined }] }, 'criterio_vaga[0].peso_percentual deve ser número entre 1 e 100.'],
     [{ ...valida, criterio_vaga: [{ ...criterio, peso_percentual: 0 }] }, 'criterio_vaga[0].peso_percentual deve ser número entre 1 e 100.'],
+    [{ ...valida, criterio_vaga: [{ ...criterio, peso_percentual: 0.5 }] }, 'criterio_vaga[0].peso_percentual deve ser número entre 1 e 100.'],
     [{ ...valida, criterio_vaga: [{ ...criterio, peso_percentual: 101 }] }, 'criterio_vaga[0].peso_percentual deve ser número entre 1 e 100.'],
     [{ ...valida, criterio_vaga: [{ ...criterio, obrigatorio: 'sim' }] }, 'criterio_vaga[0].obrigatorio deve ser booleano.'],
     [
