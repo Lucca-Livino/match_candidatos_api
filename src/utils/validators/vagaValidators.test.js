@@ -71,6 +71,13 @@ describe('requisito do critério — demais casos', () => {
     expect(requisito(obrigatorio('skill_tecnica', { itemId: 'sql', nivelMinimo: null }))).toEqual({ itemId: 'sql' });
   });
 
+  it.each(['Intermediario', ' intermediario ', 'INTERMEDIARIO'])('habilidade: normaliza nivelMinimo %p', (nivelMinimo) => {
+    expect(requisito(obrigatorio('skill_tecnica', { itemId: 'sql', nivelMinimo }))).toEqual({
+      itemId: 'sql',
+      nivelMinimo: 'intermediario',
+    });
+  });
+
   it('informa os níveis permitidos quando nivelMinimo é inválido', () => {
     expect(() => validateCreateVaga(obrigatorio('skill_tecnica', { itemId: 'sql', nivelMinimo: 'guru' }))).toThrow(
       expect.objectContaining({
