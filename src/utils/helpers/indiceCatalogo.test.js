@@ -30,7 +30,6 @@ describe('indiceCatalogo', () => {
 
   it('expande implica em um nivel so', () => {
     expect([...expandir(indice, ['pg'])].sort()).toEqual(['pg', 'sql']);
-    // Prisma implica PostgreSQL, que implica SQL: SQL NAO entra (sem cadeia).
     expect([...expandir(indice, ['orm'])].sort()).toEqual(['orm', 'pg']);
   });
 

@@ -15,7 +15,6 @@ describe('calcularScore', () => {
     const vaga = [criterio('a', 30), criterio('b', 10)];
     const avaliados = [nota('a', 1), nota('b', 0)];
 
-    // 30 / 40, e nao 30 / 100
     expect(calcularScore(vaga, avaliados)).toBe(0.75);
   });
 
@@ -51,8 +50,6 @@ describe('calcularScore', () => {
     expect(calcularScore([], [nota('a', 1)])).toBe(0);
   });
 
-  // Caso do D24 (configuracao P4): fica exatamente no limiar padrao e e
-  // promovido, porque a comparacao e >=.
   it('pesos 20/20/60 com notas 1/1/0,5 da exatamente 0,70', () => {
     const vaga = [criterio('a', 20), criterio('b', 20), criterio('c', 60)];
     const score = calcularScore(vaga, [nota('a', 1), nota('b', 1), nota('c', 0.5)]);
@@ -61,8 +58,6 @@ describe('calcularScore', () => {
     expect(score >= 0.7).toBe(true);
   });
 
-  // Caso do estudo D22: o modelo dava score alto, mas a conta pelos pesos
-  // deixa a candidata abaixo do limiar padrao (0,7).
   it('caso D22: pesos 10/10/80 com notas 1/1/0,5 da 0,60 e nao promove', () => {
     const vaga = [criterio('a', 10), criterio('b', 10), criterio('c', 80)];
     const score = calcularScore(vaga, [nota('a', 1), nota('b', 1), nota('c', 0.5)]);

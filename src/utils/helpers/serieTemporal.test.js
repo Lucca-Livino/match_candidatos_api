@@ -1,6 +1,6 @@
 import { inicioDoPeriodo, granularidadeDo, montarSerie } from './serieTemporal.js';
 
-const AGORA = new Date('2026-09-30T12:00:00Z'); // quarta-feira
+const AGORA = new Date('2026-09-30T12:00:00Z');
 
 describe('serieTemporal', () => {
   it('inicioDoPeriodo recua dias, meses ou devolve null em tudo', () => {

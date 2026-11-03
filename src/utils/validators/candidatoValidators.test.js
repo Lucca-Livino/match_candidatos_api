@@ -22,8 +22,6 @@ describe('validateCreateFormacao', () => {
     anoInicio: 2024,
   };
 
-  // Cursando e concluido exigem o ano (previsao ou formatura); trancado e
-  // incompleto nao tem ano de conclusao a informar.
   it.each([
     ['ausente', {}],
     ['null', { anoConclusao: null }],
