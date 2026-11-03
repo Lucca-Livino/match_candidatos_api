@@ -99,3 +99,21 @@ describe('detalharCriterios', () => {
     expect(detalharCriterios(vaga, avaliados)[0].aderencia).toBe(calcularScore(vaga, avaliados));
   });
 });
+
+describe('valores ausentes', () => {
+  it('sem argumentos o score é 0 e o detalhe é vazio', () => {
+    expect(calcularScore()).toBe(0);
+    expect(calcularScore([criterio('a', 100)])).toBe(0);
+    expect(detalharCriterios()).toEqual([]);
+  });
+
+  it('trata peso, aderência e evidência ausentes como vazios', () => {
+    const vaga = [{ id: 'a', nome: 'React' }];
+    const avaliados = [{ criterioId: 'a', aderencia: 'n/a' }];
+
+    expect(calcularScore(vaga, avaliados)).toBe(0);
+    expect(detalharCriterios(vaga, avaliados)).toEqual([
+      { criterioId: 'a', nome: 'React', peso: 0, obrigatorio: false, aderencia: 0, evidencia: '', atendido: false, omitido: false },
+    ]);
+  });
+});
