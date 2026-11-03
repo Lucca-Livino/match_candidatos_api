@@ -1,12 +1,7 @@
 import UsuarioService from './UsuarioService.js';
 import AppError from '../utils/helpers/AppError.js';
-import { hashPassword } from '../utils/password.js';
 import { auth } from '../utils/auth.js';
 import Grupo from '../models/Grupo.js';
-
-jest.mock('../utils/password.js', () => ({
-  hashPassword: jest.fn(async (senha) => `hash(${senha})`),
-}));
 
 jest.mock('../utils/auth.js', () => ({
   auth: { api: { signUpEmail: jest.fn().mockResolvedValue({}) } },
@@ -268,22 +263,10 @@ describe('UsuarioService', () => {
       await expect(service.atualizar(ID, { email: 'novo@x.com' })).resolves.toEqual({ _id: ID, email: 'novo@x.com' });
     });
 
-    it('grava o hash quando o payload traz senha e nunca a devolve', async () => {
-      colaboradores.repository.atualizar.mockResolvedValue({ _id: ID, senha: 'hash(nova)' });
+    it('repassa o payload ao repositório e nunca devolve a senha', async () => {
+      colaboradores.repository.atualizar.mockResolvedValue({ _id: ID, nome: 'Ana', senha: 'legado' });
 
-      const resultado = await service.atualizar(ID, { senha: 'nova' });
-
-      expect(hashPassword).toHaveBeenCalledWith('nova');
-      expect(colaboradores.repository.atualizar).toHaveBeenCalledWith(ID, { senha: 'hash(nova)' });
-      expect(resultado).toEqual({ _id: ID });
-    });
-
-    it('sem senha no payload, não gera hash', async () => {
-      colaboradores.repository.atualizar.mockResolvedValue({ _id: ID, nome: 'Ana' });
-
-      await service.atualizar(ID, { nome: 'Ana' });
-
-      expect(hashPassword).not.toHaveBeenCalled();
+      await expect(service.atualizar(ID, { nome: 'Ana' })).resolves.toEqual({ _id: ID, nome: 'Ana' });
       expect(colaboradores.repository.atualizar).toHaveBeenCalledWith(ID, { nome: 'Ana' });
     });
   });

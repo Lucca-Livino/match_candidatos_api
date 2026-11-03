@@ -103,7 +103,6 @@ describe('validatePatchUsuario', () => {
       validatePatchUsuario({
         nome: ' Ana Maria ',
         email: 'ANA@T.COM',
-        senha: 'Senha@123',
         telefone: '11999999999',
         linkedin: 'linkedin.com/in/ana-maria',
         cidade: 'Campinas',
@@ -111,10 +110,15 @@ describe('validatePatchUsuario', () => {
     ).toEqual({
       nome: 'Ana Maria',
       email: 'ana@t.com',
-      senha: 'Senha@123',
       telefone: '11999999999',
       linkedin: 'https://www.linkedin.com/in/ana-maria',
       cidade: 'Campinas',
     });
+  });
+
+  it('recusa senha e aponta a rota do better-auth', () => {
+    expect(() => validatePatchUsuario({ nome: 'Ana', senha: 'Senha@123' })).toThrow(
+      expect.objectContaining({ statusCode: 400, code: 'SENHA_PELO_AUTH' }),
+    );
   });
 });
