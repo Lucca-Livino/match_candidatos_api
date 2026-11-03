@@ -2,7 +2,7 @@ import { connectTestDatabase, clearTestDatabase, disconnectTestDatabase } from '
 import RotaRepository from './RotaRepository.js';
 import Rota from '../models/Rota.js';
 
-describe('RotaRepository.listarPaginado', () => {
+describe('RotaRepository com o modelo simulado', () => {
   const repo = new RotaRepository();
   const opcoes = (page, limit) => ({ page, limit, sort: { route: 1 }, lean: true });
 
@@ -21,6 +21,29 @@ describe('RotaRepository.listarPaginado', () => {
       { route: { $regex: 'vaga\\.\\*', $options: 'i' }, domain: 'localhost' },
       opcoes(2, 50),
     );
+  });
+
+  it('criar repassa o payload', async () => {
+    jest.spyOn(Rota, 'create').mockResolvedValue({ _id: 'r1' });
+
+    await expect(repo.criar({ route: 'vaga' })).resolves.toEqual({ _id: 'r1' });
+    expect(Rota.create).toHaveBeenCalledWith({ route: 'vaga' });
+  });
+
+  it.each([
+    ['buscarPorId', 'findById', ['r1'], ['r1']],
+    [
+      'atualizar',
+      'findByIdAndUpdate',
+      ['r1', { active: false }],
+      ['r1', { active: false }, { returnDocument: 'after', runValidators: true }],
+    ],
+    ['deletar', 'findByIdAndDelete', ['r1'], ['r1']],
+  ])('%s usa %s com os argumentos esperados', async (metodo, estatico, args, esperado) => {
+    jest.spyOn(Rota, estatico).mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: 'r1' }) });
+
+    await expect(repo[metodo](...args)).resolves.toEqual({ _id: 'r1' });
+    expect(Rota[estatico]).toHaveBeenCalledWith(...esperado);
   });
 });
 

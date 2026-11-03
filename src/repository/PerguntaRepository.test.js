@@ -109,4 +109,51 @@ describe('PerguntaRepository', () => {
 
     expect(OpcaoResposta.deleteMany).toHaveBeenCalledWith({ perguntaId: { $in: esperado } });
   });
+
+  it.each([
+    ['criar', Pergunta],
+    ['criarOpcao', OpcaoResposta],
+  ])('%s cria com o payload', async (metodo, modelo) => {
+    jest.spyOn(modelo, 'create').mockResolvedValue({ id: 'x1' });
+
+    await expect(repo[metodo]({ texto: 'a' })).resolves.toEqual({ id: 'x1' });
+    expect(modelo.create).toHaveBeenCalledWith({ texto: 'a' });
+  });
+
+  it.each([
+    ['buscarPorId', Pergunta, 'findOne', ['p1'], [{ id: 'p1' }]],
+    ['deletarPorId', Pergunta, 'findOneAndDelete', ['p1'], [{ id: 'p1' }]],
+    [
+      'atualizarOpcao',
+      OpcaoResposta,
+      'findOneAndUpdate',
+      ['p1', 'o1', { texto: 'b' }],
+      [{ id: 'o1', perguntaId: 'p1' }, { texto: 'b' }, { returnDocument: 'after', runValidators: true }],
+    ],
+    ['deletarOpcao', OpcaoResposta, 'findOneAndDelete', ['p1', 'o1'], [{ id: 'o1', perguntaId: 'p1' }]],
+  ])('%s usa o método do modelo com os argumentos esperados', async (metodo, modelo, estatico, args, esperado) => {
+    jest.spyOn(modelo, estatico).mockReturnValue(consulta({ id: 'x1' }));
+
+    await expect(repo[metodo](...args)).resolves.toEqual({ id: 'x1' });
+    expect(modelo[estatico]).toHaveBeenCalledWith(...esperado);
+  });
+
+  it.each([
+    ['deletarPorQuestionarioId', Pergunta, 'q1', { questionarioId: 'q1' }],
+    ['deletarOpcoesPorPerguntaId', OpcaoResposta, 'p1', { perguntaId: 'p1' }],
+  ])('%s apaga em lote pelo pai', async (metodo, modelo, arg, filtro) => {
+    jest.spyOn(modelo, 'deleteMany').mockResolvedValue({ deletedCount: 2 });
+
+    await expect(repo[metodo](arg)).resolves.toEqual({ deletedCount: 2 });
+    expect(modelo.deleteMany).toHaveBeenCalledWith(filtro);
+  });
+
+  it('lista opções da pergunta por ordem e _id', async () => {
+    const q = consulta([{ id: 'o1' }]);
+    jest.spyOn(OpcaoResposta, 'find').mockReturnValue(q);
+
+    await expect(repo.listarOpcoesPorPerguntaId('p1')).resolves.toEqual([{ id: 'o1' }]);
+    expect(OpcaoResposta.find).toHaveBeenCalledWith({ perguntaId: 'p1' });
+    expect(q.sort).toHaveBeenCalledWith({ ordem: 1, _id: 1 });
+  });
 });

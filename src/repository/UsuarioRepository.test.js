@@ -87,4 +87,34 @@ describe('UsuarioRepository', () => {
       deletadoEm: null,
     });
   });
+
+  it('criar repassa o payload', async () => {
+    jest.spyOn(Usuario, 'create').mockResolvedValue({ _id: 'u1' });
+
+    await expect(repo.criar({ email: 'a@b' })).resolves.toEqual({ _id: 'u1' });
+    expect(Usuario.create).toHaveBeenCalledWith({ email: 'a@b' });
+  });
+
+  it.each([
+    ['buscarPorId', 'findById', ['u1'], ['u1']],
+    ['buscarPorEmail', 'findOne', ['a@b'], [{ email: 'a@b' }]],
+    [
+      'atualizar',
+      'findByIdAndUpdate',
+      ['u1', { nome: 'Ana' }],
+      ['u1', { nome: 'Ana' }, { returnDocument: 'after', runValidators: true }],
+    ],
+    [
+      'atualizarPorEmail',
+      'findOneAndUpdate',
+      ['a@b', { nome: 'Ana' }],
+      [{ email: 'a@b' }, { nome: 'Ana' }, { returnDocument: 'after', runValidators: true }],
+    ],
+    ['deletar', 'findByIdAndDelete', ['u1'], ['u1']],
+  ])('%s usa %s com os argumentos esperados', async (metodo, estatico, args, esperado) => {
+    jest.spyOn(Usuario, estatico).mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: 'u1' }) });
+
+    await expect(repo[metodo](...args)).resolves.toEqual({ _id: 'u1' });
+    expect(Usuario[estatico]).toHaveBeenCalledWith(...esperado);
+  });
 });

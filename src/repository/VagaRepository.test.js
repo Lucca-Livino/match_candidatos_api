@@ -36,4 +36,27 @@ describe('VagaRepository', () => {
       opcoes(1, 10),
     );
   });
+
+  it('criar repassa o payload', async () => {
+    jest.spyOn(Vaga, 'create').mockResolvedValue({ _id: 'v1' });
+
+    await expect(repo.criar({ titulo: 'Dev' })).resolves.toEqual({ _id: 'v1' });
+    expect(Vaga.create).toHaveBeenCalledWith({ titulo: 'Dev' });
+  });
+
+  it.each([
+    ['buscarPorId', 'findById', ['v1'], ['v1']],
+    [
+      'atualizar',
+      'findByIdAndUpdate',
+      ['v1', { status: 'pausada' }],
+      ['v1', { status: 'pausada' }, { returnDocument: 'after', runValidators: true }],
+    ],
+    ['deletar', 'findByIdAndDelete', ['v1'], ['v1']],
+  ])('%s usa %s com os argumentos esperados', async (metodo, estatico, args, esperado) => {
+    jest.spyOn(Vaga, estatico).mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: 'v1' }) });
+
+    await expect(repo[metodo](...args)).resolves.toEqual({ _id: 'v1' });
+    expect(Vaga[estatico]).toHaveBeenCalledWith(...esperado);
+  });
 });

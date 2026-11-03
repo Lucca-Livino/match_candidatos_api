@@ -34,4 +34,37 @@ describe('CatalogoRepository', () => {
 
     expect(ItemCatalogo.find).toHaveBeenCalledWith({ tipo: 'habilidade', ativo: true, chaves: { $regex: regex } });
   });
+
+  it('cria o item com o payload', async () => {
+    jest.spyOn(ItemCatalogo, 'create').mockResolvedValue({ id: 'i1' });
+
+    await expect(repo.criar({ nome: 'React' })).resolves.toEqual({ id: 'i1' });
+    expect(ItemCatalogo.create).toHaveBeenCalledWith({ nome: 'React' });
+  });
+
+  it.each([
+    ['buscarPorId', 'findOne', ['i1'], [{ id: 'i1' }]],
+    ['buscarPorIds', 'find', [['i1', 'i2']], [{ id: { $in: ['i1', 'i2'] } }]],
+    ['listarTodos', 'find', [], [{}]],
+    [
+      'atualizar',
+      'findOneAndUpdate',
+      ['i1', { ativo: false }],
+      [{ id: 'i1' }, { ativo: false }, { returnDocument: 'after', runValidators: true }],
+    ],
+  ])('%s usa %s com os argumentos esperados', async (metodo, estatico, args, esperado) => {
+    jest.spyOn(ItemCatalogo, estatico).mockReturnValue(consulta({ id: 'i1' }));
+
+    await expect(repo[metodo](...args)).resolves.toEqual({ id: 'i1' });
+    expect(ItemCatalogo[estatico]).toHaveBeenCalledWith(...esperado);
+  });
+
+  it('lista o tipo inteiro, inativos inclusive, por nome', async () => {
+    const q = consulta([{ id: 'i1' }]);
+    jest.spyOn(ItemCatalogo, 'find').mockReturnValue(q);
+
+    await expect(repo.listarPorTipo('habilidade')).resolves.toEqual([{ id: 'i1' }]);
+    expect(ItemCatalogo.find).toHaveBeenCalledWith({ tipo: 'habilidade' });
+    expect(q.sort).toHaveBeenCalledWith({ nome: 1 });
+  });
 });
