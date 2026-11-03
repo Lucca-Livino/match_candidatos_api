@@ -2,7 +2,7 @@ import request from 'supertest';
 import Rota from '../../models/Rota.js';
 import Usuario from '../../models/Usuario.js';
 import { subirAmbiente, limparBanco, derrubarAmbiente } from './setup/ambiente.js';
-import { criarUsuarioLogado, SENHA_PADRAO } from './setup/usuarios.js';
+import { criarUsuarioLogado, logar, SENHA_PADRAO } from './setup/usuarios.js';
 import { registrarCandidato } from './setup/cenarios.js';
 
 // Primeira camada de seguranca: quem nao tem sessao valida nao passa, e as
@@ -155,6 +155,40 @@ describe('E2E — autenticação', () => {
       const admin = await criarUsuarioLogado(app, 'administrador');
       const res = await admin.get('/api/rota-inexistente').expect(404);
       expect(res.body.error.code).toBe('ROUTE_NOT_FOUND');
+    });
+  });
+
+  describe('troca de senha', () => {
+    it('PATCH /api/usuarios/:id recusa senha', async () => {
+      const candidato = await criarUsuarioLogado(app, 'candidato');
+
+      const res = await candidato.patch(`/api/usuarios/${candidato.id}`).send({ senha: 'OutraSenha@456' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('SENHA_PELO_AUTH');
+    });
+
+    it('change-password do better-auth troca a senha usada no login', async () => {
+      const candidato = await criarUsuarioLogado(app, 'candidato');
+
+      await candidato
+        .post('/api/auth/change-password')
+        .send({ currentPassword: SENHA_PADRAO, newPassword: 'OutraSenha@456' })
+        .expect(200);
+
+      await expect(logar(app, candidato.email, 'OutraSenha@456')).resolves.toBeDefined();
+      await expect(logar(app, candidato.email)).rejects.toThrow('Login falhou');
+    });
+
+    it('change-password com a senha atual errada responde 400', async () => {
+      const candidato = await criarUsuarioLogado(app, 'candidato');
+
+      const res = await candidato
+        .post('/api/auth/change-password')
+        .send({ currentPassword: 'Errada@123', newPassword: 'OutraSenha@456' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('Invalid password');
     });
   });
 });
