@@ -25,6 +25,14 @@ describe('cascataModelos', () => {
     expect(trilha(estado)).toEqual({ usados: ['a', 'b'], esgotados: estado.esgotados });
   });
 
+  it('descer não muta o estado anterior', () => {
+    const antes = novaCascata(['a', 'b']);
+    const depois = descer(antes, 'cota diaria');
+
+    expect(antes).toEqual({ modelos: ['a', 'b'], indice: 0, esgotados: [] });
+    expect(depois.indice).toBe(1);
+  });
+
   it('depois do último degrau acaba e não tem degrau atual', () => {
     const estado = descer(descer(novaCascata(['a', 'b']), 'x'), 'y');
 

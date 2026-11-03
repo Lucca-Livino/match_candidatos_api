@@ -44,6 +44,14 @@ describe('MatchIAService', () => {
     expect(resultado).toEqual({ ...avaliacao, modeloUsado: 'modelo-a', degrausEsgotados: [] });
   });
 
+  it('devolve campos extras do provider sem inspecioná-los', async () => {
+    const provider = providerQue({ ...avaliacao, extra: 'livre' });
+
+    const resultado = await new MatchIAService(provider).avaliar(payload, opcoes);
+
+    expect(resultado.extra).toBe('livre');
+  });
+
   it('sem provider injetado, resolve pela fábrica com o nome do provedor', async () => {
     const provider = providerQue(avaliacao);
     criarProvider.mockReturnValue(provider);

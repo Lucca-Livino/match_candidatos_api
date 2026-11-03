@@ -1,4 +1,4 @@
-import GeminiProvider from './GeminiProvider.js';
+import GeminiProvider, { traduzirErro } from './GeminiProvider.js';
 import { RUBRICA, SCHEMA_AVALIACAO, montarMensagem } from './promptAvaliacao.js';
 import {
   ErroDeIAPermanente,
@@ -109,5 +109,11 @@ describe('GeminiProvider', () => {
       await verificacao;
       expect(cliente.models.generateContent).toHaveBeenCalledTimes(4);
     });
+  });
+
+  it('não retipa erro que já é do domínio', () => {
+    const erro = new ErroDeCotaDiaria(new Error('429'), 'gemini-teste');
+
+    expect(traduzirErro(erro, 'gemini-teste')).toBe(erro);
   });
 });
