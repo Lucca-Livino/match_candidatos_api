@@ -15,10 +15,10 @@ describe('RotaRepository.listarPaginado', () => {
   });
 
   it('filtra rota por trecho sem caixa e domínio exato, com a paginação informada', async () => {
-    await repo.listarPaginado({ page: 2, limit: 50, route: 'vaga', domain: 'localhost' });
+    await repo.listarPaginado({ page: 2, limit: 50, route: 'vaga.*', domain: 'localhost' });
 
     expect(Rota.paginate).toHaveBeenCalledWith(
-      { route: { $regex: 'vaga', $options: 'i' }, domain: 'localhost' },
+      { route: { $regex: 'vaga\\.\\*', $options: 'i' }, domain: 'localhost' },
       opcoes(2, 50),
     );
   });

@@ -27,4 +27,13 @@ describe('VagaRepository', () => {
       opcoes(3, 20),
     );
   });
+
+  it('busca o título como texto literal', async () => {
+    await repo.listarPaginado({ titulo: 'c++ (a+)+' });
+
+    expect(Vaga.paginate).toHaveBeenCalledWith(
+      { titulo: { $regex: 'c\\+\\+ \\(a\\+\\)\\+', $options: 'i' } },
+      opcoes(1, 10),
+    );
+  });
 });

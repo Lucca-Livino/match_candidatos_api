@@ -38,14 +38,14 @@ describe('UsuarioRepository', () => {
     });
 
     it('combina situação, e-mail, nome e paginação informada', async () => {
-      await repo.listarPaginado({ page: 2, limit: 5, email: 'ana@', nome: 'Ana', situacao: 'desativado' });
+      await repo.listarPaginado({ page: 2, limit: 5, email: 'ana.m@', nome: 'Ana (TI)', situacao: 'desativado' });
 
       expect(Usuario.paginate).toHaveBeenCalledWith(
         {
           deletadoEm: null,
           status_ativo: false,
-          email: { $regex: 'ana@', $options: 'i' },
-          nome: { $regex: 'Ana', $options: 'i' },
+          email: { $regex: 'ana\\.m@', $options: 'i' },
+          nome: { $regex: 'Ana \\(TI\\)', $options: 'i' },
         },
         opcoes(2, 5),
       );

@@ -1,5 +1,6 @@
 import Usuario from '../models/Usuario.js';
 import { filtroDaSituacao } from '../utils/helpers/situacaoUsuario.js';
+import { escaparRegex } from '../utils/helpers/escaparRegex.js';
 
 class UsuarioRepository {
   async listarPaginado({ page = 1, limit = 10, email, nome, status_ativo, papel, situacao } = {}) {
@@ -14,11 +15,11 @@ class UsuarioRepository {
     }
 
     if (email) {
-      filter.email = { $regex: email, $options: 'i' };
+      filter.email = { $regex: escaparRegex(email), $options: 'i' };
     }
 
     if (nome) {
-      filter.nome = { $regex: nome, $options: 'i' };
+      filter.nome = { $regex: escaparRegex(nome), $options: 'i' };
     }
 
     if (typeof status_ativo === 'boolean') {
