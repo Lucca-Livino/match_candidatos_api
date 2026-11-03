@@ -465,6 +465,19 @@ describe('ConviteService', () => {
       esperarAppError(erro, MENSAGEM_FALHA_ENVIO, 502, 'EMAIL_FALHOU');
       expect(emailService.enviarConvite).not.toHaveBeenCalled();
     });
+
+    it('falha ao limpar os tokens depois do envio não esconde o 502', async () => {
+      const { service, repository, exclusaoRepository, emailService } = montar();
+      repository.buscarPorId.mockResolvedValue(pendente);
+      emailService.enviarConvite.mockRejectedValue(new Error('smtp fora'));
+      exclusaoRepository.apagarTokensConvite
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('banco fora'));
+
+      const erro = await capturarErro(service.reenviar(ID));
+
+      esperarAppError(erro, MENSAGEM_FALHA_ENVIO, 502, 'EMAIL_FALHOU');
+    });
   });
 
   describe('ativar', () => {
