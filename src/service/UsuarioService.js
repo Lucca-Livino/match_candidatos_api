@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import UsuarioRepository from '../repository/UsuarioRepository.js';
 import ExclusaoContaRepository from '../repository/ExclusaoContaRepository.js';
 import AppError from '../utils/helpers/AppError.js';
-import { hashPassword } from '../utils/password.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 import { situacaoDoUsuario } from '../utils/helpers/situacaoUsuario.js';
 
@@ -20,17 +19,6 @@ class UsuarioService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError('ID de usuário inválido.', 400, 'VALIDATION_ERROR');
     }
-  }
-
-  async withHashedPassword(payload) {
-    if (!Object.hasOwn(payload, 'senha')) {
-      return payload;
-    }
-
-    return {
-      ...payload,
-      senha: await hashPassword(payload.senha),
-    };
   }
 
   // `papeisDoSolicitante` decide o alcance da listagem. O recrutador chega aqui
@@ -134,8 +122,7 @@ class UsuarioService {
       }
     }
 
-    const payloadComHash = await this.withHashedPassword(payload);
-    const atualizado = await this.repository.atualizar(id, payloadComHash);
+    const atualizado = await this.repository.atualizar(id, payload);
     return this.sanitize(atualizado);
   }
 

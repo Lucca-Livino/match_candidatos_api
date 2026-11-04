@@ -178,12 +178,14 @@ export const validatePatchUsuario = (payload) => {
     normalized.email = email;
   }
 
+  // A credencial vive na colecao `account` do better-auth; gravar aqui nao
+  // mudaria o login. A troca passa por POST /api/auth/change-password.
   if (Object.hasOwn(payload, 'senha')) {
-    const senha = String(payload.senha || '').trim();
-    if (senha.length < MIN_PASSWORD_LENGTH) {
-      throw new AppError('senha deve ter ao menos 8 caracteres.', 400, 'VALIDATION_ERROR');
-    }
-    normalized.senha = senha;
+    throw new AppError(
+      'A senha não é alterada por esta rota. Use /api/auth/change-password.',
+      400,
+      'SENHA_PELO_AUTH',
+    );
   }
 
   normalizeContato(payload, normalized);

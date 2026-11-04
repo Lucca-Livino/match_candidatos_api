@@ -157,7 +157,11 @@ class ConviteService {
     } catch (erro) {
       logger.error(`Falha ao reenviar convite para ${usuario.email}: ${erro?.message}`);
       // Sem e-mail entregue, nenhum token valido deve ficar para tras.
-      await this.apagarTokens(id);
+      try {
+        await this.apagarTokens(id);
+      } catch (erroLimpeza) {
+        logger.error(`Falha ao apagar tokens de ${usuario.email}: ${erroLimpeza?.message}`);
+      }
       throw falhaNoEnvio();
     }
 

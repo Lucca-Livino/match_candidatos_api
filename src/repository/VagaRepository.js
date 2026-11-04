@@ -1,11 +1,12 @@
 import Vaga from '../models/Vaga.js';
+import { escaparRegex } from '../utils/helpers/escaparRegex.js';
 
 class VagaRepository {
   async listarPaginado({ page = 1, limit = 10, titulo, area, status, tipo_criterio } = {}) {
     const filter = {};
 
     if (titulo) {
-      filter.titulo = { $regex: titulo, $options: 'i' };
+      filter.titulo = { $regex: escaparRegex(titulo), $options: 'i' };
     }
 
     if (area) {
