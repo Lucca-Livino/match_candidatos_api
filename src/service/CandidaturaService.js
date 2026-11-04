@@ -1,4 +1,6 @@
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
+import QuestionarioRepository from '../repository/QuestionarioRepository.js';
+import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
 import AvaliacaoCandidaturaService, { SEM_CRITERIOS } from './AvaliacaoCandidaturaService.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
@@ -18,9 +20,13 @@ class CandidaturaService {
   constructor(
     candidaturaRepository = new CandidaturaRepository(),
     avaliacaoCandidaturaService = new AvaliacaoCandidaturaService(),
+    questionarioRepository = new QuestionarioRepository(),
+    respostaQuestionarioRepository = new RespostaQuestionarioRepository(),
   ) {
     this.candidaturaRepository = candidaturaRepository;
     this.avaliacaoCandidaturaService = avaliacaoCandidaturaService;
+    this.questionarioRepository = questionarioRepository;
+    this.respostaQuestionarioRepository = respostaQuestionarioRepository;
   }
 
   sanitize(doc) {
@@ -107,7 +113,38 @@ class CandidaturaService {
 
   async listarCandidatura(usuarioId) {
     const list = await this.candidaturaRepository.listarPorUsuarioId(usuarioId);
-    return list.map((item) => this.omitirTriagem(this.sanitize(item)));
+    const visiveis = list.map((item) => this.omitirTriagem(this.sanitize(item)));
+    return this.marcarQuestionarioPendente(usuarioId, visiveis);
+  }
+
+  // A candidatura e criada antes do questionario. Se o envio das respostas
+  // falha (rede, aba fechada), ela fica sem respostas e a triagem nunca roda.
+  // `questionarioPendente` avisa o candidato que falta concluir: vale quando a
+  // vaga tem questionario ativo e nenhuma resposta foi finalizada depois da
+  // candidatura (resposta anterior a um cancelamento nao conta).
+  async marcarQuestionarioPendente(usuarioId, candidaturas) {
+    if (candidaturas.length === 0) return candidaturas;
+
+    const vagaIds = [...new Set(candidaturas.map((c) => String(c.vagaId)))];
+    const questionarios = await this.questionarioRepository.listarPorVagaIds(vagaIds);
+    const finalizadas = questionarios.length
+      ? await this.respostaQuestionarioRepository.listarFinalizadasDoUsuario(
+          String(usuarioId),
+          questionarios.map((q) => q.id),
+        )
+      : [];
+
+    return candidaturas.map((candidatura) => {
+      const daVaga = questionarios.filter((q) => String(q.vagaId) === String(candidatura.vagaId));
+      const temAtivo = daVaga.some((q) => q.ativo === 1);
+      const ids = new Set(daVaga.map((q) => q.id));
+      const criadaEm = new Date(candidatura.criadoEm);
+      const respondida = finalizadas.some(
+        (r) => ids.has(r.questionarioId) && new Date(r.finalizadoEm) >= criadaEm,
+      );
+
+      return { ...candidatura, questionarioPendente: temAtivo && !respondida };
+    });
   }
 
   // Listagem do recrutador: quem se candidatou a esta vaga, em ordem de
@@ -186,7 +223,10 @@ class CandidaturaService {
       throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
-    return this.omitirTriagem(this.sanitize(candidatura));
+    const [detalhada] = await this.marcarQuestionarioPendente(usuarioId, [
+      this.omitirTriagem(this.sanitize(candidatura)),
+    ]);
+    return detalhada;
   }
 
   async atualizarStatusCandidatura(usuarioId, vagaId, payload, ator = null) {

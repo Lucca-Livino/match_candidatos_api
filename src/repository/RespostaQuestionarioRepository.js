@@ -19,6 +19,22 @@ class RespostaQuestionarioRepository {
     }).lean();
   }
 
+  async buscarFinalizadaDesde(questionarioId, usuarioId, desde) {
+    return RespostaQuestionario.findOne({
+      questionarioId,
+      usuarioId,
+      status: 'finalizado',
+      finalizadoEm: { $gte: desde },
+    }).lean();
+  }
+
+  async listarFinalizadasDoUsuario(usuarioId, questionarioIds) {
+    return RespostaQuestionario.find(
+      { usuarioId, questionarioId: { $in: questionarioIds }, status: 'finalizado' },
+      'questionarioId finalizadoEm',
+    ).lean();
+  }
+
   async atualizarRespostaQuestionario(id, payload) {
     return RespostaQuestionario.findOneAndUpdate({ id }, payload, {
       returnDocument: 'after',

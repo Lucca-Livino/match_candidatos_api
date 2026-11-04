@@ -19,6 +19,10 @@ class QuestionarioRepository {
     return Questionario.find(filter).sort({ criadoEm: -1 }).lean();
   }
 
+  async listarPorVagaIds(vagaIds) {
+    return Questionario.find({ vagaId: { $in: vagaIds } }, 'id vagaId ativo').lean();
+  }
+
   async buscarPorId(id) {
     return Questionario.findOne({ id }).lean();
   }
