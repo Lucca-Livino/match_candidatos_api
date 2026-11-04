@@ -81,4 +81,40 @@ describe('E2E — jornada do candidato', () => {
     const lista = await candidato.get(`/api/usuarios/${candidato.id}/candidatura`).expect(200);
     expect(lista.body.data).toHaveLength(0);
   });
+
+  it('candidatura sem questionário concluído fica pendente até o candidato finalizar', async () => {
+    configurarIA();
+    const { vaga, candidato } = await prepararCandidatura();
+    const rotaLista = `/api/usuarios/${candidato.id}/candidatura`;
+
+    // Falha simulada: a candidatura foi criada, o questionário não.
+    await candidato.post(rotaLista).send({ vagaId: vaga.vagaId }).expect(201);
+    const pendente = await candidato.get(rotaLista).expect(200);
+    expect(pendente.body.data[0].questionarioPendente).toBe(true);
+
+    const detalhe = await candidato.get(`${rotaLista}/${vaga.vagaId}`).expect(200);
+    expect(detalhe.body.data.questionarioPendente).toBe(true);
+
+    // Retomada: o 409 da candidatura não impede concluir o questionário.
+    await candidato.post(rotaLista).send({ vagaId: vaga.vagaId }).expect(409);
+    const iniciada = await candidato
+      .post('/api/resposta-questionario/iniciar')
+      .send({ questionarioId: vaga.questionarioId, usuarioId: candidato.id })
+      .expect(201);
+    await candidato
+      .post(`/api/resposta-questionario/${iniciada.body.data.id}/responder`)
+      .send({ respostas: [{ perguntaId: vaga.perguntaId, textoResposta: 'Resposta enviada na retomada.' }] })
+      .expect(200);
+    await candidato.patch(`/api/resposta-questionario/${iniciada.body.data.id}/finalizar`).expect(200);
+    await aguardarAvaliacao(candidato.id, vaga.vagaId);
+
+    const concluida = await candidato.get(rotaLista).expect(200);
+    expect(concluida.body.data[0].questionarioPendente).toBe(false);
+
+    // Uma resposta por candidatura: iniciar de novo é recusado.
+    await candidato
+      .post('/api/resposta-questionario/iniciar')
+      .send({ questionarioId: vaga.questionarioId, usuarioId: candidato.id })
+      .expect(409);
+  });
 });

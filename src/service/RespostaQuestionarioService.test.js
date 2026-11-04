@@ -21,6 +21,7 @@ const perguntaDissertativa = { id: 'p3', questionarioId: 'q1', tipoResposta: 'di
 const criarRepository = () => ({
   buscarRespostaQuestionarioPorId: jest.fn().mockResolvedValue(respostaEmAndamento),
   buscarRespostaEmAndamento: jest.fn().mockResolvedValue(null),
+  buscarFinalizadaDesde: jest.fn().mockResolvedValue(null),
   criarRespostaQuestionario: jest.fn(async (dados) => ({ id: 'rq-novo', ...dados, __v: 0 })),
   atualizarRespostaQuestionario: jest.fn(async (id, dados) => ({ ...respostaEmAndamento, ...dados, id })),
   buscarRespostaPergunta: jest.fn().mockResolvedValue(null),
@@ -194,6 +195,21 @@ describe('RespostaQuestionarioService', () => {
         code: 'BUSINESS_RULE_ERROR',
       });
       expect(repository.buscarRespostaEmAndamento).not.toHaveBeenCalled();
+      expect(repository.criarRespostaQuestionario).not.toHaveBeenCalled();
+    });
+
+    it('recusa com 409 quando o questionário já foi finalizado para esta candidatura', async () => {
+      const { service, candidaturaRepository, repository } = montarService();
+      const criadoEm = new Date('2026-11-01T10:00:00Z');
+      candidaturaRepository.buscarPorUsuarioEVaga.mockResolvedValue({ id: 'c1', criadoEm });
+      repository.buscarFinalizadaDesde.mockResolvedValue({ id: 'rq-antiga', status: 'finalizado' });
+
+      await esperarAppError(service.iniciar(payload, candidato), {
+        message: 'O questionário desta candidatura já foi respondido.',
+        statusCode: 409,
+        code: 'CONFLICT',
+      });
+      expect(repository.buscarFinalizadaDesde).toHaveBeenCalledWith('q1', 'u1', criadoEm);
       expect(repository.criarRespostaQuestionario).not.toHaveBeenCalled();
     });
   });
