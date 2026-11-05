@@ -115,7 +115,11 @@ class AvaliacaoCandidaturaService {
     const suspeita = this.montarSuspeita({
       padroes,
       modelo: resultado.tentativaManipulacao === true,
-      evidencias: conferirEvidencias(payload.curriculo, payload.questionario, resultado.criterios),
+      evidencias: conferirEvidencias(
+        payload.curriculo,
+        payload.questionario,
+        resultado.criterios.filter((c) => payload.vaga.criterios.some((v) => String(v.id) === String(c.criterioId))),
+      ),
     });
     const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado && !suspeita.detectada);
 

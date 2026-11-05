@@ -434,6 +434,16 @@ describe('AvaliacaoCandidaturaService', () => {
       expect(dados.suspeitaInjecao).toEqual({ detectada: true, origens: [origem], trechos });
     });
 
+    it('confere evidência só dos critérios que existem na vaga', async () => {
+      const resultado = resultadoIA([1, 1]);
+      resultado.criterios.push({ criterioId: 'inventado', aderencia: 1, evidencia: 'Kubernetes', atendido: true });
+      const { service } = criarService({ resultado });
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      expect(conferirEvidencias.mock.calls[0][2].map((c) => c.criterioId)).toEqual(['c1', 'c2']);
+    });
+
     it('junta as três origens na ordem padrao, modelo, evidencia', async () => {
       detectarInjecao.mockReturnValue([{ campo: 'x', padrao: 'p', trecho: 'A' }]);
       conferirEvidencias.mockReturnValue([{ criterioId: 'c1', evidencia: 'B' }]);
