@@ -72,6 +72,12 @@ describe('escaparDelimitadores', () => {
     expect(JSON.parse(escaparDelimitadores('{"a":"<b>"}'))).toEqual({ a: '<b>' });
   });
 
+  it('escapa também < e > de largura total', () => {
+    const json = JSON.stringify({ a: '\uFF1Cb\uFF1E' });
+    expect(escaparDelimitadores(json)).toBe(`{"a":"${'\\'}uff1cb${'\\'}uff1e"}`);
+    expect(JSON.parse(escaparDelimitadores(json))).toEqual({ a: '\uFF1Cb\uFF1E' });
+  });
+
   it('devolve undefined sem quebrar', () => {
     expect(escaparDelimitadores(undefined)).toBeUndefined();
   });

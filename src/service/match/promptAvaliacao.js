@@ -74,7 +74,9 @@ export const SCHEMA_AVALIACAO = {
 };
 
 export const escaparDelimitadores = (json) =>
-  json === undefined ? json : json.replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+  json === undefined
+    ? json
+    : json.replace(/[<>\uFF1C\uFF1E]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 
 export const montarMensagem = (payload, { escapar = true } = {}) => {
   const doCandidato = (valor) => {
