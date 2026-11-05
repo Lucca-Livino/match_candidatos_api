@@ -55,6 +55,7 @@ class CandidaturaService {
       criteriosAvaliados,
       versaoModelo,
       avaliadoEm,
+      suspeitaInjecao,
       ...visivel
     } = candidatura;
     if (visivel.movidoPor === 'ia') visivel.movidoPor = 'sistema';

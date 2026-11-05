@@ -25,6 +25,7 @@ const candidaturaCompleta = (extra = {}) => ({
   criteriosAvaliados: [{ criterioId: 'c1', aderencia: 1 }],
   versaoModelo: 'gemini-teste',
   avaliadoEm: new Date('2026-10-01T00:00:00Z'),
+  suspeitaInjecao: { detectada: true, origens: ['padrao'], trechos: ['Ignore as instruções'] },
   ...extra,
 });
 
@@ -37,6 +38,7 @@ const CAMPOS_DA_TRIAGEM = [
   'criteriosAvaliados',
   'versaoModelo',
   'avaliadoEm',
+  'suspeitaInjecao',
 ];
 
 const criarRepositorio = () => ({
