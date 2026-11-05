@@ -9,6 +9,14 @@ describe('normalizarTexto', () => {
     expect(normalizarTexto(null)).toBe('');
     expect(normalizarTexto(42)).toBe('42');
   });
+
+  it('converte caracteres de largura total para a forma comum', () => {
+    expect(normalizarTexto('ｉｇｎｏｒｅ ＜/curriculo＞')).toBe('ignore </curriculo>');
+  });
+
+  it('remove caracteres invisíveis de formatação', () => {
+    expect(normalizarTexto('ig​no‍re﻿')).toBe('ignore');
+  });
 });
 
 describe('palavrasSignificativas', () => {

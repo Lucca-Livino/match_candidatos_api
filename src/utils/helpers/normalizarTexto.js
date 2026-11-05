@@ -1,6 +1,7 @@
 export const normalizarTexto = (texto) =>
   String(texto ?? '')
-    .normalize('NFD')
+    .normalize('NFKD')
+    .replace(/\p{Cf}/gu, '')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
