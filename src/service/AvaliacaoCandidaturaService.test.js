@@ -218,8 +218,8 @@ describe('AvaliacaoCandidaturaService', () => {
             'Requisito obrigatório não atendido: React: não encontrado no perfil. '
             + 'Inglês: nível mínimo avançado, declarado básico.',
           criteriosAvaliados: [],
-          movidoPor: 'sistema',
         });
+        expect(dadosPersistidos(candidaturaRepository)).not.toHaveProperty('movidoPor');
         expect(retorno).toEqual(expect.objectContaining({ salvo: true, compativel: 0 }));
       });
 
@@ -333,7 +333,7 @@ describe('AvaliacaoCandidaturaService', () => {
 
       const dados = dadosPersistidos(candidaturaRepository);
       expect(dados.compativel).toBe(1);
-      expect(dados.movidoPor).toBe('sistema');
+      expect(dados).not.toHaveProperty('movidoPor');
       expect(dados).not.toHaveProperty('status');
     });
 
@@ -352,10 +352,10 @@ describe('AvaliacaoCandidaturaService', () => {
           compativel: 0,
           scoreIA: 0.38,
           motivoIncompat_: 'Compatibilidade abaixo do limiar definido para a triagem automática.',
-          movidoPor: 'sistema',
         }),
       );
       expect(dados).not.toHaveProperty('status');
+      expect(dados).not.toHaveProperty('movidoPor');
     });
 
     it('trunca a evidência de cada critério em 2000 caracteres', async () => {

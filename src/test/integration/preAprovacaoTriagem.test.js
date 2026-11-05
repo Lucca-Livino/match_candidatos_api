@@ -42,8 +42,8 @@ describe('Pre-aprovacao: candidatura compativel entra em em_analise', () => {
   afterEach(clearTestDatabase);
   afterAll(disconnectTestDatabase);
 
-  const semear = (status = 'inscrito') =>
-    Candidatura.create({ usuarioId: 'u1', vagaId: 'v1', status });
+  const semear = (status = 'inscrito', movidoPor = 'sistema') =>
+    Candidatura.create({ usuarioId: 'u1', vagaId: 'v1', status, movidoPor });
 
   it('compativel e promovido para em_analise, com movidoPor = ia', async () => {
     await semear();
@@ -67,12 +67,12 @@ describe('Pre-aprovacao: candidatura compativel entra em em_analise', () => {
   // A decisao humana vale mais que a da IA: uma reavaliacao nao pode puxar de
   // volta quem o recrutador ja aprovou.
   it('nao regride status ja decidido pelo recrutador', async () => {
-    await semear('aprovado');
+    await semear('aprovado', 'ana.recrutadora@match.com');
     await montarService(0.9).avaliar('u1', 'v1');
 
     const doc = await Candidatura.findOne({ usuarioId: 'u1', vagaId: 'v1' }).lean();
     expect(doc.status).toBe('aprovado');
-    expect(doc.movidoPor).toBe('sistema');
+    expect(doc.movidoPor).toBe('ana.recrutadora@match.com');
   });
 });
 
