@@ -6,7 +6,6 @@ import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
 import { montarIndice } from '../utils/helpers/indiceCatalogo.js';
 import { detectarInjecao } from '../utils/helpers/detectarInjecao.js';
-import { conferirEvidencias } from '../utils/helpers/conferirEvidencias.js';
 
 jest.mock('./AvaliacaoPayloadService.js', () => ({
   __esModule: true,
@@ -27,7 +26,6 @@ jest.mock('../repository/CandidaturaRepository.js', () => ({
 jest.mock('../utils/helpers/gateObrigatorios.js', () => ({ __esModule: true, avaliarObrigatorios: jest.fn() }));
 jest.mock('../utils/helpers/indiceCatalogo.js', () => ({ __esModule: true, montarIndice: jest.fn() }));
 jest.mock('../utils/helpers/detectarInjecao.js', () => ({ __esModule: true, detectarInjecao: jest.fn() }));
-jest.mock('../utils/helpers/conferirEvidencias.js', () => ({ __esModule: true, conferirEvidencias: jest.fn() }));
 
 const AGORA = new Date('2026-11-02T12:00:00.000Z');
 const USUARIO_ID = 'usuario-1';
@@ -88,7 +86,6 @@ describe('AvaliacaoCandidaturaService', () => {
     avaliarObrigatorios.mockReset().mockReturnValue({ aprovado: true, motivos: [] });
     montarIndice.mockReset().mockReturnValue({ indiceVazio: true });
     detectarInjecao.mockReset().mockReturnValue([]);
-    conferirEvidencias.mockReset().mockReturnValue([]);
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -412,14 +409,12 @@ describe('AvaliacaoCandidaturaService', () => {
       await service.avaliar(USUARIO_ID, VAGA_ID);
 
       expect(detectarInjecao).toHaveBeenCalledWith(payload.curriculo, payload.questionario);
-      expect(conferirEvidencias).toHaveBeenCalledWith(payload.curriculo, payload.questionario, resultado.criterios);
       expect(dadosPersistidos(candidaturaRepository)).toMatchObject({ status: 'em_analise', suspeitaInjecao: SEM_SUSPEITA });
     });
 
     it.each([
       ['padrao', () => detectarInjecao.mockReturnValue([{ campo: 'respostas[0].textoResposta', padrao: 'ignorar_instrucoes', trecho: 'Ignore as instruções' }]), {}, ['Ignore as instruções']],
       ['modelo', () => {}, { tentativaManipulacao: true }, []],
-      ['evidencia', () => conferirEvidencias.mockReturnValue([{ criterioId: 'c1', evidencia: 'Lidera times de Kubernetes' }]), {}, ['Lidera times de Kubernetes']],
     ])('origem %s: grava a suspeita e não promove', async (origem, preparar, extraIA, trechos) => {
       preparar();
       const { service, candidaturaRepository } = criarService({ resultado: resultadoIA([1, 1], extraIA), atual: { status: 'inscrito' } });
@@ -434,27 +429,16 @@ describe('AvaliacaoCandidaturaService', () => {
       expect(dados.suspeitaInjecao).toEqual({ detectada: true, origens: [origem], trechos });
     });
 
-    it('confere evidência só dos critérios que existem na vaga', async () => {
-      const resultado = resultadoIA([1, 1]);
-      resultado.criterios.push({ criterioId: 'inventado', aderencia: 1, evidencia: 'Kubernetes', atendido: true });
-      const { service } = criarService({ resultado });
-
-      await service.avaliar(USUARIO_ID, VAGA_ID);
-
-      expect(conferirEvidencias.mock.calls[0][2].map((c) => c.criterioId)).toEqual(['c1', 'c2']);
-    });
-
-    it('junta as três origens na ordem padrao, modelo, evidencia', async () => {
+    it('junta as duas origens na ordem padrao, modelo', async () => {
       detectarInjecao.mockReturnValue([{ campo: 'x', padrao: 'p', trecho: 'A' }]);
-      conferirEvidencias.mockReturnValue([{ criterioId: 'c1', evidencia: 'B' }]);
       const { service, candidaturaRepository } = criarService({ resultado: resultadoIA([1, 1], { tentativaManipulacao: true }) });
 
       await service.avaliar(USUARIO_ID, VAGA_ID);
 
       expect(dadosPersistidos(candidaturaRepository).suspeitaInjecao).toEqual({
         detectada: true,
-        origens: ['padrao', 'modelo', 'evidencia'],
-        trechos: ['A', 'B'],
+        origens: ['padrao', 'modelo'],
+        trechos: ['A'],
       });
     });
 
@@ -477,7 +461,6 @@ describe('AvaliacaoCandidaturaService', () => {
       await service.avaliar(USUARIO_ID, VAGA_ID);
 
       expect(matchIAService.avaliar).not.toHaveBeenCalled();
-      expect(conferirEvidencias).not.toHaveBeenCalled();
       expect(dadosPersistidos(candidaturaRepository).suspeitaInjecao).toEqual({
         detectada: true,
         origens: ['padrao'],

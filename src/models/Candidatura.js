@@ -25,7 +25,7 @@ const CriterioAvaliadoSchema = new mongoose.Schema(
 const SuspeitaInjecaoSchema = new mongoose.Schema(
   {
     detectada: { type: Boolean, default: false },
-    origens: { type: [{ type: String, enum: ['padrao', 'modelo', 'evidencia'] }], default: [] },
+    origens: { type: [{ type: String, enum: ['padrao', 'modelo'] }], default: [] },
     trechos: { type: [{ type: String, maxlength: 300 }], default: [] },
   },
   { _id: false },

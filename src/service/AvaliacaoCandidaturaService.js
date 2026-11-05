@@ -6,7 +6,6 @@ import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
 import { montarIndice } from '../utils/helpers/indiceCatalogo.js';
 import { calcularScore, detalharCriterios } from '../utils/helpers/calcularScore.js';
 import { detectarInjecao } from '../utils/helpers/detectarInjecao.js';
-import { conferirEvidencias } from '../utils/helpers/conferirEvidencias.js';
 
 // Retorno de `avaliar` quando a vaga nao tem criterio: nada foi gravado, mas
 // por regra, e nao por falha. Distinto do null para a reavaliacao manual nao
@@ -41,13 +40,10 @@ class AvaliacaoCandidaturaService {
     return { status: 'em_analise', movidoPor: 'ia' };
   }
 
-  montarSuspeita({ padroes = [], modelo = false, evidencias = [] } = {}) {
-    const origens = [
-      ...(padroes.length ? ['padrao'] : []),
-      ...(modelo ? ['modelo'] : []),
-      ...(evidencias.length ? ['evidencia'] : []),
-    ];
-    const trechos = [...padroes.map((p) => p.trecho), ...evidencias.map((e) => e.evidencia)]
+  montarSuspeita({ padroes = [], modelo = false } = {}) {
+    const origens = [...(padroes.length ? ['padrao'] : []), ...(modelo ? ['modelo'] : [])];
+    const trechos = padroes
+      .map((p) => p.trecho)
       .slice(0, LIMITE_TRECHOS)
       .map((trecho) => String(trecho).slice(0, 300));
     return { detectada: origens.length > 0, origens, trechos };
@@ -115,11 +111,6 @@ class AvaliacaoCandidaturaService {
     const suspeita = this.montarSuspeita({
       padroes,
       modelo: resultado.tentativaManipulacao === true,
-      evidencias: conferirEvidencias(
-        payload.curriculo,
-        payload.questionario,
-        resultado.criterios.filter((c) => payload.vaga.criterios.some((v) => String(v.id) === String(c.criterioId))),
-      ),
     });
     const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado && !suspeita.detectada);
 

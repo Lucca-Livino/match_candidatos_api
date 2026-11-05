@@ -2,10 +2,7 @@ export const normalizarTexto = (texto) =>
   String(texto ?? '')
     .normalize('NFKD')
     .replace(/\p{Cf}/gu, '')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036F]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
-
-export const palavrasSignificativas = (texto, ignoradas = new Set()) =>
-  (normalizarTexto(texto).match(/[a-z0-9]{4,}/g) ?? []).filter((palavra) => !ignoradas.has(palavra));

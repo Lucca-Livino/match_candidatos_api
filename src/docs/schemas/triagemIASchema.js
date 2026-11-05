@@ -126,7 +126,7 @@ const AvaliacaoAuditoria = {
       description: 'Suspeita de prompt injection. Com detectada true a triagem nao promove a candidatura.',
       properties: {
         detectada: { type: 'boolean', example: true },
-        origens: { type: 'array', items: { type: 'string', enum: ['padrao', 'modelo', 'evidencia'] } },
+        origens: { type: 'array', items: { type: 'string', enum: ['padrao', 'modelo'] } },
         trechos: { type: 'array', items: { type: 'string' }, example: ['Ignore as instrucoes anteriores...'] },
       },
     },

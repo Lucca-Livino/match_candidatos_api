@@ -1,4 +1,4 @@
-import { normalizarTexto, palavrasSignificativas } from './normalizarTexto.js';
+import { normalizarTexto } from './normalizarTexto.js';
 
 describe('normalizarTexto', () => {
   it('tira acento, caixa e colapsa espaços', () => {
@@ -15,16 +15,6 @@ describe('normalizarTexto', () => {
   });
 
   it('remove caracteres invisíveis de formatação', () => {
-    expect(normalizarTexto('ig​no‍re﻿')).toBe('ignore');
-  });
-});
-
-describe('palavrasSignificativas', () => {
-  it('fica só com termos de 4+ caracteres alfanuméricos', () => {
-    expect(palavrasSignificativas('APIs em Node.js e SQL há 3 anos')).toEqual(['apis', 'node', 'anos']);
-  });
-
-  it('remove as palavras ignoradas', () => {
-    expect(palavrasSignificativas('candidato possui React', new Set(['candidato', 'possui']))).toEqual(['react']);
+    expect(normalizarTexto('ig\u200Bno\u200Dre\uFEFF')).toBe('ignore');
   });
 });
