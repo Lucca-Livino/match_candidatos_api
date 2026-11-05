@@ -1,0 +1,24 @@
+# lightcloud — gerado pelo Light Cloud (menu Deploy)
+# Build das imagens do deploy: o painel do Light Cloud troca as imagens na VM quando o pipeline passa.
+variables:
+  LC_SERVICOS: "app"
+lightcloud-build:
+  stage: build
+  image: docker:29.2.1-cli
+  services:
+    - docker:29.2.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    # LC_BRANCHES (variável do projeto) = regex das branches com deploy no painel
+    - if: $LC_BRANCHES && $CI_COMMIT_BRANCH =~ $LC_BRANCHES
+  script:
+    # Variáveis da branch: LC_REGISTRY_<BRANCH>, LC_HARBOR_USUARIO_<BRANCH>, LC_HARBOR_SENHA_<BRANCH>
+    - S=$(echo "$CI_COMMIT_REF_SLUG" | tr 'a-z-' 'A-Z_')
+    - eval "LC_REGISTRY=\${LC_REGISTRY_$S:-} LC_HARBOR_USUARIO=\${LC_HARBOR_USUARIO_$S:-} LC_HARBOR_SENHA=\${LC_HARBOR_SENHA_$S:-}"
+    - 'if [ -z "$LC_REGISTRY" ]; then echo "Esta branch não tem deploy no Light Cloud."; exit 0; fi'
+    - export LC_REGISTRY LC_TAG="$CI_COMMIT_SHA"
+    - echo "$LC_HARBOR_SENHA" | docker login "${LC_REGISTRY%%/*}" -u "$LC_HARBOR_USUARIO" --password-stdin
+    - docker compose -f docker-compose.yml build $LC_SERVICOS
+    - docker compose -f docker-compose.yml push $LC_SERVICOS
