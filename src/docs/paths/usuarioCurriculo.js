@@ -197,6 +197,8 @@ const usuarioCurriculoPaths = {
       },
       responses: {
         201: { description: 'Candidatura criada com sucesso', content: { 'application/json': { schema: { $ref: '#/components/schemas/CandidaturaSingleResponse' } } } },
+        400: { description: 'Vaga nao esta recebendo candidaturas (pausada ou encerrada)', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        404: { description: 'Vaga nao encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
         409: { description: 'Usuario ja inscrito nesta vaga', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
       },
     },
@@ -225,6 +227,8 @@ const usuarioCurriculoPaths = {
       parameters: [idParam, { name: 'vagaId', in: 'path', required: true, schema: { type: 'string' } }],
       responses: {
         200: { description: 'Candidatura cancelada com sucesso', content: { 'application/json': { schema: { $ref: '#/components/schemas/CandidaturaCancelResponse' } } } },
+        400: { description: 'So candidaturas com status inscrito ou em_analise podem ser canceladas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        404: { description: 'Candidatura nao encontrada', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
       },
     },
   },
