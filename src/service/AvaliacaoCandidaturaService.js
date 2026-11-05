@@ -70,7 +70,6 @@ class AvaliacaoCandidaturaService {
         // Sem chamada ao modelo nao ha nota por criterio; limpa a de uma
         // avaliacao anterior para o registro nao misturar as duas.
         criteriosAvaliados: [],
-        movidoPor: 'sistema',
       });
     }
 
@@ -110,7 +109,6 @@ class AvaliacaoCandidaturaService {
       motivoIncompat_: aprovado
         ? ''
         : 'Compatibilidade abaixo do limiar definido para a triagem automática.',
-      movidoPor: 'sistema',
       ...promocao,
     });
   }
