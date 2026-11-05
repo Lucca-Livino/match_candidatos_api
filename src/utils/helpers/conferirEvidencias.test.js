@@ -16,6 +16,10 @@ describe('conferirEvidencias', () => {
     expect(conferirEvidencias(curriculo, questionario, [criterio(0.9, 'Constrói APIs REST em Node.js')])).toEqual([]);
   });
 
+  it('aceita variação de palavra e grafia sem hífen', () => {
+    expect(conferirEvidencias(curriculo, questionario, [criterio(0.9, 'Desenvolve backend com Postgres')])).toEqual([]);
+  });
+
   it('aceita evidência que cita acerto de múltipla escolha', () => {
     expect(conferirEvidencias(curriculo, questionario, [criterio(0.8, 'Acertou a pergunta sobre PostgreSQL')])).toEqual([]);
   });
