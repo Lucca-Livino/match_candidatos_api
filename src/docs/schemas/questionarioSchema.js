@@ -74,6 +74,12 @@ const QuestionarioDetalhado = {
           type: 'array',
           items: { $ref: '#/components/schemas/PerguntaComOpcoes' },
         },
+        respondido: {
+          type: 'boolean',
+          description:
+            'So na visao de quem conduz o processo. true quando ja ha resposta (mesmo em andamento): perguntas e opcoes ficam travadas.',
+          example: false,
+        },
       },
     },
   ],

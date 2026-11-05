@@ -160,7 +160,18 @@ describe('QuestionarioService', () => {
 
       expect(perguntaRepository.listarPorQuestionarioId).toHaveBeenCalledWith('q1');
       expect(perguntaRepository.listarOpcoesPorPerguntaIds).not.toHaveBeenCalled();
-      expect(resultado).toEqual({ id: 'q1', vagaId: 'v1', titulo: 'Teste', ativo: 1, perguntas: [] });
+      expect(resultado).toEqual({ id: 'q1', vagaId: 'v1', titulo: 'Teste', ativo: 1, perguntas: [], respondido: false });
+    });
+
+    it('marca respondido para o editor e omite o campo na visão do candidato', async () => {
+      const { service, respostaQuestionarioRepository } = montarService();
+      respostaQuestionarioRepository.contarRespostasPorQuestionario.mockResolvedValue(3);
+
+      const editor = await service.buscarPorIdComPerguntas('q1');
+      const candidato = await service.buscarPorIdComPerguntas('q1', { comGabarito: false });
+
+      expect(editor.respondido).toBe(true);
+      expect(candidato).not.toHaveProperty('respondido');
     });
 
     it.each([

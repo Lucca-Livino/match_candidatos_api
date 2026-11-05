@@ -43,6 +43,17 @@ class PerguntaService {
     return pergunta;
   }
 
+  async garantirQuestionarioSemRespostas(questionarioId) {
+    const total = await this.respostaQuestionarioRepository.contarRespostasPorQuestionario(questionarioId);
+    if (total > 0) {
+      throw new AppError(
+        'Questionário já respondido por candidatos: perguntas e opções não podem mais ser alteradas.',
+        400,
+        'BUSINESS_RULE_ERROR',
+      );
+    }
+  }
+
   async garantirOrdemPerguntaDisponivel(questionarioId, ordem, perguntaIgnoradaId = null) {
     const perguntas = await this.repository.listarPorQuestionarioId(questionarioId);
 
@@ -66,6 +77,7 @@ class PerguntaService {
 
   async criar(payload) {
     await this.garantirQuestionarioExiste(payload.questionarioId);
+    await this.garantirQuestionarioSemRespostas(payload.questionarioId);
     await this.garantirOrdemPerguntaDisponivel(payload.questionarioId, payload.ordem);
 
     const created = await this.repository.criar(payload);
@@ -104,6 +116,7 @@ class PerguntaService {
 
   async atualizar(id, payload) {
     const existente = await this.garantirPerguntaExiste(id);
+    await this.garantirQuestionarioSemRespostas(existente.questionarioId);
 
     if (payload.ordem && payload.ordem !== existente.ordem) {
       await this.garantirOrdemPerguntaDisponivel(existente.questionarioId, payload.ordem, existente.id);
@@ -129,6 +142,7 @@ class PerguntaService {
         'BUSINESS_RULE_ERROR',
       );
     }
+    await this.garantirQuestionarioSemRespostas(pergunta.questionarioId);
 
     await this.repository.deletarOpcoesPorPerguntaId(pergunta.id);
     await this.repository.deletarPorId(pergunta.id);
@@ -164,6 +178,7 @@ class PerguntaService {
 
   async adicionarOpcao(perguntaId, payload) {
     const pergunta = await this.garantirPerguntaExiste(perguntaId);
+    await this.garantirQuestionarioSemRespostas(pergunta.questionarioId);
 
     if (pergunta.tipoResposta === 'dissertativa') {
       throw new AppError('Perguntas dissertativas não aceitam opções de resposta.', 400, 'BUSINESS_RULE_ERROR');
@@ -184,6 +199,7 @@ class PerguntaService {
 
   async atualizarOpcao(perguntaId, opcaoId, payload) {
     const pergunta = await this.garantirPerguntaExiste(perguntaId);
+    await this.garantirQuestionarioSemRespostas(pergunta.questionarioId);
 
     if (pergunta.tipoResposta === 'dissertativa') {
       throw new AppError('Perguntas dissertativas não aceitam opções de resposta.', 400, 'BUSINESS_RULE_ERROR');
@@ -210,6 +226,7 @@ class PerguntaService {
 
   async removerOpcao(perguntaId, opcaoId) {
     const pergunta = await this.garantirPerguntaExiste(perguntaId);
+    await this.garantirQuestionarioSemRespostas(pergunta.questionarioId);
 
     const opcao = await this.repository.buscarOpcaoPorId(pergunta.id, opcaoId);
     if (!opcao) {
@@ -244,6 +261,7 @@ class PerguntaService {
     }
 
     await this.garantirQuestionarioExiste(questionarioIdResolvido);
+    await this.garantirQuestionarioSemRespostas(questionarioIdResolvido);
 
     const perguntasAtuais = await this.repository.listarPorQuestionarioId(questionarioIdResolvido);
 

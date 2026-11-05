@@ -142,6 +142,22 @@ const vagaPaths = {
             },
           },
         },
+        400: {
+          description: 'Payload invalido, transicao de status nao permitida (encerrada e definitivo) ou ativacao sem questionario ativo',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        404: {
+          description: 'Vaga nao encontrada',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
       },
     },
     delete: {

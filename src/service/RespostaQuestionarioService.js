@@ -82,6 +82,15 @@ class RespostaQuestionarioService {
       );
     }
 
+    const finalizada = await this.repository.buscarFinalizadaDesde(
+      questionario.id,
+      payload.usuarioId,
+      candidatura.criadoEm,
+    );
+    if (finalizada) {
+      throw new AppError('O questionário desta candidatura já foi respondido.', 409, 'CONFLICT');
+    }
+
     // Idempotente: retomar um envio interrompido devolve a resposta em andamento
     // em vez de bloquear o candidato, que nao tem como recuperar o id sozinho.
     const emAndamento = await this.repository.buscarRespostaEmAndamento(questionario.id, payload.usuarioId);

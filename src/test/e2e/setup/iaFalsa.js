@@ -10,6 +10,12 @@ const espionar = () => {
   return espiao;
 };
 
+const evidenciaDoMaterial = (payload) =>
+  payload.questionario?.respostas?.find((r) => r.textoResposta)?.textoResposta
+  || payload.curriculo?.experiencias?.[0]?.descricaoAtivida_
+  || payload.curriculo?.habilidades?.[0]?.habilidade
+  || 'sem evidencia';
+
 export const configurarIA = ({ aderencia = 1, notas, resumo = 'Avaliacao simulada no e2e.' } = {}) =>
   espionar().mockImplementation(async (payload) => ({
     criterios: payload.vaga.criterios
@@ -19,7 +25,7 @@ export const configurarIA = ({ aderencia = 1, notas, resumo = 'Avaliacao simulad
         return {
           criterioId: String(criterio.id),
           aderencia: nota,
-          evidencia: `Evidencia simulada de ${criterio.nome}.`,
+          evidencia: evidenciaDoMaterial(payload),
           atendido: nota >= 0.5,
         };
       }),
@@ -50,7 +56,7 @@ export const respostaDoModelo = (payload, aderencia = 1) =>
     criterios: payload.vaga.criterios.map((c) => ({
       criterioId: String(c.id),
       aderencia,
-      evidencia: 'Evidencia simulada.',
+      evidencia: evidenciaDoMaterial(payload),
       atendido: aderencia >= 0.5,
     })),
     resumo: 'Avaliacao simulada no e2e.',

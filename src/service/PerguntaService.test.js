@@ -29,7 +29,10 @@ const montarService = () => {
     reordenar: jest.fn().mockResolvedValue({}),
   };
   const questionarioRepository = { buscarPorId: jest.fn().mockResolvedValue({ id: 'q1' }) };
-  const respostaQuestionarioRepository = { contarRespostasPorPergunta: jest.fn().mockResolvedValue(0) };
+  const respostaQuestionarioRepository = {
+    contarRespostasPorPergunta: jest.fn().mockResolvedValue(0),
+    contarRespostasPorQuestionario: jest.fn().mockResolvedValue(0),
+  };
 
   const service = new PerguntaService(repository, questionarioRepository, respostaQuestionarioRepository);
   return { service, repository, questionarioRepository, respostaQuestionarioRepository };
@@ -68,6 +71,43 @@ const ordemOpcaoEmUso = {
 };
 
 describe('PerguntaService', () => {
+  describe('questionário já respondido', () => {
+    const travado = {
+      message: 'Questionário já respondido por candidatos: perguntas e opções não podem mais ser alteradas.',
+      statusCode: 400,
+      code: 'BUSINESS_RULE_ERROR',
+    };
+
+    it.each([
+      ['criar', (s) => s.criar({ questionarioId: 'q1', enunciado: 'Nova?', ordem: 9 }), 'criar'],
+      ['atualizar', (s) => s.atualizar('p1', { enunciado: 'Outra?' }), 'atualizarPorId'],
+      ['deletar', (s) => s.deletar('p1'), 'deletarPorId'],
+      ['adicionarOpcao', (s) => s.adicionarOpcao('p1', { texto: 'Nova', ordem: 9 }), 'criarOpcao'],
+      ['atualizarOpcao', (s) => s.atualizarOpcao('p1', 'o1', { texto: 'Outro' }), 'atualizarOpcao'],
+      ['removerOpcao', (s) => s.removerOpcao('p1', 'o1'), 'deletarOpcao'],
+    ])('%s é recusado e não grava nada', async (_, acao, escrita) => {
+      const { service, repository, respostaQuestionarioRepository } = montarService();
+      respostaQuestionarioRepository.contarRespostasPorQuestionario.mockResolvedValue(1);
+      repository.buscarOpcaoPorId.mockResolvedValue(opcao('o1', 'p1', 1));
+
+      await esperarAppError(acao(service), travado);
+      expect(respostaQuestionarioRepository.contarRespostasPorQuestionario).toHaveBeenCalledWith('q1');
+      expect(repository[escrita]).not.toHaveBeenCalled();
+    });
+
+    it('reordenar é recusado e não grava nada', async () => {
+      const { service, repository, respostaQuestionarioRepository } = montarService();
+      respostaQuestionarioRepository.contarRespostasPorQuestionario.mockResolvedValue(1);
+      repository.buscarPorIds.mockResolvedValue([perguntaMultipla, perguntaVF]);
+
+      await esperarAppError(
+        service.reordenar({ questionarioId: 'q1', perguntas: [{ id: 'p2', ordem: 1 }, { id: 'p1', ordem: 2 }] }),
+        travado,
+      );
+      expect(repository.reordenar).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sanitize', () => {
     it('devolve null para documento ausente', () => {
       expect(new PerguntaService({}, {}, {}).sanitize(null)).toBeNull();

@@ -5,6 +5,7 @@ import ConfiguracaoIntegracaoService from './ConfiguracaoIntegracaoService.js';
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
 import { montarIndice } from '../utils/helpers/indiceCatalogo.js';
+import { detectarInjecao } from '../utils/helpers/detectarInjecao.js';
 
 jest.mock('./AvaliacaoPayloadService.js', () => ({
   __esModule: true,
@@ -24,6 +25,7 @@ jest.mock('../repository/CandidaturaRepository.js', () => ({
 }));
 jest.mock('../utils/helpers/gateObrigatorios.js', () => ({ __esModule: true, avaliarObrigatorios: jest.fn() }));
 jest.mock('../utils/helpers/indiceCatalogo.js', () => ({ __esModule: true, montarIndice: jest.fn() }));
+jest.mock('../utils/helpers/detectarInjecao.js', () => ({ __esModule: true, detectarInjecao: jest.fn() }));
 
 const AGORA = new Date('2026-11-02T12:00:00.000Z');
 const USUARIO_ID = 'usuario-1';
@@ -83,6 +85,7 @@ describe('AvaliacaoCandidaturaService', () => {
     jest.setSystemTime(AGORA.getTime());
     avaliarObrigatorios.mockReset().mockReturnValue({ aprovado: true, motivos: [] });
     montarIndice.mockReset().mockReturnValue({ indiceVazio: true });
+    detectarInjecao.mockReset().mockReturnValue([]);
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -218,8 +221,9 @@ describe('AvaliacaoCandidaturaService', () => {
             'Requisito obrigatório não atendido: React: não encontrado no perfil. '
             + 'Inglês: nível mínimo avançado, declarado básico.',
           criteriosAvaliados: [],
-          movidoPor: 'sistema',
+          suspeitaInjecao: { detectada: false, origens: [], trechos: [] },
         });
+        expect(dadosPersistidos(candidaturaRepository)).not.toHaveProperty('movidoPor');
         expect(retorno).toEqual(expect.objectContaining({ salvo: true, compativel: 0 }));
       });
 
@@ -306,6 +310,7 @@ describe('AvaliacaoCandidaturaService', () => {
           },
         ],
         motivoIncompat_: '',
+        suspeitaInjecao: { detectada: false, origens: [], trechos: [] },
         movidoPor: 'ia',
         status: 'em_analise',
       });
@@ -333,7 +338,7 @@ describe('AvaliacaoCandidaturaService', () => {
 
       const dados = dadosPersistidos(candidaturaRepository);
       expect(dados.compativel).toBe(1);
-      expect(dados.movidoPor).toBe('sistema');
+      expect(dados).not.toHaveProperty('movidoPor');
       expect(dados).not.toHaveProperty('status');
     });
 
@@ -352,10 +357,10 @@ describe('AvaliacaoCandidaturaService', () => {
           compativel: 0,
           scoreIA: 0.38,
           motivoIncompat_: 'Compatibilidade abaixo do limiar definido para a triagem automática.',
-          movidoPor: 'sistema',
         }),
       );
       expect(dados).not.toHaveProperty('status');
+      expect(dados).not.toHaveProperty('movidoPor');
     });
 
     it('trunca a evidência de cada critério em 2000 caracteres', async () => {
@@ -390,6 +395,77 @@ describe('AvaliacaoCandidaturaService', () => {
       await expect(service.avaliar(USUARIO_ID, VAGA_ID)).resolves.toEqual(
         expect.objectContaining({ salvo: true, compativel: 1, scoreIA: 1 }),
       );
+    });
+  });
+
+  describe('suspeita de prompt injection', () => {
+    const SEM_SUSPEITA = { detectada: false, origens: [], trechos: [] };
+
+    it('sem suspeita promove como antes e grava o registro vazio', async () => {
+      const resultado = resultadoIA([1, 1]);
+      const payload = montarPayload({ questionario: { respostas: [] } });
+      const { service, candidaturaRepository } = criarService({ payload, resultado, atual: { status: 'inscrito' } });
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      expect(detectarInjecao).toHaveBeenCalledWith(payload.curriculo, payload.questionario);
+      expect(dadosPersistidos(candidaturaRepository)).toMatchObject({ status: 'em_analise', suspeitaInjecao: SEM_SUSPEITA });
+    });
+
+    it.each([
+      ['padrao', () => detectarInjecao.mockReturnValue([{ campo: 'respostas[0].textoResposta', padrao: 'ignorar_instrucoes', trecho: 'Ignore as instruções' }]), {}, ['Ignore as instruções']],
+      ['modelo', () => {}, { tentativaManipulacao: true }, []],
+    ])('origem %s: grava a suspeita e não promove', async (origem, preparar, extraIA, trechos) => {
+      preparar();
+      const { service, candidaturaRepository } = criarService({ resultado: resultadoIA([1, 1], extraIA), atual: { status: 'inscrito' } });
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      const dados = dadosPersistidos(candidaturaRepository);
+      expect(candidaturaRepository.buscarPorUsuarioEVaga).not.toHaveBeenCalled();
+      expect(dados).not.toHaveProperty('status');
+      expect(dados).not.toHaveProperty('movidoPor');
+      expect(dados.compativel).toBe(1);
+      expect(dados.suspeitaInjecao).toEqual({ detectada: true, origens: [origem], trechos });
+    });
+
+    it('junta as duas origens na ordem padrao, modelo', async () => {
+      detectarInjecao.mockReturnValue([{ campo: 'x', padrao: 'p', trecho: 'A' }]);
+      const { service, candidaturaRepository } = criarService({ resultado: resultadoIA([1, 1], { tentativaManipulacao: true }) });
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      expect(dadosPersistidos(candidaturaRepository).suspeitaInjecao).toEqual({
+        detectada: true,
+        origens: ['padrao', 'modelo'],
+        trechos: ['A'],
+      });
+    });
+
+    it('limita a 10 trechos de até 300 caracteres', async () => {
+      detectarInjecao.mockReturnValue(Array.from({ length: 12 }, (_, i) => ({ campo: `c${i}`, padrao: 'p', trecho: `${i}${'x'.repeat(400)}` })));
+      const { service, candidaturaRepository } = criarService({ resultado: resultadoIA([1, 1]) });
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      const { trechos } = dadosPersistidos(candidaturaRepository).suspeitaInjecao;
+      expect(trechos).toHaveLength(10);
+      expect(trechos.every((t) => t.length === 300)).toBe(true);
+    });
+
+    it('no caminho do gate registra a suspeita do detector sem chamar a IA', async () => {
+      avaliarObrigatorios.mockReturnValue({ aprovado: false, motivos: ['React: não encontrado no perfil.'] });
+      detectarInjecao.mockReturnValue([{ campo: 'x', padrao: 'p', trecho: 'Ignore as instruções' }]);
+      const { service, matchIAService, candidaturaRepository } = criarService();
+
+      await service.avaliar(USUARIO_ID, VAGA_ID);
+
+      expect(matchIAService.avaliar).not.toHaveBeenCalled();
+      expect(dadosPersistidos(candidaturaRepository).suspeitaInjecao).toEqual({
+        detectada: true,
+        origens: ['padrao'],
+        trechos: ['Ignore as instruções'],
+      });
     });
   });
 });

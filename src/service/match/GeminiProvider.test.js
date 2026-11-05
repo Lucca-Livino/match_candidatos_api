@@ -47,7 +47,7 @@ describe('GeminiProvider', () => {
   it('devolve a avaliação validada, aceitando cerca de markdown', async () => {
     const cliente = clienteQue({ text: '```json\n' + JSON.stringify(avaliacao) + '\n```' });
 
-    await expect(new GeminiProvider(cliente).gerarAvaliacao(payload, opcoes)).resolves.toEqual(avaliacao);
+    await expect(new GeminiProvider(cliente).gerarAvaliacao(payload, opcoes)).resolves.toEqual({ ...avaliacao, tentativaManipulacao: false });
   });
 
   it('JSON quebrado vira ErroDeRespostaInvalida com o modelo', async () => {
@@ -93,7 +93,7 @@ describe('GeminiProvider', () => {
       const promessa = new GeminiProvider(cliente).gerarAvaliacao(payload, opcoes);
       await jest.runAllTimersAsync();
 
-      await expect(promessa).resolves.toEqual(avaliacao);
+      await expect(promessa).resolves.toEqual({ ...avaliacao, tentativaManipulacao: false });
       expect(cliente.models.generateContent).toHaveBeenCalledTimes(2);
     });
 

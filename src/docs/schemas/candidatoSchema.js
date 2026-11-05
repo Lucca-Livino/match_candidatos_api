@@ -121,6 +121,12 @@ const Candidatura = {
       example: 'ana.recrutadora@match.com',
     },
     reabertoEm: { type: 'string', format: 'date-time', nullable: true },
+    questionarioPendente: {
+      type: 'boolean',
+      description:
+        'So nas rotas do proprio candidato. true quando a vaga tem questionario ativo e nenhuma resposta foi finalizada depois da candidatura.',
+      example: false,
+    },
     criadoEm: { type: 'string', format: 'date-time' },
     atualizadoEm: { type: 'string', format: 'date-time' },
   },

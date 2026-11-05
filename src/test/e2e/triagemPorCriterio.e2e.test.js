@@ -78,7 +78,7 @@ describe('E2E — triagem por critério', () => {
     const [registro] = auditoria.body.data;
     expect(registro.scoreIA).toBe(0.78);
     expect(registro.criteriosAvaliados).toEqual([
-      expect.objectContaining({ nome: 'Node.js', peso: 60, aderencia: 0.9, evidencia: 'Evidencia simulada de Node.js.', omitido: false }),
+      expect.objectContaining({ nome: 'Node.js', peso: 60, aderencia: 0.9, evidencia: 'Três anos construindo APIs em Node.js.', omitido: false }),
       expect.objectContaining({ nome: 'Express', peso: 40, aderencia: 0.6, omitido: false }),
     ]);
   });
@@ -114,7 +114,7 @@ describe('E2E — triagem por critério', () => {
     for (const res of respostas) {
       const corpo = JSON.stringify(res.body);
       expect(corpo).not.toContain('criteriosAvaliados');
-      expect(corpo).not.toContain('Evidencia simulada');
+      expect(corpo).not.toContain('"evidencia"');
     }
   });
 

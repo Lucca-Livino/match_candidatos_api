@@ -25,6 +25,7 @@ const candidaturaCompleta = (extra = {}) => ({
   criteriosAvaliados: [{ criterioId: 'c1', aderencia: 1 }],
   versaoModelo: 'gemini-teste',
   avaliadoEm: new Date('2026-10-01T00:00:00Z'),
+  suspeitaInjecao: { detectada: true, origens: ['padrao'], trechos: ['Ignore as instruções'] },
   ...extra,
 });
 
@@ -37,6 +38,7 @@ const CAMPOS_DA_TRIAGEM = [
   'criteriosAvaliados',
   'versaoModelo',
   'avaliadoEm',
+  'suspeitaInjecao',
 ];
 
 const criarRepositorio = () => ({
@@ -60,12 +62,21 @@ const esperarAppError = async (promessa, { mensagem, statusCode, code }) => {
 describe('CandidaturaService', () => {
   let repositorio;
   let avaliacaoService;
+  let questionarioRepository;
+  let respostaQuestionarioRepository;
   let service;
 
   beforeEach(() => {
     repositorio = criarRepositorio();
     avaliacaoService = { avaliar: jest.fn() };
-    service = new CandidaturaService(repositorio, avaliacaoService);
+    questionarioRepository = { listarPorVagaIds: jest.fn().mockResolvedValue([]) };
+    respostaQuestionarioRepository = { listarFinalizadasDoUsuario: jest.fn().mockResolvedValue([]) };
+    service = new CandidaturaService(
+      repositorio,
+      avaliacaoService,
+      questionarioRepository,
+      respostaQuestionarioRepository,
+    );
   });
 
   afterEach(() => {
@@ -254,6 +265,86 @@ describe('CandidaturaService', () => {
       repositorio.listarPorUsuarioId.mockResolvedValue([]);
 
       await expect(service.listarCandidatura(USUARIO_ID)).resolves.toEqual([]);
+      expect(questionarioRepository.listarPorVagaIds).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('questionarioPendente', () => {
+    const CRIADA_EM = new Date('2026-11-01T10:00:00Z');
+    const OUTRA_VAGA = '507f1f77bcf86cd799439022';
+
+    beforeEach(() => {
+      repositorio.listarPorUsuarioId.mockResolvedValue([candidaturaCompleta({ criadoEm: CRIADA_EM })]);
+    });
+
+    it('marca pendente quando a vaga tem questionário ativo e nenhuma resposta finalizada', async () => {
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([{ id: 'q1', vagaId: VAGA_ID, ativo: 1 }]);
+
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(questionarioRepository.listarPorVagaIds).toHaveBeenCalledWith([VAGA_ID]);
+      expect(respostaQuestionarioRepository.listarFinalizadasDoUsuario).toHaveBeenCalledWith(USUARIO_ID, ['q1']);
+      expect(item.questionarioPendente).toBe(true);
+    });
+
+    it('não marca pendente quando há resposta finalizada depois da candidatura', async () => {
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([{ id: 'q1', vagaId: VAGA_ID, ativo: 1 }]);
+      respostaQuestionarioRepository.listarFinalizadasDoUsuario.mockResolvedValue([
+        { questionarioId: 'q1', finalizadoEm: new Date('2026-11-01T10:05:00Z') },
+      ]);
+
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(item.questionarioPendente).toBe(false);
+    });
+
+    it('resposta finalizada antes da candidatura (cancelada e refeita) não conta', async () => {
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([{ id: 'q1', vagaId: VAGA_ID, ativo: 1 }]);
+      respostaQuestionarioRepository.listarFinalizadasDoUsuario.mockResolvedValue([
+        { questionarioId: 'q1', finalizadoEm: new Date('2026-10-01T10:00:00Z') },
+      ]);
+
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(item.questionarioPendente).toBe(true);
+    });
+
+    it('resposta de questionário de outra vaga não conta', async () => {
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([
+        { id: 'q1', vagaId: VAGA_ID, ativo: 1 },
+        { id: 'q2', vagaId: OUTRA_VAGA, ativo: 1 },
+      ]);
+      respostaQuestionarioRepository.listarFinalizadasDoUsuario.mockResolvedValue([
+        { questionarioId: 'q2', finalizadoEm: new Date('2026-11-02T10:00:00Z') },
+      ]);
+
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(item.questionarioPendente).toBe(true);
+    });
+
+    it('não marca pendente quando a vaga não tem questionário ativo', async () => {
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([{ id: 'q1', vagaId: VAGA_ID, ativo: 0 }]);
+
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(item.questionarioPendente).toBe(false);
+    });
+
+    it('vaga sem questionário não consulta respostas e não fica pendente', async () => {
+      const [item] = await service.listarCandidatura(USUARIO_ID);
+
+      expect(respostaQuestionarioRepository.listarFinalizadasDoUsuario).not.toHaveBeenCalled();
+      expect(item.questionarioPendente).toBe(false);
+    });
+
+    it('o detalhe da candidatura também traz o indicador', async () => {
+      repositorio.buscarPorUsuarioEVaga.mockResolvedValue(candidaturaCompleta({ criadoEm: CRIADA_EM }));
+      questionarioRepository.listarPorVagaIds.mockResolvedValue([{ id: 'q1', vagaId: VAGA_ID, ativo: 1 }]);
+
+      const resultado = await service.detalharCandidatura(USUARIO_ID, VAGA_ID);
+
+      expect(resultado.questionarioPendente).toBe(true);
     });
   });
 

@@ -98,10 +98,17 @@ class QuestionarioService {
       ? await this.perguntaRepository.listarOpcoesPorPerguntaIds(perguntas.map((item) => item.id))
       : [];
 
-    return {
+    const resultado = {
       ...this.sanitize(questionario),
       perguntas: this.montarPerguntasComOpcoes(perguntas, opcoes, { comGabarito }),
     };
+
+    if (comGabarito) {
+      resultado.respondido =
+        (await this.respostaQuestionarioRepository.contarRespostasPorQuestionario(questionario.id)) > 0;
+    }
+
+    return resultado;
   }
 
   async atualizar(id, payload) {

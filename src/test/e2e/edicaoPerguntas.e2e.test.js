@@ -96,10 +96,22 @@ describe('E2E — edição de perguntas e opções', () => {
     expect(lida.body.data.opcaoResposta.map((o) => o.id)).toEqual([mongoId]);
   });
 
-  it('não remove pergunta já respondida; sem resposta, remove junto com as opções', async () => {
+  it('sem resposta, remove a pergunta junto com as opções', async () => {
     const recrutador = await criarUsuarioLogado(app, 'recrutador');
     const vaga = await publicarVaga(recrutador);
-    const { perguntaId: semResposta } = await criarMultiplaEscolha(recrutador, vaga.questionarioId);
+    const { perguntaId } = await criarMultiplaEscolha(recrutador, vaga.questionarioId);
+
+    await recrutador.delete(`/api/pergunta/${perguntaId}`).expect(200);
+    await recrutador.get(`/api/pergunta/${perguntaId}`).expect(404);
+
+    const restantes = await recrutador.get(`/api/pergunta?questionarioId=${vaga.questionarioId}`).expect(200);
+    expect(restantes.body.data.map((p) => p.id)).toEqual([vaga.perguntaId]);
+  });
+
+  it('questionário com resposta trava perguntas e opções, mas não título e instruções', async () => {
+    const recrutador = await criarUsuarioLogado(app, 'recrutador');
+    const vaga = await publicarVaga(recrutador);
+    const { perguntaId: semResposta, mongoId } = await criarMultiplaEscolha(recrutador, vaga.questionarioId);
 
     const candidato = await registrarCandidato(app);
     await candidato.post(`/api/usuarios/${candidato.id}/candidatura`).send({ vagaId: vaga.vagaId }).expect(201);
@@ -115,10 +127,19 @@ describe('E2E — edição de perguntas e opções', () => {
     const respondida = await recrutador.delete(`/api/pergunta/${vaga.perguntaId}`).expect(400);
     expect(respondida.body.error.code).toBe('BUSINESS_RULE_ERROR');
 
-    await recrutador.delete(`/api/pergunta/${semResposta}`).expect(200);
-    await recrutador.get(`/api/pergunta/${semResposta}`).expect(404);
+    await recrutador.delete(`/api/pergunta/${semResposta}`).expect(400);
+    await recrutador.put(`/api/pergunta/${semResposta}`).send({ enunciado: 'Mudou o sentido?' }).expect(400);
+    await recrutador.delete(`/api/pergunta/${semResposta}/opcao/${mongoId}`).expect(400);
+    await recrutador
+      .post('/api/pergunta')
+      .send({ questionarioId: vaga.questionarioId, enunciado: 'Pergunta nova?', tipoResposta: 'dissertativa', peso: 1, ordem: 3 })
+      .expect(400);
+
+    const editor = await recrutador.get(`/api/questionario/${vaga.questionarioId}`).expect(200);
+    expect(editor.body.data.respondido).toBe(true);
+    await recrutador.put(`/api/questionario/${vaga.questionarioId}`).send({ titulo: 'Título revisado' }).expect(200);
 
     const restantes = await recrutador.get(`/api/pergunta?questionarioId=${vaga.questionarioId}`).expect(200);
-    expect(restantes.body.data.map((p) => p.id)).toEqual([vaga.perguntaId]);
+    expect(restantes.body.data.map((p) => p.id)).toEqual([vaga.perguntaId, semResposta]);
   });
 });
