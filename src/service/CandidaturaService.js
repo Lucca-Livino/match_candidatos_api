@@ -117,11 +117,6 @@ class CandidaturaService {
     return this.marcarQuestionarioPendente(usuarioId, visiveis);
   }
 
-  // A candidatura e criada antes do questionario. Se o envio das respostas
-  // falha (rede, aba fechada), ela fica sem respostas e a triagem nunca roda.
-  // `questionarioPendente` avisa o candidato que falta concluir: vale quando a
-  // vaga tem questionario ativo e nenhuma resposta foi finalizada depois da
-  // candidatura (resposta anterior a um cancelamento nao conta).
   async marcarQuestionarioPendente(usuarioId, candidaturas) {
     if (candidaturas.length === 0) return candidaturas;
 

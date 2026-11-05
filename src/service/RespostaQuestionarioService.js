@@ -82,10 +82,6 @@ class RespostaQuestionarioService {
       );
     }
 
-    // Uma resposta por candidatura: sem isto o candidato que retoma o envio
-    // depois de ja ter finalizado criaria uma segunda resposta e dispararia
-    // outra avaliacao. Resposta anterior a candidatura (cancelada e refeita)
-    // nao conta.
     const finalizada = await this.repository.buscarFinalizadaDesde(
       questionario.id,
       payload.usuarioId,
