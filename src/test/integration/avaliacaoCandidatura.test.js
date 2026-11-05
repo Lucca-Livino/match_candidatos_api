@@ -50,7 +50,7 @@ const fakes = ({ payload = PAYLOAD, score = 0.84, limite = 0.7, iaFalha = false 
       : jest.fn().mockResolvedValue({
           // O score e calculado em codigo pelas notas por criterio. Com um
           // criterio so, o score final e a propria aderencia.
-          criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'Perfil cita React.' }],
+          criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'React avancado' }],
           resumo: 'Perfil aderente.',
           // O modelo que DE FATO respondeu vem do proprio MatchIAService: com
           // cascata, o degrau que atendeu e decisao de runtime.

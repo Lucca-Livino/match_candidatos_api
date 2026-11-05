@@ -5,11 +5,15 @@ import CandidaturaRepository from '../repository/CandidaturaRepository.js';
 import { avaliarObrigatorios } from '../utils/helpers/gateObrigatorios.js';
 import { montarIndice } from '../utils/helpers/indiceCatalogo.js';
 import { calcularScore, detalharCriterios } from '../utils/helpers/calcularScore.js';
+import { detectarInjecao } from '../utils/helpers/detectarInjecao.js';
+import { conferirEvidencias } from '../utils/helpers/conferirEvidencias.js';
 
 // Retorno de `avaliar` quando a vaga nao tem criterio: nada foi gravado, mas
 // por regra, e nao por falha. Distinto do null para a reavaliacao manual nao
 // responder como se a IA estivesse fora.
 export const SEM_CRITERIOS = Object.freeze({ semCriterios: true });
+
+const LIMITE_TRECHOS = 10;
 
 class AvaliacaoCandidaturaService {
   constructor(
@@ -37,6 +41,18 @@ class AvaliacaoCandidaturaService {
     return { status: 'em_analise', movidoPor: 'ia' };
   }
 
+  montarSuspeita({ padroes = [], modelo = false, evidencias = [] } = {}) {
+    const origens = [
+      ...(padroes.length ? ['padrao'] : []),
+      ...(modelo ? ['modelo'] : []),
+      ...(evidencias.length ? ['evidencia'] : []),
+    ];
+    const trechos = [...padroes.map((p) => p.trecho), ...evidencias.map((e) => e.evidencia)]
+      .slice(0, LIMITE_TRECHOS)
+      .map((trecho) => String(trecho).slice(0, 300));
+    return { detectada: origens.length > 0, origens, trechos };
+  }
+
   async avaliar(usuarioId, vagaId) {
     const config = await this.configuracaoService.obter();
 
@@ -49,6 +65,8 @@ class AvaliacaoCandidaturaService {
     // triagem reprovaria todo mundo. Deixa pendente, sem nota e sem chamada a
     // IA; o recrutador move a candidatura manualmente.
     if (payload.vaga.criterios.length === 0) return SEM_CRITERIOS;
+
+    const padroes = detectarInjecao(payload.curriculo, payload.questionario);
 
     // Gate deterministico contra o catalogo: criterio obrigatorio sem
     // comprovacao barra sem gastar chamada. Payload sem `verificacao` (montado
@@ -70,6 +88,7 @@ class AvaliacaoCandidaturaService {
         // Sem chamada ao modelo nao ha nota por criterio; limpa a de uma
         // avaliacao anterior para o registro nao misturar as duas.
         criteriosAvaliados: [],
+        suspeitaInjecao: this.montarSuspeita({ padroes }),
       });
     }
 
@@ -93,7 +112,12 @@ class AvaliacaoCandidaturaService {
     // O modelo da a nota por criterio; a combinacao pelos pesos e feita aqui.
     const score = calcularScore(payload.vaga.criterios, resultado.criterios);
     const aprovado = score >= config.limiteCompatibilidade;
-    const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado);
+    const suspeita = this.montarSuspeita({
+      padroes,
+      modelo: resultado.tentativaManipulacao === true,
+      evidencias: conferirEvidencias(payload.curriculo, payload.questionario, resultado.criterios),
+    });
+    const promocao = await this.promoverSeCompativel(usuarioId, vagaId, aprovado && !suspeita.detectada);
 
     return this.persistir(usuarioId, vagaId, {
       compativel: aprovado ? 1 : 0,
@@ -109,6 +133,7 @@ class AvaliacaoCandidaturaService {
       motivoIncompat_: aprovado
         ? ''
         : 'Compatibilidade abaixo do limiar definido para a triagem automática.',
+      suspeitaInjecao: suspeita,
       ...promocao,
     });
   }

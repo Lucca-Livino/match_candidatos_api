@@ -19,7 +19,7 @@ const configuracaoFake = (ativo = true) => ({
 const payloadFake = {
   montar: async () => ({
     vaga: { criterios: [{ id: 'crit-1', nome: 'Node.js', tipo_criterio: 'skill_tecnica', peso_percentual: 100 }] },
-    curriculo: { habilidades: [], formacoes: [], experiencias: [], certificacoes: [] },
+    curriculo: { habilidades: [{ habilidade: 'Node.js', nivel: 'avancado' }], formacoes: [], experiencias: [], certificacoes: [] },
     questionario: { titulo: null, respostas: [] },
   }),
 };
@@ -28,7 +28,7 @@ const payloadFake = {
 // so, o score final e a propria aderencia.
 const iaFake = (score) => ({
   avaliar: async () => ({
-    criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'evidencia de teste' }],
+    criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'Node.js' }],
     resumo: 'analise de teste',
     modeloUsado: 'modelo-a',
   }),
