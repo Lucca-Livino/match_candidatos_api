@@ -1,5 +1,13 @@
 import AppError from '../helpers/AppError.js';
 
+const permissoesSemRepeticao = (permissions) => {
+  const combos = permissions.map((p) => `${p?.route}_${p?.domain}`);
+  if (combos.length !== new Set(combos).size) {
+    throw new AppError('Permissões duplicadas: route + domain devem ser únicos no grupo.', 400, 'VALIDATION_ERROR');
+  }
+  return permissions;
+};
+
 export function validateCreateGrupo(body = {}) {
   if (!body.nome || typeof body.nome !== 'string') {
     throw new AppError('Campo nome é obrigatório.', 400, 'VALIDATION_ERROR');
@@ -12,7 +20,7 @@ export function validateCreateGrupo(body = {}) {
     nome: body.nome,
     descricao: body.descricao,
     ativo: typeof body.ativo === 'boolean' ? body.ativo : true,
-    permissions: Array.isArray(body.permissions) ? body.permissions : [],
+    permissions: Array.isArray(body.permissions) ? permissoesSemRepeticao(body.permissions) : [],
   };
 }
 
@@ -21,7 +29,7 @@ export function validatePatchGrupo(body = {}) {
   if (typeof body.nome === 'string') out.nome = body.nome;
   if (typeof body.descricao === 'string') out.descricao = body.descricao;
   if (typeof body.ativo === 'boolean') out.ativo = body.ativo;
-  if (Array.isArray(body.permissions)) out.permissions = body.permissions;
+  if (Array.isArray(body.permissions)) out.permissions = permissoesSemRepeticao(body.permissions);
   if (Object.keys(out).length === 0) {
     throw new AppError('Nenhum campo válido para atualizar.', 400, 'VALIDATION_ERROR');
   }

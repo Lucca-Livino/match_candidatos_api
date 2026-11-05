@@ -1,7 +1,10 @@
 import CandidaturaRepository from '../repository/CandidaturaRepository.js';
+import QuestionarioRepository from '../repository/QuestionarioRepository.js';
+import RespostaQuestionarioRepository from '../repository/RespostaQuestionarioRepository.js';
 import AvaliacaoCandidaturaService, { SEM_CRITERIOS } from './AvaliacaoCandidaturaService.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
+import mongoose from 'mongoose';
 import AppError from '../utils/helpers/AppError.js';
 import { sanitizeDoc } from '../utils/helpers/sanitize.js';
 
@@ -17,9 +20,13 @@ class CandidaturaService {
   constructor(
     candidaturaRepository = new CandidaturaRepository(),
     avaliacaoCandidaturaService = new AvaliacaoCandidaturaService(),
+    questionarioRepository = new QuestionarioRepository(),
+    respostaQuestionarioRepository = new RespostaQuestionarioRepository(),
   ) {
     this.candidaturaRepository = candidaturaRepository;
     this.avaliacaoCandidaturaService = avaliacaoCandidaturaService;
+    this.questionarioRepository = questionarioRepository;
+    this.respostaQuestionarioRepository = respostaQuestionarioRepository;
   }
 
   sanitize(doc) {
@@ -48,6 +55,7 @@ class CandidaturaService {
       criteriosAvaliados,
       versaoModelo,
       avaliadoEm,
+      suspeitaInjecao,
       ...visivel
     } = candidatura;
     if (visivel.movidoPor === 'ia') visivel.movidoPor = 'sistema';
@@ -74,11 +82,26 @@ class CandidaturaService {
     }
   }
 
+  // Inscricao so em vaga que existe e esta no ar. Vem depois da checagem de
+  // duplicidade de proposito: o front trata o 409 como "reenvio apos falha no
+  // questionario" e segue, mesmo que a vaga tenha sido pausada no meio.
+  async garantirVagaAberta(vagaId) {
+    const vaga = mongoose.isValidObjectId(vagaId) ? await Vaga.findById(vagaId, 'status').lean() : null;
+    if (!vaga) {
+      throw new AppError('Vaga não encontrada.', 404, 'NOT_FOUND');
+    }
+    if (vaga.status !== 'ativa') {
+      throw new AppError('Esta vaga não está recebendo candidaturas.', 400, 'BUSINESS_RULE_ERROR');
+    }
+  }
+
   async criarCandidatura(usuarioId, payload) {
     const jaExiste = await this.candidaturaRepository.buscarPorUsuarioEVaga(usuarioId, payload.vagaId);
     if (jaExiste) {
       throw new AppError('Usuário já está inscrito nesta vaga.', 409, 'CONFLICT');
     }
+
+    await this.garantirVagaAberta(payload.vagaId);
 
     const created = await this.candidaturaRepository.criar({
       ...payload,
@@ -91,7 +114,33 @@ class CandidaturaService {
 
   async listarCandidatura(usuarioId) {
     const list = await this.candidaturaRepository.listarPorUsuarioId(usuarioId);
-    return list.map((item) => this.omitirTriagem(this.sanitize(item)));
+    const visiveis = list.map((item) => this.omitirTriagem(this.sanitize(item)));
+    return this.marcarQuestionarioPendente(usuarioId, visiveis);
+  }
+
+  async marcarQuestionarioPendente(usuarioId, candidaturas) {
+    if (candidaturas.length === 0) return candidaturas;
+
+    const vagaIds = [...new Set(candidaturas.map((c) => String(c.vagaId)))];
+    const questionarios = await this.questionarioRepository.listarPorVagaIds(vagaIds);
+    const finalizadas = questionarios.length
+      ? await this.respostaQuestionarioRepository.listarFinalizadasDoUsuario(
+          String(usuarioId),
+          questionarios.map((q) => q.id),
+        )
+      : [];
+
+    return candidaturas.map((candidatura) => {
+      const daVaga = questionarios.filter((q) => String(q.vagaId) === String(candidatura.vagaId));
+      const temAtivo = daVaga.some((q) => q.ativo === 1);
+      const ids = new Set(daVaga.map((q) => q.id));
+      const criadaEm = new Date(candidatura.criadoEm);
+      const respondida = finalizadas.some(
+        (r) => ids.has(r.questionarioId) && new Date(r.finalizadoEm) >= criadaEm,
+      );
+
+      return { ...candidatura, questionarioPendente: temAtivo && !respondida };
+    });
   }
 
   // Listagem do recrutador: quem se candidatou a esta vaga, em ordem de
@@ -170,7 +219,10 @@ class CandidaturaService {
       throw new AppError('Candidatura não encontrada.', 404, 'NOT_FOUND');
     }
 
-    return this.omitirTriagem(this.sanitize(candidatura));
+    const [detalhada] = await this.marcarQuestionarioPendente(usuarioId, [
+      this.omitirTriagem(this.sanitize(candidatura)),
+    ]);
+    return detalhada;
   }
 
   async atualizarStatusCandidatura(usuarioId, vagaId, payload, ator = null) {

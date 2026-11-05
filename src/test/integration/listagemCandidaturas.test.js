@@ -110,7 +110,7 @@ describe('CandidaturaService.reavaliarCandidatura', () => {
 
     await expect(
       montarService(avaliacaoService).reavaliarCandidatura('fantasma', 'v1'),
-    ).rejects.toThrow('Candidatura nao encontrada.');
+    ).rejects.toThrow('Candidatura não encontrada.');
     expect(avaliacaoService.avaliar).not.toHaveBeenCalled();
   });
 
@@ -123,6 +123,6 @@ describe('CandidaturaService.reavaliarCandidatura', () => {
 
     await expect(
       montarService(avaliacaoService).reavaliarCandidatura('u2', 'v2'),
-    ).rejects.toThrow('Avaliacao por IA indisponivel.');
+    ).rejects.toThrow('Avaliação por IA indisponível.');
   });
 });

@@ -39,11 +39,12 @@ const normalizeArea = (area) => {
 
   if (tipo === 'skill_tecnica') {
     const normalizado = { itemId: exigirId('itemId') };
-    if (texto(requisito.nivelMinimo)) {
-      if (!NIVEIS_HABILIDADE.includes(requisito.nivelMinimo)) {
+    const nivelMinimo = texto(requisito.nivelMinimo).toLowerCase();
+    if (nivelMinimo) {
+      if (!NIVEIS_HABILIDADE.includes(nivelMinimo)) {
         throw new AppError(`${campo}.nivelMinimo inválido.`, 400, 'VALIDATION_ERROR', { allowed: NIVEIS_HABILIDADE });
       }
-      normalizado.nivelMinimo = requisito.nivelMinimo;
+      normalizado.nivelMinimo = nivelMinimo;
     }
     return normalizado;
   }
@@ -106,7 +107,7 @@ const normalizeCriterios = (criterios) => {
     }
 
     const peso_percentual = Number(item.peso_percentual);
-    if (!Number.isFinite(peso_percentual) || peso_percentual <= 0 || peso_percentual > 100) {
+    if (!Number.isFinite(peso_percentual) || peso_percentual < 1 || peso_percentual > 100) {
       throw new AppError(
         `criterio_vaga[${index}].peso_percentual deve ser número entre 1 e 100.`,
         400,

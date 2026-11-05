@@ -22,6 +22,15 @@ const CriterioAvaliadoSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const SuspeitaInjecaoSchema = new mongoose.Schema(
+  {
+    detectada: { type: Boolean, default: false },
+    origens: { type: [{ type: String, enum: ['padrao', 'modelo'] }], default: [] },
+    trechos: { type: [{ type: String, maxlength: 300 }], default: [] },
+  },
+  { _id: false },
+);
+
 const CandidaturaSchema = new mongoose.Schema(
   {
     id: { type: String, default: createUuid, unique: true, index: true },
@@ -37,6 +46,7 @@ const CandidaturaSchema = new mongoose.Schema(
     avaliadoEm: { type: Date, default: null },
     justificativa: { type: String, trim: true, maxlength: 4000, default: '' },
     criteriosAvaliados: { type: [CriterioAvaliadoSchema], default: [] },
+    suspeitaInjecao: { type: SuspeitaInjecaoSchema, default: null },
     // Trilha da ultima reabertura (aprovado/reprovado -> em_analise). Vem da
     // sessao, nunca do payload.
     reabertoPor: { type: String, trim: true, maxlength: 180, default: null },

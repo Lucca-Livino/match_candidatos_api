@@ -19,8 +19,19 @@ export const notFoundHandler = (req, res) => {
   });
 };
 
-export const errorHandler = (error, req, res, next) => {
+const traduzirErroDoBanco = (error) => {
+  if (error?.name === 'CastError') {
+    return new AppError(`Valor inválido para ${error.path}.`, 400, 'VALIDATION_ERROR');
+  }
+  if (error?.code === 11000) {
+    return new AppError('Já existe registro com estes dados.', 409, 'CONFLICT', error.keyValue);
+  }
+  return error;
+};
+
+export const errorHandler = (erroOriginal, req, res, next) => {
   const isDev = process.env.NODE_ENV === 'development';
+  const error = traduzirErroDoBanco(erroOriginal);
 
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({

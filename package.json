@@ -12,7 +12,8 @@
     "seed:auto": "docker compose --profile seed up --build --force-recreate",
     "start": "node server.js",
     "start:production": "docker compose -f docker-compose.yml up --build --force-recreate",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "test:e2e": "jest src/test/e2e"
   },
   "repository": {
     "type": "git",
@@ -91,6 +92,7 @@
       ]
     },
     "testEnvironment": "node",
+    "testTimeout": 60000,
     "verbose": true,
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"

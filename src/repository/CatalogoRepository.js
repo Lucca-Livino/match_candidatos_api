@@ -1,4 +1,5 @@
 import ItemCatalogo from '../models/ItemCatalogo.js';
+import { escaparRegex } from '../utils/helpers/escaparRegex.js';
 
 class CatalogoRepository {
   async criar(payload) {
@@ -15,7 +16,7 @@ class CatalogoRepository {
 
   async buscarAtivos({ tipo, prefixo, limit }) {
     const filtro = { tipo, ativo: true };
-    if (prefixo) filtro.chaves = { $regex: `^${prefixo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}` };
+    if (prefixo) filtro.chaves = { $regex: `^${escaparRegex(prefixo)}` };
     return ItemCatalogo.find(filtro).sort({ nome: 1 }).limit(limit).lean();
   }
 

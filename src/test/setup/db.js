@@ -8,12 +8,13 @@ export const connectTestDatabase = async () => {
   await mongoose.connect(mongoServer.getUri());
 };
 
+// Lista pelo banco, nao pelos models: as colecoes do better-auth (account,
+// session, verification) nao tem model e sobravam de um teste para o outro.
 export const clearTestDatabase = async () => {
-  const collections = mongoose.connection.collections;
-  const collectionKeys = Object.keys(collections);
+  const collections = await mongoose.connection.db.collections();
 
-  for (const key of collectionKeys) {
-    await collections[key].deleteMany({});
+  for (const collection of collections) {
+    await collection.deleteMany({});
   }
 };
 

@@ -120,6 +120,16 @@ const AvaliacaoAuditoria = {
       description: 'Aqui a origem ia aparece: candidatura promovida pela triagem.',
       example: 'ia',
     },
+    suspeitaInjecao: {
+      type: 'object',
+      nullable: true,
+      description: 'Suspeita de prompt injection. Com detectada true a triagem nao promove a candidatura.',
+      properties: {
+        detectada: { type: 'boolean', example: true },
+        origens: { type: 'array', items: { type: 'string', enum: ['padrao', 'modelo'] } },
+        trechos: { type: 'array', items: { type: 'string' }, example: ['Ignore as instrucoes anteriores...'] },
+      },
+    },
     candidato: {
       type: 'object',
       nullable: true,

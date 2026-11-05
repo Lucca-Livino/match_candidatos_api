@@ -14,16 +14,24 @@ const configuracaoFake = (ativo = true) => ({
   }),
 });
 
+// Vaga sem criterio nao chega a IA (fica pendente por regra), entao o payload
+// precisa de pelo menos um criterio para a triagem acontecer.
 const payloadFake = {
   montar: async () => ({
-    vaga: { criterios: [] },
-    curriculo: { habilidades: [], formacoes: [], experiencias: [], certificacoes: [] },
+    vaga: { criterios: [{ id: 'crit-1', nome: 'Node.js', tipo_criterio: 'skill_tecnica', peso_percentual: 100 }] },
+    curriculo: { habilidades: [{ habilidade: 'Node.js', nivel: 'avancado' }], formacoes: [], experiencias: [], certificacoes: [] },
     questionario: { titulo: null, respostas: [] },
   }),
 };
 
+// O score e calculado em codigo a partir da nota por criterio: com um criterio
+// so, o score final e a propria aderencia.
 const iaFake = (score) => ({
-  avaliar: async () => ({ score, resumo: 'analise de teste', modeloUsado: 'modelo-a' }),
+  avaliar: async () => ({
+    criterios: [{ criterioId: 'crit-1', aderencia: score, evidencia: 'Node.js' }],
+    resumo: 'analise de teste',
+    modeloUsado: 'modelo-a',
+  }),
 });
 
 const montarService = (score, ativo = true) =>
@@ -34,8 +42,8 @@ describe('Pre-aprovacao: candidatura compativel entra em em_analise', () => {
   afterEach(clearTestDatabase);
   afterAll(disconnectTestDatabase);
 
-  const semear = (status = 'inscrito') =>
-    Candidatura.create({ usuarioId: 'u1', vagaId: 'v1', status });
+  const semear = (status = 'inscrito', movidoPor = 'sistema') =>
+    Candidatura.create({ usuarioId: 'u1', vagaId: 'v1', status, movidoPor });
 
   it('compativel e promovido para em_analise, com movidoPor = ia', async () => {
     await semear();
@@ -59,12 +67,12 @@ describe('Pre-aprovacao: candidatura compativel entra em em_analise', () => {
   // A decisao humana vale mais que a da IA: uma reavaliacao nao pode puxar de
   // volta quem o recrutador ja aprovou.
   it('nao regride status ja decidido pelo recrutador', async () => {
-    await semear('aprovado');
+    await semear('aprovado', 'ana.recrutadora@match.com');
     await montarService(0.9).avaliar('u1', 'v1');
 
     const doc = await Candidatura.findOne({ usuarioId: 'u1', vagaId: 'v1' }).lean();
     expect(doc.status).toBe('aprovado');
-    expect(doc.movidoPor).toBe('sistema');
+    expect(doc.movidoPor).toBe('ana.recrutadora@match.com');
   });
 });
 

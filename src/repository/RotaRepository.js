@@ -1,9 +1,10 @@
 import Rota from '../models/Rota.js';
+import { escaparRegex } from '../utils/helpers/escaparRegex.js';
 
 class RotaRepository {
   async listarPaginado({ page = 1, limit = 10, route, domain } = {}) {
     const filter = {};
-    if (route) filter.route = { $regex: route, $options: 'i' };
+    if (route) filter.route = { $regex: escaparRegex(route), $options: 'i' };
     if (domain) filter.domain = domain;
     return Rota.paginate(filter, { page, limit, sort: { route: 1 }, lean: true });
   }

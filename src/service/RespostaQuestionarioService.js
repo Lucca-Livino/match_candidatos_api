@@ -46,7 +46,22 @@ class RespostaQuestionarioService {
     return respostaQuestionario;
   }
 
-  async iniciar(payload) {
+  // O RBAC libera estas rotas por papel (administrador e candidato), sem olhar
+  // de quem e a resposta. O candidato so age sobre a propria; o administrador
+  // segue com acesso a qualquer uma. Sem solicitante (chamada interna, fora do
+  // HTTP) nao ha o que conferir.
+  garantirDono(usuarioIdDono, solicitante) {
+    if (!solicitante) return;
+    if (solicitante.tipos_permissao?.includes('administrador')) return;
+
+    if (String(usuarioIdDono) !== String(solicitante.id)) {
+      throw new AppError('Acesso negado. Você não tem permissão para realizar esta ação.', 403, 'FORBIDDEN');
+    }
+  }
+
+  async iniciar(payload, solicitante) {
+    this.garantirDono(payload.usuarioId, solicitante);
+
     const questionario = await this.garantirQuestionarioExiste(payload.questionarioId);
 
     if (questionario.ativo !== 1) {
@@ -65,6 +80,15 @@ class RespostaQuestionarioService {
         400,
         'BUSINESS_RULE_ERROR',
       );
+    }
+
+    const finalizada = await this.repository.buscarFinalizadaDesde(
+      questionario.id,
+      payload.usuarioId,
+      candidatura.criadoEm,
+    );
+    if (finalizada) {
+      throw new AppError('O questionário desta candidatura já foi respondido.', 409, 'CONFLICT');
     }
 
     // Idempotente: retomar um envio interrompido devolve a resposta em andamento
@@ -86,8 +110,9 @@ class RespostaQuestionarioService {
     return this.sanitize(created);
   }
 
-  async responder(respostaQuestionarioId, payload) {
+  async responder(respostaQuestionarioId, payload, solicitante) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
 
     if (respostaQuestionario.status !== 'em_andamento') {
       throw new AppError('Este questionário já foi finalizado e não aceita novas respostas.', 400, 'BUSINESS_RULE_ERROR');
@@ -96,7 +121,9 @@ class RespostaQuestionarioService {
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(respostaQuestionario.questionarioId);
     const perguntaPorId = new Map(perguntas.map((item) => [item.id, item]));
 
-    const respostasCriadasOuAtualizadas = [];
+    // Valida o lote inteiro antes de gravar: uma resposta invalida no meio nao
+    // pode deixar as anteriores salvas atras de um 400.
+    const respostasValidadas = [];
 
     for (const respostaInput of payload.respostas) {
       const pergunta = perguntaPorId.get(respostaInput.perguntaId);
@@ -137,6 +164,12 @@ class RespostaQuestionarioService {
         }
       }
 
+      respostasValidadas.push({ pergunta, opcaoRespostaIds, textoResposta });
+    }
+
+    const respostasCriadasOuAtualizadas = [];
+
+    for (const { pergunta, opcaoRespostaIds, textoResposta } of respostasValidadas) {
       const existente = await this.repository.buscarRespostaPergunta(respostaQuestionario.id, pergunta.id);
 
       const respostaPergunta = existente
@@ -168,8 +201,9 @@ class RespostaQuestionarioService {
     };
   }
 
-  async finalizar(respostaQuestionarioId) {
+  async finalizar(respostaQuestionarioId, solicitante) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
 
     if (respostaQuestionario.status !== 'em_andamento') {
       throw new AppError('A resposta já foi finalizada.', 400, 'BUSINESS_RULE_ERROR');
@@ -197,8 +231,11 @@ class RespostaQuestionarioService {
     return this.sanitize(finalizada);
   }
 
-  async buscarCompleta(respostaQuestionarioId) {
+  // Sem gabarito, as opcoes saem sem `correta`: o candidato consulta a propria
+  // resposta em andamento e nao pode ver a opcao certa antes de responder.
+  async buscarCompleta(respostaQuestionarioId, solicitante, { comGabarito = true } = {}) {
     const respostaQuestionario = await this.garantirRespostaQuestionarioExiste(respostaQuestionarioId);
+    this.garantirDono(respostaQuestionario.usuarioId, solicitante);
     const questionario = await this.garantirQuestionarioExiste(respostaQuestionario.questionarioId);
 
     const perguntas = await this.perguntaRepository.listarPorQuestionarioId(questionario.id);
@@ -219,7 +256,7 @@ class RespostaQuestionarioService {
       if (!acc[item.perguntaId]) {
         acc[item.perguntaId] = [];
       }
-      acc[item.perguntaId].push(this.sanitize(item));
+      acc[item.perguntaId].push(sanitizeDoc(item, comGabarito ? [] : ['correta']));
       return acc;
     }, {});
 

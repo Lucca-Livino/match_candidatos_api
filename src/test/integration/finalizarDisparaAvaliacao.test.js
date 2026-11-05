@@ -110,7 +110,7 @@ describe('RespostaQuestionarioService.finalizar — disparo da avaliacao', () =>
     const avaliacaoService = { avaliar: jest.fn() };
 
     await expect(montarService(avaliacaoService).finalizar(resposta.id)).rejects.toThrow(
-      'A resposta ja foi finalizada.',
+      'A resposta já foi finalizada.',
     );
     expect(avaliacaoService.avaliar).not.toHaveBeenCalled();
   });

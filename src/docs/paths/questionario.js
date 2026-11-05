@@ -1,3 +1,12 @@
+const questionarioRespondido = {
+  description: 'Questionario ja respondido: perguntas e opcoes nao podem mais ser alteradas',
+  content: {
+    'application/json': {
+      schema: { $ref: '#/components/schemas/ErrorResponse' },
+    },
+  },
+};
+
 const questionarioPaths = {
   '/api/questionario': {
     post: {
@@ -205,6 +214,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
     get: {
@@ -279,6 +289,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
   },
@@ -332,6 +343,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
     delete: {
@@ -350,7 +362,7 @@ const questionarioPaths = {
           },
         },
         400: {
-          description: 'Pergunta possui respostas vinculadas',
+          description: 'Pergunta possui respostas vinculadas ou questionario ja respondido',
           content: {
             'application/json': {
               schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -385,6 +397,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
   },
@@ -414,6 +427,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
     delete: {
@@ -432,6 +446,7 @@ const questionarioPaths = {
             },
           },
         },
+        400: questionarioRespondido,
       },
     },
   },
@@ -459,6 +474,14 @@ const questionarioPaths = {
         },
         400: {
           description: 'Questionario inativo ou payload invalido',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ErrorResponse' },
+            },
+          },
+        },
+        409: {
+          description: 'Questionario ja finalizado para esta candidatura',
           content: {
             'application/json': {
               schema: { $ref: '#/components/schemas/ErrorResponse' },
