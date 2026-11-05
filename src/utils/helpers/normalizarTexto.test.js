@@ -1,0 +1,22 @@
+import { normalizarTexto, palavrasSignificativas } from './normalizarTexto.js';
+
+describe('normalizarTexto', () => {
+  it('tira acento, caixa e colapsa espaços', () => {
+    expect(normalizarTexto('  Ignore   as INSTRUÇÕES\n anteriores ')).toBe('ignore as instrucoes anteriores');
+  });
+
+  it('trata nulo e número', () => {
+    expect(normalizarTexto(null)).toBe('');
+    expect(normalizarTexto(42)).toBe('42');
+  });
+});
+
+describe('palavrasSignificativas', () => {
+  it('fica só com termos de 4+ caracteres alfanuméricos', () => {
+    expect(palavrasSignificativas('APIs em Node.js e SQL há 3 anos')).toEqual(['apis', 'node', 'anos']);
+  });
+
+  it('remove as palavras ignoradas', () => {
+    expect(palavrasSignificativas('candidato possui React', new Set(['candidato', 'possui']))).toEqual(['react']);
+  });
+});
